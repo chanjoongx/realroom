@@ -6,7 +6,7 @@ Real catalog furniture in a photo of your own room, with every other pixel left 
 
 Realroom is an agent built on Meta's models. You give it a room photo and one sentence about what you want. It reads the room, plans what to add or replace, searches 4,375 real products for pieces that fit the space, and renders them into the photo. Then it checks its own work. SAM 3.1 finds each product again in the render, Muse Spark 1.3 compares it with the product's catalog photo, and anything that came out wrong is redrawn. Only the new products, their shadows and the spots that were cleared come from the image model. Everything else is copied back from your original photo, and the page lets you verify that count in your own browser.
 
-Built for the 27 Meta Global AI Developer Hackathon (2026).
+Built for the 27 Meta Global AI Developer Hackathon (2026). Try it at [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). The demo rooms replay recorded runs, and the upload box runs the whole agent on your own photo.
 
 ## Why
 
@@ -18,9 +18,9 @@ The demo rooms were generated with Muse Image 1.0, so this repository holds no p
 
 | Room | Brief | Products | Matched | Untouched pixels | Time | Cost |
 |---|---|---|---|---|---|---|
-| Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, floor lamp, throw pillows | 3 of 3 | 78.3% | 157 s | $0.19 |
-| Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | loveseat, rug, floor lamp, coffee table, planter | 5 of 5, the rug after one round of redraws | 62.1% | 165 s | $0.24 |
-| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | coverlet, rug, wall art | 3 of 3 | 65.9% | 156 s | $0.19 |
+| Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, rug, floor lamp | 3 of 3, the rug after one round of redraws | 70.1% | 206 s | $0.25 |
+| Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | loveseat, rug, floor lamp, coffee table, planter | 5 of 5, the coffee table after one round of redraws | 62.5% | 203 s | $0.27 |
+| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | coverlet, rug, wall art | 3 of 3 | 67.9% | 150 s | $0.18 |
 
 "Matched" is Muse Spark 1.3's verdict on a close crop of each rendered product next to its catalog photo. Costs are estimates from Meta's published prices, logged per call.
 
@@ -38,22 +38,22 @@ The demo rooms were generated with Muse Image 1.0, so this repository holds no p
 
 The web app replays each run from its event log: the scan with every outline, the search funnel, the pick sheets, all render candidates, each fix with its before and after, and the final layers.
 
-![The verify step of the move-in run](docs/verify.jpg)
+![The verify step of the living-room run](docs/verify.jpg)
 
-Above is the verify step of the move-in run. Muse Image drew three candidates, Spark scored all five products in each, and candidate 3 was kept. Its rug scored 5 of 10, so it went on to the fix step and came back at 9.
+Above is the verify step of the living-room run. Muse Image drew three candidates, Spark scored all three products in each, and candidate 1 was kept. Its rug scored 4 of 10, so it went on to the fix step and came back at 9.
 
 ## What you can check
 
 - `before.png` and `after.png` are lossless. In the app, **Check it yourself** downloads both and compares them pixel by pixel in your browser, then shows the share that is identical.
 - `layers.png` colors every changed pixel as product, cleared or shadow. `masks.npz` holds every object and product mask.
 - `ledger.jsonl` lists every model call with its time and estimated cost.
-- `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.6 to 2.6 on the demo runs). Those pixels are the reason for the composite step.
+- `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.8 to 2.1 on the demo runs). Those pixels are the reason for the composite step.
 
 ## The catalog
 
 [Amazon Berkeley Objects](https://amazon-berkeley-objects.s3.us-east-1.amazonaws.com/index.html) (ABO) is a public dataset of real Amazon product listings with photos and dimensions. `catalog/` builds the Realroom catalog from it:
 
-1. `abo_catalog.py` sorts amazon.com listings into 25 kinds (sofa, rug, floor lamp, wall art and so on), which matches 5,931 of them. It converts sizes to centimetres and drops listings with no dimensions or implausible ones, leaving 4,612 candidates.
+1. `abo_catalog.py` sorts amazon.com listings into 25 kinds (sofa, rug, floor lamp, wall art and so on), which matches 5,931 of them. It converts sizes to centimeters and drops listings with no dimensions or implausible ones, leaving 4,612 candidates.
 2. `modal_catalog.py --step score` and `abo_choose.py` pick one reference photo per product, preferring a clean cutout on white.
 3. `modal_catalog.py --step fetch` downloads that photo once, in Modal's cloud, and trims it.
 4. `modal_catalog.py --step tag` sends every photo with its listing to **Muse Spark Open**, Meta's open-weight model, served by Baseten (Fireworks as fallback). It returns a title, colors, materials, style, a visual description, a SAM phrase, a render-risk guess, and whether the photo really shows the listed product.

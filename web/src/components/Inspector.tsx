@@ -458,7 +458,7 @@ export function VerifyPanel({ run, events, focus, setFocus }: PanelProps) {
                       {i + 1}. {p.title}
                     </div>
                     {v && <VerdictChip v={v} />}
-                    {!!v?.issues?.length && <p className="faint pair-issues">{v.issues.join(" ")}</p>}
+                    {!!v?.issues?.length && <p className="faint pair-issues">{v.issues.map(asSentence).join(" ")}</p>}
                   </div>
                 </div>
               );
@@ -469,6 +469,12 @@ export function VerifyPanel({ run, events, focus, setFocus }: PanelProps) {
       {chosen?.judge.scene && <SceneScores s={chosen.judge.scene} />}
     </>
   );
+}
+
+/** Spark lists issues as bare phrases; show each as a sentence so they do not run together. */
+function asSentence(s: string): string {
+  const t = s.trim().replace(/[.;,]+$/, "");
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) + "." : "";
 }
 
 function SceneScores({ s, title = "Whole photo" }: { s: NonNullable<Run["result"]>["scene"]; title?: string }) {

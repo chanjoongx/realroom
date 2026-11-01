@@ -11,9 +11,14 @@ export function BoxCrop({ src, box, w, h, label }: { src: string; box: Box; w: n
   const cy = Math.max(0, y1 - my);
   const cw = Math.min(w, x2 + mx) - cx;
   const ch = Math.min(h, y2 + my) - cy;
+  const vb = `${cx} ${cy} ${cw} ${ch}`;
+  // the inner svg clips to the crop, so the bands that letterboxing leaves stay empty
+  // instead of showing the rest of the photo
   return (
-    <svg className="box-crop" viewBox={`${cx} ${cy} ${cw} ${ch}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={label}>
-      <image href={src} x={0} y={0} width={w} height={h} />
+    <svg className="box-crop" viewBox={vb} preserveAspectRatio="xMidYMid meet" role="img" aria-label={label}>
+      <svg x={cx} y={cy} width={cw} height={ch} viewBox={vb} overflow="hidden">
+        <image href={src} x={0} y={0} width={w} height={h} />
+      </svg>
     </svg>
   );
 }
