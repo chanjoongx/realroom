@@ -1586,6 +1586,15 @@
   background: #050506;
 }
 
+.box-crop {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #050506;
+  overflow: hidden;
+}
+
 .pair-imgs figcaption {
   margin-top: 5px;
   font-size: 10px;

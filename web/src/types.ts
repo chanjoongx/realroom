@@ -155,6 +155,8 @@ export interface Candidate {
   drift: { dE_mean: number; changed_frac_dE10: number; ssim_static: number };
   align: { ok?: boolean; max_corner_shift_px?: number };
   seg_how: string[];
+  /** where SAM 3.1 found each product in this candidate, in slot order (runs after 2026-11-02) */
+  boxes?: (Box | null)[];
 }
 
 export interface FixRecord {

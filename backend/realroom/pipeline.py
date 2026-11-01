@@ -229,7 +229,8 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
         R.save_img(cc["comp"], f"cand_{i + 1}.jpg", 90)
         cands.append({"index": i + 1, "score": score, "judge": j, "raw": f"cand_{i + 1}_raw.jpg",
                       "comp": f"cand_{i + 1}.jpg", "drift": cc["preservation"], "align": cc["align"],
-                      "seg_how": cc["seg_how"]})
+                      "seg_how": cc["seg_how"],
+                      "boxes": [[int(v) for v in b] if b is not None else None for b in cc["boxes"]]})
     best_i = max(range(len(checked)), key=lambda k: cands[k]["score"])
     _, best, best_crops, best_j = checked[best_i]
     R.data["render"] = {"candidates": cands, "chosen": best_i + 1, "prompt": prompt}
@@ -244,6 +245,7 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
     comp = best["comp"]
     boxes = list(best["boxes"])
     masks = [f[0]["mask"] if f[0] is not None else None for f in best["found"]]
+    sam_masks = [f[0].get("sam_mask", f[0]["mask"]) if f[0] is not None else None for f in best["found"]]
     fixes = []
     weak = sorted([k for k in range(len(products)) if verdicts.get(k + 1, {}).get("verdict") in ("partial", "mismatch")],
                   key=lambda k: verdicts[k + 1]["score"])[:max_fixes]
@@ -294,6 +296,7 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
             if s_best > float(v["score"]):
                 rd = rds[i_best]
                 comp, boxes[k], masks[k] = rd["comp"], rd["box"], rd["mask"]
+                sam_masks[k] = rd.get("sam_mask", rd["mask"])
                 v = {**js[i_best], "index": k + 1, "fixed": True}
                 accepted = True
             if v.get("verdict") == "match":
@@ -413,10 +416,11 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
     R.save_img(C.heatmap(best["de"]), "drift.jpg", 85)
     np.savez_compressed(R.dir / "masks.npz", **{f"product_{s['id']}": masks[k] for k, s in enumerate(slots)
                                                  if masks[k] is not None},
+                        **{f"found_{s['id']}": sam_masks[k] for k, s in enumerate(slots) if sam_masks[k] is not None},
                         **{f"object_{o['id']}": o["_mask"] for o in sc["objects"] if o.get("_mask") is not None})
     prods_out = []
     for k, (s, p) in enumerate(zip(slots, products)):
-        m = masks[k]
+        m = sam_masks[k]  # the outline people see is SAM 3.1's mask of the product, not the composite region
         crop = imgutil.crop_box(after, boxes[k], margin=0.12)
         R.save_img(crop, f"crop_{s['id']}.jpg", 90)
         prods_out.append({"slot": s["id"], "product": p.id, "box": list(boxes[k]),

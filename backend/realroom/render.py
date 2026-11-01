@@ -197,9 +197,9 @@ def composite_candidate(ledger: meta.Ledger, room: np.ndarray, out_bytes: bytes,
             if j != i and g is not None:
                 others |= g["mask"]
         grown = C.complete_mask(room, out_h, f["mask"], targets[i], fixed | others)
-        ys, xs = np.nonzero(grown)
-        found[i] = ({**f, "mask": grown, "area": int(grown.sum()),
-                     "box": (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)}, how)
+        # the grown mask (contact shadow, fringe) is what gets composited; SAM 3.1's own mask and its
+        # box stay for the outline, the number marker and the crop Spark judges
+        found[i] = ({**f, "sam_mask": f["mask"], "mask": grown, "area": int(grown.sum())}, how)
     new_masks = [f[0]["mask"] for f in found if f[0] is not None]
     new_union = np.zeros((h, w), dtype=bool)
     for m in new_masks:
@@ -315,8 +315,14 @@ def redraw_product(ledger: meta.Ledger, comp: np.ndarray, room: np.ndarray, prod
         out = C.paste_seamless(comp, full_new, full_mask, C.feather(full_mask))
         pmask = np.zeros((h, w), dtype=bool)
         pmask[ry1:ry2, rx1:rx2] = segm
-        new_box = (int(xs.min()) + rx1, int(ys.min()) + ry1, int(xs.max()) + 1 + rx1, int(ys.max()) + 1 + ry1)
-        return {"comp": out, "box": new_box, "mask": pmask, "region": (rx1, ry1, rx2, ry2), "seg_how": how,
+        smask = np.zeros((h, w), dtype=bool)
+        smask[ry1:ry2, rx1:rx2] = seg["mask"]
+        sy, sx = np.nonzero(seg["mask"])
+        if not sx.size:
+            sy, sx = ys, xs
+        new_box = (int(sx.min()) + rx1, int(sy.min()) + ry1, int(sx.max()) + 1 + rx1, int(sy.max()) + 1 + ry1)
+        return {"comp": out, "box": new_box, "mask": pmask, "sam_mask": smask, "region": (rx1, ry1, rx2, ry2),
+                "seg_how": how,
                 "crop_before": crop, "crop_after": out[ry1:ry2, rx1:rx2].copy(), "local_preservation": pres}
 
     if not outs:

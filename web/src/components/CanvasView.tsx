@@ -75,11 +75,18 @@ export function CanvasView({
     const r = run.render;
     const show = cand ?? r.chosen;
     const c = r.candidates.find((x) => x.index === show) ?? r.candidates[0];
+    // the verdicts this candidate got here; the result may already carry a later redraw
+    const order = (run.plan?.slots ?? []).map((s) => s.id);
+    const marks = (run.result?.products ?? []).map((rp) => {
+      const k = order.indexOf(rp.slot);
+      const v = c.judge.products?.find((p) => p.index === k + 1);
+      return { ...rp, verdict: v ?? rp.verdict, box: c.boxes?.[k] ?? rp.box, fixed: false };
+    });
     return (
       <>
         <Photo src={runFile(run.id, c.comp)} w={w} h={h}>
           {show === r.chosen && run.result && (
-            <ProductMarks items={run.result.products} w={w} h={h} focus={focus} onFocus={setFocus} showChips />
+            <ProductMarks items={marks} w={w} h={h} focus={focus} onFocus={setFocus} showChips />
           )}
         </Photo>
         <div className="canvas-tabs">

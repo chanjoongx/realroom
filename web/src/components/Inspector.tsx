@@ -3,6 +3,7 @@ import { ArrowRight, Check, CornerDownRight, TriangleAlert } from "lucide-react"
 import { imageUrl, runFile, thumbUrl } from "../api";
 import { kindLabel, pct, secs, sizeCm, sizeIn, titleCase, usd } from "../lib/format";
 import type { FixRecord, Product, Run, RunEvent, SceneObject, Slot, StageId, Verdict } from "../types";
+import { BoxCrop } from "./BoxCrop";
 import { ModelChips } from "./ModelChip";
 import { verdictTone } from "./Overlays";
 import { PixelCheck } from "./PixelCheck";
@@ -431,8 +432,10 @@ export function VerifyPanel({ run, events, focus, setFocus }: PanelProps) {
         <Section title={`Candidate ${chosen.index}, product by product`}>
           <div className="pairs">
             {slots.map((s, i) => {
-              const v = run.result?.products.find((p) => p.slot === s.id)?.verdict ?? chosen.judge.products?.find((p) => p.index === i + 1);
-              const crop = run.result?.products.find((p) => p.slot === s.id)?.crop;
+              // what Spark said about this candidate at this step; a later fix shows up in the next step
+              const rp = run.result?.products.find((x) => x.slot === s.id);
+              const v = chosen.judge.products?.find((x) => x.index === i + 1) ?? rp?.verdict;
+              const box = chosen.boxes?.[i] ?? rp?.box;
               const p = s.pick ? prods[s.pick] : undefined;
               if (!p) return null;
               return (
@@ -444,7 +447,9 @@ export function VerifyPanel({ run, events, focus, setFocus }: PanelProps) {
                     </figure>
                     <ArrowRight size={14} className="faint" />
                     <figure>
-                      {crop && <img src={runFile(run.id, crop)} alt={`${p.title}, in the room`} loading="lazy" />}
+                      {box && (
+                        <BoxCrop src={runFile(run.id, chosen.comp)} box={box} w={run.room.w} h={run.room.h} label={`${p.title}, in the room`} />
+                      )}
                       <figcaption className="mono">in your room</figcaption>
                     </figure>
                   </div>
