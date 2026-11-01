@@ -1,0 +1,16 @@
+# secrets
+.env
+*.env
+
+# local data: the ABO download, the built catalog, recorded and live runs
+data/
+runs/
+_work/
+
+# build output and dependencies
+web/node_modules/
+web/dist/
+__pycache__/
+*.pyc
+.venv/
+.DS_Store

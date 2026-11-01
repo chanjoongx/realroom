@@ -1,0 +1,1514 @@
+{
+ "id": "living",
+ "version": 1,
+ "status": "done",
+ "events": [
+  {
+   "t": 0.02,
+   "stage": "scan",
+   "title": "Reading the room",
+   "detail": "Muse Spark 1.3 lists every object, the fixed structure, size and light",
+   "model": "muse-spark-1.3",
+   "status": "start"
+  },
+  {
+   "t": 50.86,
+   "stage": "scan",
+   "title": "Found 11 objects and 6 fixed elements",
+   "detail": "living room, about 320 x 350 cm (medium confidence). Bright living room with large sheer-covered windows, dark brown 3-seat sofa, glass coffee table, white TV stand and tall plant.",
+   "model": "muse-spark-1.3",
+   "sec": 29.9,
+   "status": "done"
+  },
+  {
+   "t": 50.87,
+   "stage": "scan",
+   "title": "Outlined 11 objects with SAM 3.1",
+   "detail": "10 concept prompts found 11 objects, 0 box-prompt request(s) for the rest; Spark box vs SAM box IoU 0.519",
+   "model": "sam-3.1",
+   "sec": 20.6,
+   "usd": 0.0539,
+   "status": "done"
+  },
+  {
+   "t": 50.88,
+   "stage": "plan",
+   "title": "Bright Cozy Light Refresh",
+   "detail": "Replace the gloomy dark sofa with a light solid and add warm textiles and soft lighting for coziness.",
+   "model": "muse-spark-1.3",
+   "status": "done",
+   "slots": [
+    {
+     "id": "s1",
+     "kind": "sofa",
+     "action": "replace"
+    },
+    {
+     "id": "s2",
+     "kind": "floor_lamp",
+     "action": "add"
+    },
+    {
+     "id": "s3",
+     "kind": "throw_pillow",
+     "action": "add"
+    }
+   ]
+  },
+  {
+   "t": 60.99,
+   "stage": "search",
+   "title": "Searched 4,375 real products",
+   "detail": "sofa: 556 > 462 fit > 24; floor lamp: 76 > 65 fit > 24; throw pillow: 187 > 153 fit > 24",
+   "model": "catalog index + siglip-2",
+   "sec": 10.11,
+   "status": "done"
+  },
+  {
+   "t": 81.73,
+   "stage": "pick",
+   "title": "Chose Low Back Linen Sofa, White Drum Floor Lamp, Striated Velvet Throw Pillow",
+   "detail": "Cream beige sofa plus white drum light plus warm mustard and off-white pillows create a bright cozy refresh that lifts the walls and wood floor.",
+   "model": "muse-spark-1.3",
+   "sec": 20.7,
+   "usd": 0.0245,
+   "status": "done"
+  },
+  {
+   "t": 81.81,
+   "stage": "render",
+   "title": "Drawing 3 candidates",
+   "detail": "Muse Image 1.0 gets the room, a placement guide and 3 real product photos",
+   "model": "muse-image-1.0",
+   "status": "start"
+  },
+  {
+   "t": 109.93,
+   "stage": "render",
+   "title": "3 candidates in 28 s",
+   "detail": "",
+   "model": "muse-image-1.0",
+   "sec": 27.7,
+   "usd": 0.03,
+   "status": "done"
+  },
+  {
+   "t": 151.38,
+   "stage": "verify",
+   "title": "Inspected 9 product renders, kept candidate 1",
+   "detail": "Low Back Linen Sofa: match 9.5, White Drum Floor Lamp: match 9.0, Striated Velvet Throw Pillow: match 9.5",
+   "model": "muse-spark-1.3 + sam-3.1",
+   "sec": 41.4,
+   "usd": 0.0818,
+   "status": "done",
+   "scores": [
+    0.895,
+    0.7325,
+    0.88
+   ]
+  },
+  {
+   "t": 156.52,
+   "stage": "result",
+   "title": "3 of 3 products verified as exact matches",
+   "detail": "78.3% of the photo is pixel-identical to the original (new products 13.8%, cleared 2.8%, shadows 5.1%). The image model drifted everywhere else (mean dE 2.6); those pixels were restored.",
+   "status": "done"
+  }
+ ],
+ "room": {
+  "w": 1792,
+  "h": 1344,
+  "before": "before.jpg",
+  "title": "Living room, 2005 apartment",
+  "ai_generated": true,
+  "made_with": "Muse Image 1.0 (AI-generated demo room)"
+ },
+ "brief": "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor.",
+ "mode": "refresh",
+ "elapsed_s": 156.5,
+ "cost_usd": 0.1927,
+ "scan": {
+  "size": [
+   1792,
+   1344
+  ],
+  "photo_check": {
+   "is_room_interior": true,
+   "people_visible": false,
+   "problem": ""
+  },
+  "room_type": "living room",
+  "summary": "Bright living room with large sheer-covered windows, dark brown 3-seat sofa, glass coffee table, white TV stand and tall plant.",
+  "dimensions_cm": {
+   "basis": "3-seat sofa width ~200 cm as scale reference, typical ceiling 230 cm",
+   "ceiling": 230,
+   "confidence": "medium",
+   "depth": 350,
+   "width": 320
+  },
+  "light": {
+   "color_temperature": "daylight",
+   "direction": "from left windows",
+   "quality": "soft"
+  },
+  "fixed": [
+   {
+    "name": "back wall with windows",
+    "box": [
+     0,
+     51,
+     918,
+     961
+    ]
+   },
+   {
+    "name": "right wall",
+    "box": [
+     910,
+     0,
+     1791,
+     1219
+    ]
+   },
+   {
+    "name": "floor",
+    "box": [
+     0,
+     934,
+     1788,
+     1343
+    ]
+   },
+   {
+    "name": "ceiling",
+    "box": [
+     0,
+     0,
+     1263,
+     113
+    ]
+   },
+   {
+    "name": "left window",
+    "box": [
+     18,
+     59,
+     355,
+     794
+    ]
+   },
+   {
+    "name": "right window",
+    "box": [
+     360,
+     103,
+     679,
+     665
+    ]
+   }
+  ],
+  "plan": {
+   "idea": "Replace the gloomy dark sofa with a light solid and add warm textiles and soft lighting for coziness.",
+   "palette": [
+    "beige",
+    "white",
+    "mustard"
+   ],
+   "style": "warm bright modern",
+   "title": "Bright Cozy Light Refresh",
+   "slots": [
+    {
+     "action": "replace",
+     "color_family": "beige",
+     "kind": "sofa",
+     "look": "cream beige boxy fabric 3-seater sofa modern simple",
+     "placement": "Centered against window wall under windows facing TV in same footprint as old sofa.",
+     "replaces": "o1",
+     "size_cm": {
+      "d": 85,
+      "h": 85,
+      "w": 200
+     },
+     "slot": "s1",
+     "target_box": [
+      73,
+      489,
+      520,
+      829
+     ],
+     "why": "Light solid fabric instantly brightens room and removes gloom without painting.",
+     "id": "s1",
+     "target_px": [
+      131,
+      657,
+      932,
+      1114
+     ]
+    },
+    {
+     "action": "add",
+     "color_family": "white",
+     "kind": "floor_lamp",
+     "look": "white drum shade floor lamp with simple straight pole modern",
+     "placement": "Standing on floor in back corner between sofa and TV stand with shade above seat height.",
+     "replaces": "",
+     "size_cm": {
+      "d": 30,
+      "h": 150,
+      "w": 30
+     },
+     "slot": "s2",
+     "target_box": [
+      430,
+      380,
+      535,
+      705
+     ],
+     "why": "Adds warm soft evening light for cozy feel without changing ceiling or walls.",
+     "id": "s2",
+     "target_px": [
+      771,
+      511,
+      959,
+      948
+     ]
+    },
+    {
+     "action": "add",
+     "color_family": "yellow",
+     "kind": "throw_pillow",
+     "look": "mustard yellow and off-white solid linen throw pillows set of 2",
+     "placement": "Propped against backrest on left and middle seats of new sofa.",
+     "replaces": "",
+     "size_cm": {
+      "d": 15,
+      "h": 45,
+      "w": 45
+     },
+     "slot": "s3",
+     "target_box": [
+      110,
+      550,
+      295,
+      655
+     ],
+     "why": "Adds warm cozy accent and softness that makes light sofa inviting.",
+     "id": "s3",
+     "target_px": [
+      197,
+      739,
+      529,
+      880
+     ]
+    }
+   ]
+  },
+  "stats": {
+   "spark_sec": 29.9,
+   "sam_sec": 20.6,
+   "sam_requests": 10,
+   "sam_concepts": 10,
+   "sam_box_requests": 0,
+   "by_concept": 11,
+   "objects": 11,
+   "outlined": 11,
+   "mean_iou": 0.519,
+   "classes": {
+    "keep": 9,
+    "replace": 1,
+    "remove": 1
+   }
+  },
+  "objects": [
+   {
+    "id": "o1",
+    "name": "dark brown 3-seat sofa",
+    "category": "sofa",
+    "class": "replace",
+    "reason": "dark brown fabric makes room feel gloomy, brief asks to brighten",
+    "sam_phrase": "sofa",
+    "spark_box": [
+     131,
+     657,
+     932,
+     1114
+    ],
+    "box": [
+     136,
+     658,
+     1028,
+     1109
+    ],
+    "outline": "M1027 781 L1006 767 L896 739 L881 669 L857 658 L709 667 L672 676 L638 672 L501 679 L457 691 L442 684 L218 693 L201 695 L183 706 L170 745 L172 795 L141 807 L136 832 L159 898 L163 982 L174 1031 L193 1085 L204 1091 L209 1107 L219 1108 L255 1098 L278 1078 L509 1035 L513 1002 L480 964 L484 953 L783 907 L788 887 L825 880 L840 858 L869 868 L876 888 L907 905 L915 925 L986 961 L990 850 L1015 836 L1016 810 Z",
+    "iou": 0.877,
+    "conf": 0.949367105960846,
+    "area_frac": 0.0899,
+    "how": "concept"
+   },
+   {
+    "id": "o2",
+    "name": "folded beige throw blanket",
+    "category": "throw blanket",
+    "class": "keep",
+    "reason": "light neutral textile reusable for coziness",
+    "sam_phrase": "folded blanket",
+    "spark_box": [
+     213,
+     754,
+     471,
+     878
+    ],
+    "box": [
+     248,
+     784,
+     532,
+     906
+    ],
+    "outline": "M531 869 L527 859 L508 841 L500 820 L493 815 L482 813 L475 809 L473 804 L472 791 L470 786 L465 784 L397 785 L346 793 L326 789 L264 789 L257 796 L249 821 L248 838 L251 851 L259 858 L267 875 L270 898 L274 903 L280 905 L293 905 L300 903 L307 894 L314 903 L319 905 L351 905 L380 901 L394 901 L407 899 L418 895 L470 893 L480 889 L490 879 L510 881 L525 880 L530 874 Z",
+    "iou": 0.459,
+    "conf": 0.9298245906829834,
+    "area_frac": 0.0114,
+    "how": "concept"
+   },
+   {
+    "id": "o3",
+    "name": "glass top coffee table",
+    "category": "coffee table",
+    "class": "keep",
+    "reason": "functional and visually light, fits space",
+    "sam_phrase": "glass coffee table",
+    "spark_box": [
+     387,
+     878,
+     1004,
+     1230
+    ],
+    "box": [
+     483,
+     913,
+     972,
+     1223
+    ],
+    "outline": "M971 958 L911 928 L903 948 L846 958 L791 931 L785 915 L777 913 L504 952 L483 960 L518 1000 L521 1140 L531 1140 L530 1035 L538 1036 L579 1079 L582 1219 L590 1222 L595 1220 L594 1091 L617 1077 L835 1036 L839 1076 L844 1080 L849 1076 L848 1042 L852 1034 L888 1025 L923 1024 L925 1136 L936 1141 L937 975 L940 970 L966 964 Z",
+    "iou": 0.698,
+    "conf": 0.9649122953414917,
+    "area_frac": 0.0214,
+    "how": "concept"
+   },
+   {
+    "id": "o4",
+    "name": "TV remote control",
+    "category": "electronics",
+    "class": "keep",
+    "reason": "daily use item, store neatly",
+    "sam_phrase": "remote control",
+    "spark_box": [
+     500,
+     903,
+     613,
+     942
+    ],
+    "box": [
+     624,
+     938,
+     741,
+     975
+    ],
+    "outline": "M740 945 L737 942 L735 942 L734 941 L733 941 L732 940 L730 940 L729 939 L726 939 L725 938 L716 938 L715 939 L711 939 L710 940 L705 940 L704 941 L701 941 L700 942 L695 942 L694 943 L690 943 L689 944 L684 944 L683 945 L677 945 L676 946 L671 946 L670 947 L666 947 L665 948 L661 948 L660 949 L655 949 L654 950 L650 950 L649 951 L647 951 L646 952 L643 952 L642 953 L639 953 L638 954 L633 954 L632 955 L628 955 L624 958 L624 960 L625 961 L625 962 L629 966 L629 967 L630 968 L630 970 L631 971 L631 973 L633 973 L634 974 L641 974 L642 973 L648 973 L649 972 L652 972 L653 971 L659 971 L660 970 L664 970 L665 969 L667 969 L668 968 L670 968 L671 967 L673 967 L674 966 L676 966 L677 965 L680 965 L681 964 L684 964 L685 963 L688 963 L689 962 L693 962 L694 961 L703 961 L704 960 L711 960 L712 959 L724 959 L725 958 L728 958 L729 957 L731 957 L732 956 L735 955 L740 950 Z",
+    "iou": 0.0,
+    "conf": 0.9139785170555115,
+    "area_frac": 0.001,
+    "how": "concept"
+   },
+   {
+    "id": "o5",
+    "name": "tissue box on table",
+    "category": "decor",
+    "class": "remove",
+    "reason": "small clutter on table to clear for cleaner look",
+    "sam_phrase": "tissue box",
+    "spark_box": [
+     647,
+     825,
+     810,
+     927
+    ],
+    "box": [
+     787,
+     884,
+     909,
+     957
+    ],
+    "outline": "M788 890 L787 894 L788 895 L788 922 L789 923 L789 926 L792 929 L794 929 L796 931 L801 933 L803 935 L809 937 L814 941 L820 943 L823 946 L828 948 L830 950 L836 953 L838 953 L842 955 L846 955 L847 956 L852 956 L853 955 L864 954 L865 953 L868 953 L869 952 L874 952 L875 951 L881 951 L882 950 L888 950 L889 949 L898 948 L899 947 L905 946 L907 943 L907 941 L908 940 L908 929 L907 928 L907 911 L905 907 L899 904 L897 904 L883 897 L878 896 L874 893 L872 893 L870 894 L867 898 L870 902 L870 904 L867 907 L865 908 L855 908 L854 907 L851 907 L850 906 L845 905 L840 902 L832 900 L830 898 L829 898 L826 894 L826 892 L828 888 L827 886 L824 884 L823 885 L817 885 L816 886 L811 886 L810 887 L794 888 L793 889 L789 889 Z",
+    "iou": 0.04,
+    "conf": 0.921951174736023,
+    "area_frac": 0.0025,
+    "how": "concept"
+   },
+   {
+    "id": "o6",
+    "name": "white low TV stand",
+    "category": "TV stand",
+    "class": "keep",
+    "reason": "functional white storage brightens, fits TV",
+    "sam_phrase": "tv stand",
+    "spark_box": [
+     833,
+     797,
+     1598,
+     1230
+    ],
+    "box": [
+     993,
+     831,
+     1538,
+     1220
+    ],
+    "outline": "M995 849 L993 990 L997 1010 L1011 1023 L1057 1040 L1318 1176 L1330 1185 L1337 1203 L1372 1219 L1406 1194 L1514 1156 L1515 1140 L1505 1122 L1504 1112 L1511 1095 L1533 1079 L1537 982 L1535 952 L1531 946 L1399 907 L1375 911 L1339 902 L1324 909 L1331 902 L1317 893 L1280 884 L1266 887 L1261 877 L1248 869 L1201 856 L1173 853 L1117 832 L1101 831 Z",
+    "iou": 0.64,
+    "conf": 0.6878048777580261,
+    "area_frac": 0.0556,
+    "how": "concept"
+   },
+   {
+    "id": "o7",
+    "name": "flat-screen TV",
+    "category": "electronics",
+    "class": "keep",
+    "reason": "main electronics, in good place",
+    "sam_phrase": "television",
+    "spark_box": [
+     934,
+     597,
+     1441,
+     917
+    ],
+    "box": [
+     1092,
+     595,
+     1403,
+     914
+    ],
+    "outline": "M1097 596 L1094 610 L1093 817 L1099 823 L1147 837 L1183 852 L1179 856 L1132 865 L1140 871 L1174 881 L1213 898 L1265 913 L1281 913 L1314 907 L1325 903 L1325 898 L1329 896 L1375 906 L1390 904 L1394 892 L1395 844 L1398 827 L1397 777 L1402 639 L1397 623 L1390 618 Z",
+    "iou": 0.605,
+    "conf": 0.96875,
+    "area_frac": 0.0355,
+    "how": "concept"
+   },
+   {
+    "id": "o8",
+    "name": "tall potted rubber plant",
+    "category": "plant",
+    "class": "keep",
+    "reason": "adds life and softens corner",
+    "sam_phrase": "potted plant",
+    "spark_box": [
+     1482,
+     387,
+     1740,
+     1316
+    ],
+    "box": [
+     1456,
+     359,
+     1770,
+     1314
+    ],
+    "outline": "M1551 359 L1539 378 L1544 424 L1565 455 L1595 473 L1597 506 L1522 477 L1476 480 L1456 498 L1521 522 L1586 515 L1588 548 L1551 561 L1533 587 L1502 604 L1474 650 L1483 656 L1591 588 L1559 622 L1556 664 L1499 716 L1484 763 L1490 775 L1504 770 L1577 683 L1603 691 L1604 724 L1551 746 L1494 818 L1527 813 L1556 892 L1539 921 L1540 951 L1567 907 L1562 889 L1582 846 L1606 837 L1606 937 L1588 1074 L1529 1088 L1508 1113 L1520 1139 L1533 1278 L1579 1305 L1644 1313 L1680 1294 L1711 1135 L1696 1113 L1633 1085 L1655 999 L1625 927 L1654 975 L1677 990 L1696 964 L1699 923 L1679 878 L1630 850 L1631 809 L1664 809 L1745 897 L1749 874 L1722 829 L1633 781 L1639 734 L1716 798 L1732 797 L1738 774 L1707 720 L1720 694 L1716 672 L1690 642 L1638 622 L1636 603 L1618 589 L1619 552 L1640 547 L1763 600 L1769 585 L1722 549 L1649 530 L1659 496 L1619 504 L1623 483 L1667 443 L1706 379 L1670 393 L1619 451 L1590 379 Z",
+    "iou": 0.796,
+    "conf": 0.9532163739204407,
+    "area_frac": 0.0502,
+    "how": "concept"
+   },
+   {
+    "id": "o9",
+    "name": "round wall clock",
+    "category": "decor",
+    "class": "keep",
+    "reason": "functional decor above TV",
+    "sam_phrase": "wall clock",
+    "spark_box": [
+     1349,
+     54,
+     1498,
+     238
+    ],
+    "box": [
+     1256,
+     56,
+     1373,
+     215
+    ],
+    "outline": "M1338 57 L1335 57 L1334 56 L1319 56 L1307 60 L1296 66 L1282 79 L1280 83 L1277 86 L1274 92 L1269 98 L1262 114 L1262 117 L1258 129 L1258 140 L1257 141 L1257 149 L1256 150 L1257 168 L1258 169 L1259 178 L1263 188 L1269 197 L1278 206 L1289 212 L1292 212 L1293 213 L1302 213 L1303 214 L1304 213 L1310 213 L1322 209 L1335 202 L1348 190 L1360 173 L1370 149 L1371 138 L1372 137 L1372 118 L1371 117 L1371 111 L1370 110 L1370 107 L1369 106 L1369 103 L1366 95 L1366 91 L1364 85 L1360 77 L1353 67 L1346 61 Z",
+    "iou": 0.09,
+    "conf": 0.9336099624633789,
+    "area_frac": 0.0059,
+    "how": "concept"
+   },
+   {
+    "id": "o10",
+    "name": "left sheer curtain",
+    "category": "curtain",
+    "class": "keep",
+    "reason": "diffuses daylight and keeps room bright",
+    "sam_phrase": "sheer curtain",
+    "spark_box": [
+     0,
+     4,
+     358,
+     984
+    ],
+    "box": [
+     0,
+     0,
+     393,
+     1008
+    ],
+    "outline": "M389 49 L273 34 L164 14 L44 0 L0 0 L0 644 L21 644 L34 658 L76 663 L102 659 L130 647 L177 612 L203 586 L266 506 L292 446 L315 409 L331 366 L338 311 L351 283 L365 206 L375 179 L378 128 L388 118 L392 59 Z M4 670 L0 671 L0 801 L3 802 L7 895 L13 956 L12 972 L14 977 L15 1001 L18 1006 L27 1007 L46 1002 L58 990 L64 981 L69 967 L85 954 L87 933 L96 925 L98 910 L91 869 L84 845 L75 791 L70 775 L69 763 L60 721 L52 707 L48 692 L42 683 L41 677 L37 672 L32 670 Z",
+    "iou": 0.886,
+    "conf": 0.9609756469726562,
+    "area_frac": 0.0923,
+    "how": "concept"
+   },
+   {
+    "id": "o11",
+    "name": "right sheer curtain",
+    "category": "curtain",
+    "class": "keep",
+    "reason": "diffuses daylight and keeps room bright",
+    "sam_phrase": "sheer curtain",
+    "spark_box": [
+     376,
+     50,
+     688,
+     667
+    ],
+    "box": [
+     416,
+     53,
+     810,
+     659
+    ],
+    "outline": "M419 53 L417 77 L436 148 L447 210 L483 313 L499 381 L536 462 L547 476 L572 526 L627 596 L674 633 L709 640 L738 635 L755 657 L807 653 L809 641 L795 536 L791 435 L793 317 L784 157 L788 105 L773 99 L672 87 L638 79 Z",
+    "iou": 0.619,
+    "conf": 0.9649122953414917,
+    "area_frac": 0.0669,
+    "how": "concept"
+   }
+  ]
+ },
+ "plan": {
+  "title": "Bright Cozy Light Refresh",
+  "idea": "Replace the gloomy dark sofa with a light solid and add warm textiles and soft lighting for coziness.",
+  "style": "warm bright modern",
+  "palette": [
+   "beige",
+   "white",
+   "mustard"
+  ],
+  "set_comment": "Cream beige sofa plus white drum light plus warm mustard and off-white pillows create a bright cozy refresh that lifts the walls and wood floor.",
+  "slots": [
+   {
+    "action": "replace",
+    "color_family": "beige",
+    "kind": "sofa",
+    "look": "cream beige boxy fabric 3-seater sofa modern simple",
+    "placement": "Centered against window wall under windows facing TV in same footprint as old sofa.",
+    "replaces": "o1",
+    "size_cm": {
+     "d": 85,
+     "h": 85,
+     "w": 200
+    },
+    "slot": "s1",
+    "target_box": [
+     73,
+     489,
+     520,
+     829
+    ],
+    "why": "Light solid fabric instantly brightens room and removes gloom without painting.",
+    "id": "s1",
+    "target_px": [
+     131,
+     657,
+     932,
+     1114
+    ],
+    "funnel": {
+     "kind": 556,
+     "fits": 462,
+     "size_tolerance": 0.22,
+     "clean": 462,
+     "shortlist": 24,
+     "ranked_by": [
+      "text",
+      "siglip2"
+     ]
+    },
+    "shortlist": [
+     "B084XMW9JL",
+     "B07B4MDGDF",
+     "B07B4GQ7MN",
+     "B07DB95WHM",
+     "B07P6JV16D",
+     "B07BWJCPTC",
+     "B07B4M4HDS",
+     "B07JCRRBGN",
+     "B07B4MN2R3",
+     "B071J7Q6KB",
+     "B07B4M384L",
+     "B07MJJX2XW",
+     "B07B4G5QDB",
+     "B07B4MD59G",
+     "B07B4MPX9Z",
+     "B07B4MSS4B",
+     "B084XMKQP4",
+     "B07B4L1NG2",
+     "B07B4D48NX",
+     "B07B4L56TX",
+     "B07BWMQQDR",
+     "B07B4M38B4",
+     "B07B4L6C47",
+     "B0831Y2YSC"
+    ],
+    "sheet": "sheet_s1.jpg",
+    "pick": "B07B4G5QDB",
+    "alternates": [
+     "B07B4MDGDF",
+     "B07B4MD59G"
+    ],
+    "reason": "Light beige boxy 3-seater in plain fabric brightens the dark corner, matches the beige wallpaper and wood floor for a cozy modern look.",
+    "pick_number": 13
+   },
+   {
+    "action": "add",
+    "color_family": "white",
+    "kind": "floor_lamp",
+    "look": "white drum shade floor lamp with simple straight pole modern",
+    "placement": "Standing on floor in back corner between sofa and TV stand with shade above seat height.",
+    "replaces": "",
+    "size_cm": {
+     "d": 30,
+     "h": 150,
+     "w": 30
+    },
+    "slot": "s2",
+    "target_box": [
+     430,
+     380,
+     535,
+     705
+    ],
+    "why": "Adds warm soft evening light for cozy feel without changing ceiling or walls.",
+    "id": "s2",
+    "target_px": [
+     771,
+     511,
+     959,
+     948
+    ],
+    "funnel": {
+     "kind": 76,
+     "fits": 65,
+     "size_tolerance": 0.18,
+     "clean": 65,
+     "shortlist": 24,
+     "ranked_by": [
+      "text",
+      "siglip2"
+     ]
+    },
+    "shortlist": [
+     "B07HK85S41",
+     "B0828FCNML",
+     "B0828FBDV7",
+     "B0824FRXW8",
+     "B0824G2GX6",
+     "B07ML7PPZC",
+     "B07HKF28GD",
+     "B07DBCG1NL",
+     "B07HKC3S4T",
+     "B07HKF59YX",
+     "B07DBCG1Q2",
+     "B07HK5HDPZ",
+     "B07HK85S6P",
+     "B07DBH531B",
+     "B07DBHLG7K",
+     "B0824FB7WR",
+     "B07MBFDWNM",
+     "B07DBCMTD3",
+     "B07DTLWMN5",
+     "B07DBJJ5Q9",
+     "B0825D873D",
+     "B0824F7ZLF",
+     "B07DBHLX1W",
+     "B082XLWY2S"
+    ],
+    "sheet": "sheet_s2.jpg",
+    "pick": "B07HKF59YX",
+    "alternates": [
+     "B07DBJJ5Q9",
+     "B07HK5HDPZ"
+    ],
+    "reason": "White drum shade gives soft cozy light, simple straight pole matches the modern sofa and keeps the room bright and clean.",
+    "pick_number": 10
+   },
+   {
+    "action": "add",
+    "color_family": "yellow",
+    "kind": "throw_pillow",
+    "look": "mustard yellow and off-white solid linen throw pillows set of 2",
+    "placement": "Propped against backrest on left and middle seats of new sofa.",
+    "replaces": "",
+    "size_cm": {
+     "d": 15,
+     "h": 45,
+     "w": 45
+    },
+    "slot": "s3",
+    "target_box": [
+     110,
+     550,
+     295,
+     655
+    ],
+    "why": "Adds warm cozy accent and softness that makes light sofa inviting.",
+    "id": "s3",
+    "target_px": [
+     197,
+     739,
+     529,
+     880
+    ],
+    "funnel": {
+     "kind": 187,
+     "fits": 153,
+     "size_tolerance": 0.3,
+     "clean": 153,
+     "shortlist": 24,
+     "ranked_by": [
+      "text",
+      "siglip2"
+     ]
+    },
+    "shortlist": [
+     "B07JLSSWLN",
+     "B07JL5PT18",
+     "B07JLGCLV3",
+     "B074VMF3L5",
+     "B07TL23T69",
+     "B07TFDCPKZ",
+     "B079TXJXVX",
+     "B07TFDD1MR",
+     "B07TFDCPM6",
+     "B074VKWJWP",
+     "B07THYFV9P",
+     "B07JL5Q3HC",
+     "B07JLGCKKJ",
+     "B07JLZJ94P",
+     "B07TL2FP8W",
+     "B07M6PJ4LX",
+     "B07JKJSLXR",
+     "B07ML7J5DS",
+     "B074VM8DGX",
+     "B07JLSP8JF",
+     "B079V39VFW",
+     "B07MBFDQPK",
+     "B07JLSSYTG",
+     "B07C8MSCX6"
+    ],
+    "sheet": "sheet_s3.jpg",
+    "pick": "B074VMF3L5",
+    "alternates": [
+     "B07TL23T69",
+     "B074VKWJWP"
+    ],
+    "reason": "Solid mustard pillow adds a warm pop on the light sofa, plain surface is cozy and fits the beige-white-mustard palette.",
+    "pick_number": 4
+   }
+  ]
+ },
+ "products": {
+  "B07B4G5QDB": {
+   "id": "B07B4G5QDB",
+   "kind": "sofa",
+   "title": "Low Back Linen Sofa",
+   "name": "Rivet Edgewest Low Back Modern Sofa, 87\"W, Grey Linen",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 221.0,
+    "d": 71.1,
+    "h": 91.4
+   },
+   "size_in": {
+    "w": 87.0,
+    "d": 28.0,
+    "h": 36.0
+   },
+   "color": "beige, light taupe, black",
+   "materials": [
+    "linen",
+    "fabric",
+    "metal"
+   ],
+   "style": [
+    "modern",
+    "industrial",
+    "minimal"
+   ],
+   "description": "Low-profile three-seat sofa in beige linen with wide arms, three loose back cushions, and thin dark tapered legs.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07B4G5QDB",
+   "thumb": "catalog/thumb/B07B4G5QDB.webp",
+   "image": "catalog/img/B07B4G5QDB.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B07B4MDGDF": {
+   "id": "B07B4MDGDF",
+   "kind": "sofa",
+   "title": "Low Back Modern Sofa",
+   "name": "Rivet Edgewest Low Back Modern Sofa, 87\"W, Beige",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 221.0,
+    "d": 71.1,
+    "h": 91.4
+   },
+   "size_in": {
+    "w": 87.0,
+    "d": 28.0,
+    "h": 36.0
+   },
+   "color": "beige, cream, black",
+   "materials": [
+    "polyester",
+    "fabric",
+    "metal"
+   ],
+   "style": [
+    "industrial",
+    "modern",
+    "minimal"
+   ],
+   "description": "Low-profile three-seat beige fabric sofa with three back cushions, boxy arms, and thin black tapered legs.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07B4MDGDF",
+   "thumb": "catalog/thumb/B07B4MDGDF.webp",
+   "image": "catalog/img/B07B4MDGDF.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B07B4MD59G": {
+   "id": "B07B4MD59G",
+   "kind": "sofa",
+   "title": "Modern beige linen sofa",
+   "name": "Stone & Beam Andover Modern Sofa Couch, 93\"W, Linen",
+   "brand": "Stone & Beam",
+   "size_cm": {
+    "w": 236.2,
+    "d": 104.1,
+    "h": 104.1
+   },
+   "size_in": {
+    "w": 93.0,
+    "d": 41.0,
+    "h": 41.0
+   },
+   "color": "beige, tan, cream",
+   "materials": [
+    "linen",
+    "fabric",
+    "wood"
+   ],
+   "style": [
+    "modern",
+    "minimal",
+    "contemporary"
+   ],
+   "description": "Rectangular low-profile beige linen sofa with square arms, two seat and back cushions, and short dark tapered wooden legs.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07B4MD59G",
+   "thumb": "catalog/thumb/B07B4MD59G.webp",
+   "image": "catalog/img/B07B4MD59G.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B07HKF59YX": {
+   "id": "B07HKF59YX",
+   "kind": "floor_lamp",
+   "title": "White Drum Floor Lamp",
+   "name": "Stone & Beam Mid-Century Modern Henley Living Room Standing Floor Lamp with LED Light Bulb, 15 x 15 x 58 Inches, Matte Black and Antique Brass",
+   "brand": "Stone & Beam",
+   "size_cm": {
+    "w": 45.1,
+    "d": 45.1,
+    "h": 147.3
+   },
+   "size_in": {
+    "w": 17.8,
+    "d": 17.8,
+    "h": 58.0
+   },
+   "color": "white, brass, cream",
+   "materials": [
+    "fabric",
+    "metal"
+   ],
+   "style": [
+    "mid-century",
+    "modern",
+    "minimal"
+   ],
+   "description": "Cropped white drum fabric lampshade with brass finial and stem, cylindrical proportions, matte fabric texture on plain background.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07HKF59YX",
+   "thumb": "catalog/thumb/B07HKF59YX.webp",
+   "image": "catalog/img/B07HKF59YX.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B07DBJJ5Q9": {
+   "id": "B07DBJJ5Q9",
+   "kind": "floor_lamp",
+   "title": "White Drum Floor Lamp",
+   "name": "Ravenna Home Modern Stacked Ball Standing Floor Lamp With LED Light Bulb, 58 Inches, Brushed Nickel with Smoked Glass",
+   "brand": "Ravenna Home",
+   "size_cm": {
+    "w": 43.2,
+    "d": 42.9,
+    "h": 147.3
+   },
+   "size_in": {
+    "w": 17.0,
+    "d": 16.9,
+    "h": 58.0
+   },
+   "color": "white, silver, light gray",
+   "materials": [
+    "fabric",
+    "metal"
+   ],
+   "style": [
+    "modern",
+    "minimal"
+   ],
+   "description": "Cropped close-up of white cylindrical drum lampshade with brushed nickel stem base, plain fabric shade.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07DBJJ5Q9",
+   "thumb": "catalog/thumb/B07DBJJ5Q9.webp",
+   "image": "catalog/img/B07DBJJ5Q9.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B07HK5HDPZ": {
+   "id": "B07HK5HDPZ",
+   "kind": "floor_lamp",
+   "title": "Modern Cylinder Floor Lamp",
+   "name": "Rivet Modern Metal Floor Lamp with Bulb, 59\"H, Antique Brass",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 37.5,
+    "d": 37.5,
+    "h": 149.9
+   },
+   "size_in": {
+    "w": 14.8,
+    "d": 14.8,
+    "h": 59.0
+   },
+   "color": "white, brass, cream",
+   "materials": [
+    "linen",
+    "metal",
+    "fabric"
+   ],
+   "style": [
+    "modern",
+    "minimal",
+    "contemporary"
+   ],
+   "description": "Tall white cylindrical linen drum shade with vertical proportions revealing two antique brass supports and pull chain underneath.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07HK5HDPZ",
+   "thumb": "catalog/thumb/B07HK5HDPZ.webp",
+   "image": "catalog/img/B07HK5HDPZ.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B074VMF3L5": {
+   "id": "B074VMF3L5",
+   "kind": "throw_pillow",
+   "title": "Striated Velvet Throw Pillow",
+   "name": "Rivet Velvet Texture Striated Decorative Throw Pillow, 17\" x 17\", Honeycomb",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 43.2,
+    "d": 7.6,
+    "h": 43.2
+   },
+   "size_in": {
+    "w": 17.0,
+    "d": 3.0,
+    "h": 17.0
+   },
+   "color": "mustard yellow, honeycomb, gold",
+   "materials": [
+    "velvet",
+    "polyester"
+   ],
+   "style": [
+    "contemporary",
+    "casual",
+    "textured"
+   ],
+   "description": "Square mustard yellow velvet throw pillow with horizontal striated texture and softly puffed corners.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B074VMF3L5",
+   "thumb": "catalog/thumb/B074VMF3L5.webp",
+   "image": "catalog/img/B074VMF3L5.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B07TL23T69": {
+   "id": "B07TL23T69",
+   "kind": "throw_pillow",
+   "title": "Taupe Linen Throw Pillows",
+   "name": "AmazonBasics 2-Pack Linen Style Decorative Throw Pillows, 18\" Square, Taupe",
+   "brand": "AmazonBasics",
+   "size_cm": {
+    "w": 45.7,
+    "d": 20.3,
+    "h": 45.7
+   },
+   "size_in": {
+    "w": 18.0,
+    "d": 8.0,
+    "h": 18.0
+   },
+   "color": "light taupe, beige, greige",
+   "materials": [
+    "polyester",
+    "linen",
+    "woven"
+   ],
+   "style": [
+    "casual",
+    "modern",
+    "minimal"
+   ],
+   "description": "Two square taupe linen-textured throw pillows with soft woven fabric and slightly puffed proportions overlapping on white.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07TL23T69",
+   "thumb": "catalog/thumb/B07TL23T69.webp",
+   "image": "catalog/img/B07TL23T69.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B074VKWJWP": {
+   "id": "B074VKWJWP",
+   "kind": "throw_pillow",
+   "title": "Striated Velvet Throw Pillow",
+   "name": "Stone & Beam Striated Velvet Linen-Look Decorative Throw Pillow, 17\" x 17\", Vanilla",
+   "brand": "Stone & Beam",
+   "size_cm": {
+    "w": 43.2,
+    "d": 7.6,
+    "h": 43.2
+   },
+   "size_in": {
+    "w": 17.0,
+    "d": 3.0,
+    "h": 17.0
+   },
+   "color": "cream, ivory, beige",
+   "materials": [
+    "velvet",
+    "polyester",
+    "plush"
+   ],
+   "style": [
+    "contemporary",
+    "minimal",
+    "casual"
+   ],
+   "description": "Square plush throw pillow in creamy vanilla with subtle horizontal striated texture and soft puffed corners.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B074VKWJWP",
+   "thumb": "catalog/thumb/B074VKWJWP.webp",
+   "image": "catalog/img/B074VKWJWP.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  }
+ },
+ "render": {
+  "candidates": [
+   {
+    "index": 1,
+    "score": 0.895,
+    "judge": {
+     "products": [
+      {
+       "color": "light beige / oatmeal",
+       "fix": "No fix needed, keep sofa as is.",
+       "index": 1,
+       "issues": [],
+       "material_pattern": "plain linen weave, no pattern",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9.5,
+       "shape": "low-back 3-seat rectangular sofa with straight arms and 3 back + 3 seat cushions on slim black legs",
+       "verdict": "match"
+      },
+      {
+       "color": "white shade with brass / gold pole",
+       "fix": "Move lamp forward to show base on floor with clearance from sofa.",
+       "index": 2,
+       "issues": [
+        "Base is completely hidden behind sofa arm, no floor contact visible; placement looks wedged into corner with no clearance"
+       ],
+       "material_pattern": "plain smooth fabric drum shade, metal pole",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9.0,
+       "shape": "cylindrical drum shade on thin straight pole floor lamp",
+       "verdict": "match"
+      },
+      {
+       "color": "mustard / golden yellow",
+       "fix": "No fix needed, keep pillow as is.",
+       "index": 3,
+       "issues": [],
+       "material_pattern": "striated velvet with fine horizontal slubs",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9.5,
+       "shape": "square throw pillow",
+       "verdict": "match"
+      }
+     ],
+     "scene": {
+      "artifacts": [],
+      "cohesion": 7.0,
+      "comment": "Sofa, lamp and pillows are well matched and removal is clean; new light modern pieces contrast with dated wallpaper and old TV stand but lighting and perspective are plausible.",
+      "overall": 8.0,
+      "photoreal": 8.0,
+      "removals_ok": true,
+      "renter_rule_ok": true
+     }
+    },
+    "raw": "cand_1_raw.jpg",
+    "comp": "cand_1.jpg",
+    "drift": {
+     "static_frac": 0.727,
+     "dE_mean": 2.6,
+     "dE_p95": 7.1,
+     "changed_frac_dE10": 0.0247,
+     "ssim_static": 0.8772
+    },
+    "align": {
+     "ok": true,
+     "cc": 0.9936239980289837,
+     "max_corner_shift_px": 3.73
+    },
+    "seg_how": [
+     "concept:sofa",
+     "concept:floor lamp",
+     "concept:throw pillow"
+    ]
+   },
+   {
+    "index": 2,
+    "score": 0.7325,
+    "judge": {
+     "products": [
+      {
+       "color": "light beige / oatmeal",
+       "fix": "No fix needed.",
+       "index": 1,
+       "issues": [],
+       "material_pattern": "woven linen, solid no pattern",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9,
+       "shape": "low-back square-arm 3-seat sofa with block cushions",
+       "verdict": "match"
+      },
+      {
+       "color": "white shade with brass / gold pole",
+       "fix": "Re-render pole as single all-brass stem to match reference.",
+       "index": 2,
+       "issues": [
+        "pole rendered two-tone white over brass instead of all-brass as in reference",
+        "lamp base hidden behind sofa so floor contact not verifiable"
+       ],
+       "material_pattern": "fabric drum shade, metal pole",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 6,
+       "shape": "cylindrical drum shade floor lamp",
+       "verdict": "partial"
+      },
+      {
+       "color": "mustard / golden yellow",
+       "fix": "No fix needed.",
+       "index": 3,
+       "issues": [],
+       "material_pattern": "striated velvet with fine horizontal slub",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9,
+       "shape": "square throw pillow",
+       "verdict": "match"
+      }
+     ],
+     "scene": {
+      "artifacts": [],
+      "cohesion": 8,
+      "comment": "Sofa and pillows integrate well; lamp is plausible but stem detail differs; tissue box removal is clean and room finishes unchanged.",
+      "overall": 8,
+      "photoreal": 8,
+      "removals_ok": true,
+      "renter_rule_ok": true
+     }
+    },
+    "raw": "cand_2_raw.jpg",
+    "comp": "cand_2.jpg",
+    "drift": {
+     "static_frac": 0.727,
+     "dE_mean": 2.5,
+     "dE_p95": 6.83,
+     "changed_frac_dE10": 0.024,
+     "ssim_static": 0.8611
+    },
+    "align": {
+     "ok": true,
+     "cc": 0.9961430468459538,
+     "max_corner_shift_px": 3.19
+    },
+    "seg_how": [
+     "concept:sofa",
+     "concept:floor lamp",
+     "concept:throw pillow"
+    ]
+   },
+   {
+    "index": 3,
+    "score": 0.88,
+    "judge": {
+     "products": [
+      {
+       "color": "light oatmeal beige",
+       "fix": "No fix needed.",
+       "index": 1,
+       "issues": [],
+       "material_pattern": "linen-weave solid upholstery",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9,
+       "shape": "low-back three-seat rectangular sofa with track arms and thin black legs",
+       "verdict": "match"
+      },
+      {
+       "color": "white shade with brass-gold pole and finial",
+       "fix": "No fix needed.",
+       "index": 2,
+       "issues": [],
+       "material_pattern": "fabric drum shade with metal stem",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9,
+       "shape": "tall floor lamp with cylindrical drum shade on straight pole",
+       "verdict": "match"
+      },
+      {
+       "color": "mustard golden-yellow",
+       "fix": "No fix needed.",
+       "index": 3,
+       "issues": [],
+       "material_pattern": "striated velvet with fine horizontal slub texture",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9,
+       "shape": "square throw pillow",
+       "verdict": "match"
+      }
+     ],
+     "scene": {
+      "artifacts": [
+       "slightly hard-edged shadow of lamp shade on wallpaper"
+      ],
+      "cohesion": 9,
+      "comment": "New beige sofa, mustard pillows and white-brass lamp suit the warm wood floor and neutral wallpaper; walls, floor, windows, clock, TV, stand, table, curtains and plant are unchanged and tissue box is cleanly removed with no residue.",
+      "overall": 8,
+      "photoreal": 8,
+      "removals_ok": true,
+      "renter_rule_ok": true
+     }
+    },
+    "raw": "cand_3_raw.jpg",
+    "comp": "cand_3.jpg",
+    "drift": {
+     "static_frac": 0.727,
+     "dE_mean": 2.7,
+     "dE_p95": 7.47,
+     "changed_frac_dE10": 0.0287,
+     "ssim_static": 0.8844
+    },
+    "align": {
+     "ok": true,
+     "cc": 0.9898246763250907,
+     "max_corner_shift_px": 2.82
+    },
+    "seg_how": [
+     "concept:sofa",
+     "concept:floor lamp",
+     "concept:throw pillow"
+    ]
+   }
+  ],
+  "chosen": 1,
+  "prompt": "Image 1 is a real phone photo of a room to edit. Image 2 is a placement guide: the same photo with numbered translucent boxes showing where each product goes; use it only for position and scale and never draw its boxes or numbers. Images 3 to 5 are the reference photos of products 1 to 3, in order.\n1. Replace the dark brown 3-seat sofa with product 1: Low Back Linen Sofa (sofa), real size 221 x 71.1 x 91.4 cm (width x depth x height). Centered against window wall under windows facing TV in same footprint as old sofa. It belongs inside box 1 of the placement guide. Copy product 1 exactly from its reference photo: Low-profile three-seat sofa in beige linen with wide arms, three loose back cushions, and thin dark tapered legs. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n2. Add product 2: White Drum Floor Lamp (floor lamp), real size 45.1 x 45.1 x 147.3 cm (width x depth x height). Standing on floor in back corner between sofa and TV stand with shade above seat height. It belongs inside box 2 of the placement guide. Copy product 2 exactly from its reference photo: Cropped white drum fabric lampshade with brass finial and stem, cylindrical proportions, matte fabric texture on plain background. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n3. Add product 3: Striated Velvet Throw Pillow (throw pillow), real size 43.2 x 7.6 x 43.2 cm (width x depth x height). Propped against backrest on left and middle seats of new sofa. It belongs inside box 3 of the placement guide. Copy product 3 exactly from its reference photo: Square mustard yellow velvet throw pillow with horizontal striated texture and softly puffed corners. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\nRemove: tissue box on table. Show the floor and wall that were behind them, continuing the surrounding texture, so it looks like they were never there.\nHard rules: keep the exact same camera position, framing, lens distortion and perspective. Keep the walls, wallpaper, floor, ceiling, ceiling light, windows, blinds or curtains, doors and every object that is not listed exactly as they are. Keep the existing light direction, color temperature and exposure; new products receive the same light and cast soft, physically plausible contact shadows. The result must look like an unedited phone photo of the same room, not a render. Do not add anything else: no extra decor, no text, no numbers, no colored boxes or outlines."
+ },
+ "fixes": [],
+ "result": {
+  "after": "after.jpg",
+  "edit_mask": "edit_mask.png",
+  "drift": "drift.jpg",
+  "layers": "layers.png",
+  "lossless": {
+   "before": "before.png",
+   "after": "after.png"
+  },
+  "edit_outline": "M1062 421 L990 399 L921 391 L840 405 L840 512 L908 521 L906 663 L871 646 L774 651 L744 639 L732 650 L718 643 L667 662 L468 670 L464 624 L420 548 L407 600 L407 672 L198 682 L148 706 L140 725 L156 766 L118 792 L90 798 L91 811 L72 822 L100 917 L90 954 L114 993 L109 1003 L54 1023 L45 1040 L66 1047 L95 1030 L126 1040 L161 1031 L184 1128 L208 1139 L225 1125 L312 1101 L367 1100 L473 1072 L527 1077 L541 1065 L616 1060 L611 1038 L640 1020 L687 1018 L723 1004 L765 999 L779 1007 L799 997 L847 1018 L865 999 L880 1021 L958 1003 L998 1014 L1017 960 L1003 927 L1004 857 L1093 843 L1100 829 L1071 813 L1062 796 L1039 790 L1025 763 L937 732 L936 521 L960 518 L1014 574 L1041 528 L1063 513 Z",
+  "products": [
+   {
+    "slot": "s1",
+    "product": "B07B4G5QDB",
+    "box": [
+     83,
+     585,
+     1090,
+     1129
+    ],
+    "outline": "M83 825 L87 848 L91 839 L113 849 L105 855 L114 893 L136 914 L143 967 L148 955 L154 966 L143 973 L162 995 L121 1002 L121 1025 L171 1022 L195 1076 L197 1128 L239 1107 L209 1108 L206 1085 L245 1064 L492 1023 L513 1010 L517 1029 L516 998 L483 962 L488 954 L777 912 L813 941 L788 926 L787 908 L872 903 L974 948 L979 969 L987 928 L981 767 L913 747 L912 812 L762 807 L773 730 L767 672 L461 688 L772 662 L722 666 L718 654 L716 664 L669 674 L458 687 L453 627 L440 627 L427 585 L428 681 L419 624 L419 682 L328 688 L455 688 L331 700 L387 837 L382 848 L224 884 L219 844 L170 775 L151 720 L275 700 L185 703 L201 694 L283 690 L198 693 L153 716 L168 775 L130 793 L132 820 Z",
+    "crop": "crop_s1.jpg",
+    "verdict": {
+     "color": "light beige / oatmeal",
+     "fix": "No fix needed, keep sofa as is.",
+     "index": 1,
+     "issues": [],
+     "material_pattern": "plain linen weave, no pattern",
+     "placement_ok": true,
+     "scale_ok": true,
+     "score": 9.5,
+     "shape": "low-back 3-seat rectangular sofa with straight arms and 3 back + 3 seat cushions on slim black legs",
+     "verdict": "match"
+    },
+    "fixed": false
+   },
+   {
+    "slot": "s2",
+    "product": "B07HKF59YX",
+    "box": [
+     811,
+     402,
+     1053,
+     741
+    ],
+    "outline": "M1052 426 L1039 426 L1028 420 L1010 417 L993 421 L991 412 L985 409 L922 406 L921 402 L915 407 L853 408 L849 412 L850 507 L913 508 L919 511 L919 670 L908 674 L886 674 L878 660 L863 656 L811 659 L857 657 L875 661 L883 672 L890 700 L894 735 L898 739 L919 735 L919 721 L919 732 L916 734 L914 724 L918 702 L926 682 L925 517 L928 508 L989 505 L992 518 L1001 512 L1004 516 L1013 518 L1026 511 L1039 512 L1042 515 L1052 510 Z",
+    "crop": "crop_s2.jpg",
+    "verdict": {
+     "color": "white shade with brass / gold pole",
+     "fix": "Move lamp forward to show base on floor with clearance from sofa.",
+     "index": 2,
+     "issues": [
+      "Base is completely hidden behind sofa arm, no floor contact visible; placement looks wedged into corner with no clearance"
+     ],
+     "material_pattern": "plain smooth fabric drum shade, metal pole",
+     "placement_ok": true,
+     "scale_ok": true,
+     "score": 9.0,
+     "shape": "cylindrical drum shade on thin straight pole floor lamp",
+     "verdict": "match"
+    },
+    "fixed": false
+   },
+   {
+    "slot": "s3",
+    "product": "B074VMF3L5",
+    "box": [
+     152,
+     688,
+     386,
+     885
+    ],
+    "outline": "M327 688 L286 690 L316 690 L293 700 L261 709 L215 715 L158 716 L152 720 L156 730 L179 769 L188 791 L219 839 L224 860 L224 879 L227 884 L302 860 L361 848 L382 846 L385 843 L384 837 L375 823 L364 800 L357 778 L344 749 L332 711 L322 690 Z",
+    "crop": "crop_s3.jpg",
+    "verdict": {
+     "color": "mustard / golden yellow",
+     "fix": "No fix needed, keep pillow as is.",
+     "index": 3,
+     "issues": [],
+     "material_pattern": "striated velvet with fine horizontal slubs",
+     "placement_ok": true,
+     "scale_ok": true,
+     "score": 9.5,
+     "shape": "square throw pillow",
+     "verdict": "match"
+    },
+    "fixed": false
+   }
+  ],
+  "removed": [
+   {
+    "id": "o1",
+    "name": "dark brown 3-seat sofa",
+    "box": [
+     136,
+     658,
+     1028,
+     1109
+    ],
+    "outline": "M1027 781 L1006 767 L896 739 L881 669 L857 658 L709 667 L672 676 L638 672 L501 679 L457 691 L442 684 L218 693 L201 695 L183 706 L170 745 L172 795 L141 807 L136 832 L159 898 L163 982 L174 1031 L193 1085 L204 1091 L209 1107 L219 1108 L255 1098 L278 1078 L509 1035 L513 1002 L480 964 L484 953 L783 907 L788 887 L825 880 L840 858 L869 868 L876 888 L907 905 L915 925 L986 961 L990 850 L1015 836 L1016 810 Z"
+   },
+   {
+    "id": "o2",
+    "name": "folded beige throw blanket",
+    "box": [
+     248,
+     784,
+     532,
+     906
+    ],
+    "outline": "M531 869 L527 859 L508 841 L500 820 L493 815 L482 813 L475 809 L473 804 L472 791 L470 786 L465 784 L397 785 L346 793 L326 789 L264 789 L257 796 L249 821 L248 838 L251 851 L259 858 L267 875 L270 898 L274 903 L280 905 L293 905 L300 903 L307 894 L314 903 L319 905 L351 905 L380 901 L394 901 L407 899 L418 895 L470 893 L480 889 L490 879 L510 881 L525 880 L530 874 Z",
+    "absorbed": true
+   },
+   {
+    "id": "o5",
+    "name": "tissue box on table",
+    "box": [
+     787,
+     884,
+     909,
+     957
+    ],
+    "outline": "M788 890 L787 894 L788 895 L788 922 L789 923 L789 926 L792 929 L794 929 L796 931 L801 933 L803 935 L809 937 L814 941 L820 943 L823 946 L828 948 L830 950 L836 953 L838 953 L842 955 L846 955 L847 956 L852 956 L853 955 L864 954 L865 953 L868 953 L869 952 L874 952 L875 951 L881 951 L882 950 L888 950 L889 949 L898 948 L899 947 L905 946 L907 943 L907 941 L908 940 L908 929 L907 928 L907 911 L905 907 L899 904 L897 904 L883 897 L878 896 L874 893 L872 893 L870 894 L867 898 L870 902 L870 904 L867 907 L865 908 L855 908 L854 907 L851 907 L850 906 L845 905 L840 902 L832 900 L830 898 L829 898 L826 894 L826 892 L828 888 L827 886 L824 884 L823 885 L817 885 L816 886 L811 886 L810 887 L794 888 L793 889 L789 889 Z"
+   }
+  ],
+  "proof": {
+   "untouched_pct": 78.28,
+   "edited_pct": 21.72,
+   "layers_pct": {
+    "products": 13.79,
+    "cleared": 2.82,
+    "shadows": 5.11
+   },
+   "model_drift_dE": 2.6,
+   "model_drift_changed_pct": 2.47,
+   "ssim_static": 0.8772,
+   "alignment_shift_px": 3.73
+  },
+  "scene": {
+   "artifacts": [],
+   "cohesion": 7.0,
+   "comment": "Sofa, lamp and pillows are well matched and removal is clean; new light modern pieces contrast with dated wallpaper and old TV stand but lighting and perspective are plausible.",
+   "overall": 8.0,
+   "photoreal": 8.0,
+   "removals_ok": true,
+   "renter_rule_ok": true
+  }
+ }
+}
