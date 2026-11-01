@@ -91,7 +91,7 @@ python -m venv .venv
 
 To rebuild the catalog, download the ABO listings and image metadata into `data/abo/`, then run the steps in [The catalog](#the-catalog). The Modal steps need a Modal account and, for tagging, `BASETEN_API_KEY` and `FIREWORKS_API_KEY` in a Modal secret named `realroom-keys`.
 
-The hosted version runs on Modal (`backend/modal_app.py`): one web container, the catalog and the runs on two volumes, at most three live runs at a time, 40 live runs a day and three per visitor. Uploaded photos are deleted within 24 hours.
+The hosted version runs on Modal (`backend/modal_app.py`): one web container, the catalog and the runs on two volumes, at most three live runs at a time, 40 live runs a day, three per visitor and 60 dollars of model calls in all. Uploaded photos are deleted within 24 hours.
 
 ## Limits
 

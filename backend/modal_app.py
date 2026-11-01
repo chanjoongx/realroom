@@ -5,9 +5,10 @@ background threads (so a run's files are visible to the page the moment they are
 Two volumes: `realroom-catalog` (product photos, catalog.jsonl, SigLIP 2 embeddings) and
 `realroom-runs` (recorded demo runs, live runs). API keys come from the `realroom-keys` secret.
 
-Live runs are deleted 18 hours after the upload: the web container checks every hour, and a small
-scheduled function wakes it every six hours, so an uploaded photo is gone within 24 hours even
-when nobody visits.
+Live runs are capped at 40 a day, three per visitor and 60 dollars of model calls in all (each run
+reserves 0.40 when it starts and settles to its ledger total). They are deleted 18 hours after the
+upload: the web container checks every hour, and a small scheduled function wakes it every six
+hours, so an uploaded photo is gone within 24 hours even when nobody visits.
 
 deploy:  modal deploy backend/modal_app.py          (from the repo root, after `npm run build` in web/)
 """
@@ -105,6 +106,10 @@ def web():
             finally:
                 active.discard(run_id)
                 try:
+                    limits.settle(json.loads((d / "run.json").read_text(encoding="utf-8")).get("cost_usd"))
+                except Exception:  # noqa: BLE001
+                    pass
+                try:
                     runs_vol.commit()
                 except Exception:  # noqa: BLE001
                     pass
@@ -128,6 +133,7 @@ def web():
     limits = Limits(live=live, reason="" if live else "Live runs are paused right now.",
                     per_day=int(os.environ.get("REALROOM_RUNS_PER_DAY", "40")),
                     per_client_per_day=int(os.environ.get("REALROOM_RUNS_PER_CLIENT", "3")),
+                    budget_usd=float(os.environ.get("REALROOM_BUDGET_USD", "60")),
                     state_file=runs / "_quota.json")
     return create_app(runs, pathlib.Path("/cat"), pathlib.Path("/web"), limits, launch,
                       demos_file=runs / "demos.json")

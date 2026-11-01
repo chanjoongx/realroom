@@ -40,6 +40,10 @@ class Limits:
     per_day: int = 40
     per_client_per_day: int = 3
     max_upload_mb: int = 12
+    # 0 means no cap. Otherwise live runs stop once the model calls of all live runs reach this many
+    # dollars: each run reserves est_run_usd when it starts and settles to its own ledger total.
+    budget_usd: float = 0.0
+    est_run_usd: float = 0.4
     state_file: pathlib.Path | None = None
     _lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -59,14 +63,19 @@ class Limits:
     def left_today(self) -> int:
         st = self._load()
         today = dt.date.today().isoformat()
-        return max(0, self.per_day - (st.get("total", 0) if st.get("day") == today else 0))
+        n = max(0, self.per_day - (st.get("total", 0) if st.get("day") == today else 0))
+        if self.budget_usd:
+            n = min(n, max(0, int((self.budget_usd - st.get("spent_usd", 0.0)) // self.est_run_usd)))
+        return n
 
     def take(self, client: str) -> None:
         with self._lock:
             st = self._load()
             today = dt.date.today().isoformat()
             if st.get("day") != today:
-                st = {"day": today, "total": 0, "clients": {}}
+                st = {"day": today, "total": 0, "clients": {}, "spent_usd": st.get("spent_usd", 0.0)}
+            if self.budget_usd and st.get("spent_usd", 0.0) + self.est_run_usd > self.budget_usd:
+                raise HTTPException(429, "The live demo has used its model budget. The demo rooms show complete recorded runs.")
             if st["total"] >= self.per_day:
                 raise HTTPException(429, "The live demo has used its runs for today. The demo rooms show complete recorded runs.")
             used = st["clients"].get(client, 0)
@@ -74,6 +83,27 @@ class Limits:
                 raise HTTPException(429, f"You have used your {self.per_client_per_day} live runs for today.")
             st["total"] += 1
             st["clients"][client] = used + 1
+            st["spent_usd"] = round(st.get("spent_usd", 0.0) + self.est_run_usd, 4)
+            self._save(st)
+
+    def refund(self, client: str) -> None:
+        """Undo a take() whose run never started (the server was busy or the photo would not load)."""
+        with self._lock:
+            st = self._load()
+            if st.get("day") == dt.date.today().isoformat():
+                st["total"] = max(0, st.get("total", 0) - 1)
+                clients = st.setdefault("clients", {})
+                if clients.get(client):
+                    clients[client] -= 1
+            st["spent_usd"] = round(max(0.0, st.get("spent_usd", 0.0) - self.est_run_usd), 4)
+            self._save(st)
+
+    def settle(self, usd: float | None) -> None:
+        """Swap a finished run's reservation for what its ledger says it cost (kept if unknown)."""
+        with self._lock:
+            st = self._load()
+            spent = st.get("spent_usd", 0.0) - self.est_run_usd + (self.est_run_usd if usd is None else usd)
+            st["spent_usd"] = round(max(0.0, spent), 4)
             self._save(st)
 
 
@@ -153,7 +183,11 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
         limits.take(client)
         run_id = dt.datetime.now().strftime("u%m%d%H%M") + secrets.token_hex(3)
         brief = re.sub(r"\s+", " ", brief).strip()[:280] or "Make it feel finished and comfortable."
-        launcher(run_id, jpeg, brief, mode)
+        try:
+            launcher(run_id, jpeg, brief, mode)
+        except Exception:
+            limits.refund(client)
+            raise
         return {"id": run_id}
 
     @app.get("/runs/{run_id}/{name}")
