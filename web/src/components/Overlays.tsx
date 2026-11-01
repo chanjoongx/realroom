@@ -42,6 +42,7 @@ export function ScanOverlay({
   showFixed = true,
   showLabels = true,
   faint = false,
+  traced = true,
 }: {
   scan: Scan;
   w: number;
@@ -51,6 +52,7 @@ export function ScanOverlay({
   showFixed?: boolean;
   showLabels?: boolean;
   faint?: boolean;
+  traced?: boolean;
 }) {
   const sw = w / 560;
   const labels = placeLabels(
@@ -76,7 +78,7 @@ export function ScanOverlay({
             />
           ))}
         {scan.objects.map((o, i) => (
-          <ObjectShape key={o.id} o={o} sw={sw} delay={180 + i * 90} focus={focus} onFocus={onFocus} />
+          <ObjectShape key={o.id} o={o} sw={sw} delay={180 + i * 90} focus={focus} onFocus={onFocus} traced={traced} />
         ))}
       </svg>
       {showLabels &&
@@ -106,17 +108,19 @@ function ObjectShape({
   delay,
   focus,
   onFocus,
+  traced = true,
 }: {
   o: SceneObject;
   sw: number;
   delay: number;
   focus?: string | null;
   onFocus?: (id: string | null) => void;
+  traced?: boolean;
 }) {
   const cls = `obj c-${o.class}${focus === o.id ? " is-focus" : ""}${focus && focus !== o.id ? " is-dim" : ""}`;
   const style = { animationDelay: `${delay}ms` } as CSSProperties;
   const ev = { onMouseEnter: () => onFocus?.(o.id), onMouseLeave: () => onFocus?.(null) };
-  if (o.outline) {
+  if (o.outline && traced) {
     return <path className={cls} d={o.outline} pathLength={1} strokeWidth={sw * 1.5} style={style} {...ev} />;
   }
   const [x1, y1, x2, y2] = o.box;

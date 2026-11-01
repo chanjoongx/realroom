@@ -78,7 +78,9 @@ function Fact({ k, v, note }: { k: string; v: ReactNode; note?: ReactNode }) {
 
 export function ScanPanel({ run, events, focus, setFocus }: PanelProps) {
   const s = run.scan;
-  if (!s) return <Working stage="scan" events={events} text="Muse Spark 1.3 is reading the photo. SAM 3.1 will trace every object it finds." />;
+  // a replay already has the scan, so wait for the event that finished it
+  if (!s || !events.some((e) => e.stage === "scan" && e.status === "done"))
+    return <Working stage="scan" events={events} text="Muse Spark 1.3 is reading the photo. SAM 3.1 will trace every object it finds." />;
   const d = s.dimensions_cm;
   const groups: { cls: SceneObject["class"]; label: string }[] = [
     { cls: "replace", label: "Replace" },

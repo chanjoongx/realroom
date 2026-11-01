@@ -92,7 +92,7 @@ export function Studio({ id }: { id: string }) {
       <div className="studio-body">
         <Rail run={run} events={rp.visible} reached={rp.reached} working={rp.working} selected={current} onSelect={setPicked} />
         <main className="canvas-area">
-          <CanvasView run={run} stage={current} working={rp.working} focus={focus} setFocus={setFocus} />
+          <CanvasView run={run} events={rp.visible} stage={current} working={rp.working} focus={focus} setFocus={setFocus} />
         </main>
         <aside className="inspector scroll-thin">
           <AnimatePresence mode="wait">

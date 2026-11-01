@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Activity, Columns2, Layers } from "lucide-react";
 import { runFile } from "../api";
-import type { Run, StageId } from "../types";
+import type { Run, RunEvent, StageId } from "../types";
 import { Compare } from "./Compare";
 import { ProductMarks, ScanOverlay, SlotBoxes } from "./Overlays";
 import { Photo } from "./Photo";
@@ -10,12 +10,14 @@ type ResultMode = "compare" | "proof" | "drift";
 
 export function CanvasView({
   run,
+  events,
   stage,
   working,
   focus,
   setFocus,
 }: {
   run: Run;
+  events: RunEvent[];
   stage: StageId | null;
   working: StageId | null;
   focus: string | null;
@@ -27,7 +29,9 @@ export function CanvasView({
   const [cand, setCand] = useState<number | null>(null);
   useEffect(() => setCand(null), [stage]);
 
-  if (!stage || (stage === "scan" && !run.scan)) {
+  // a replay has the whole scan from the start, so it follows the events: the beam while Spark
+  // reads the room, Spark's boxes when it is done, and SAM's outlines once SAM has traced them
+  if (!stage || (stage === "scan" && (!run.scan || working === "scan"))) {
     return (
       <Photo src={before} w={w} h={h} className="is-scanning">
         <div className="scan-beam" />
@@ -40,7 +44,7 @@ export function CanvasView({
     return (
       <>
         <Photo src={before} w={w} h={h}>
-          <ScanOverlay scan={run.scan} w={w} h={h} focus={focus} onFocus={setFocus} />
+          <ScanOverlay scan={run.scan} w={w} h={h} focus={focus} onFocus={setFocus} traced={traced(events)} />
           <Brackets />
         </Photo>
         <Legend run={run} />
@@ -232,4 +236,9 @@ function LayerLegend({ run }: { run: Run }) {
       <span className="lg"><i style={{ background: "transparent", border: "1px solid var(--line-3)" }} />original pixels {run.result!.proof.untouched_pct.toFixed(1)}%</span>
     </div>
   );
+}
+
+/** SAM's outlines are on screen once its scan event is, or once a later step has started. */
+function traced(events: RunEvent[]): boolean {
+  return events.some((e) => e.stage !== "scan" || (e.model === "sam-3.1" && e.status === "done"));
 }
