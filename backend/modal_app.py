@@ -61,7 +61,7 @@ RETAIN_HOURS = 18
     scaledown_window=600,
 )
 @modal.concurrent(max_inputs=60)
-@modal.asgi_app()
+@modal.asgi_app(label="realroom")
 def web():
     import json
     import os
