@@ -451,7 +451,7 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
         R.data["result"]["final_check_products"] = final_products
     matches = sum(1 for k in range(len(products)) if verdicts.get(k + 1, {}).get("verdict") == "match")
     lp = R.data["result"]["proof"]["layers_pct"]
-    R.event("result", f"{matches} of {len(products)} products verified as exact matches",
+    R.event("result", f"{matches} of {len(products)} products match their catalog photos",
             f"{R.data['result']['proof']['untouched_pct']:.1f}% of the photo is pixel-identical to the original "
             f"(new products {lp['products']:.1f}%, cleared {lp['cleared']:.1f}%, shadows {lp['shadows']:.1f}%). "
             f"The image model drifted everywhere else (mean dE {drift['dE_mean']}); those pixels were restored.",
