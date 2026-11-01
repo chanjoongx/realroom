@@ -33,6 +33,10 @@ export function Rail({
   const hasFix = run.events.some((e) => e.stage === "fix");
   const stages: StageId[] = ["scan", "plan", "search", "pick", "render", "verify", ...(hasFix ? (["fix"] as StageId[]) : []), "result"];
   const list = useRef<HTMLOListElement>(null);
+  // the result line comes from the result itself, in today's wording, so older recorded runs read the same
+  const res = run.result;
+  const matched = res ? res.products.filter((p) => p.verdict?.verdict === "match").length : 0;
+  const resultLine = res ? `${matched} of ${res.products.length} products match their catalog photos` : null;
   // on narrow screens the rail is one scrolling row: keep the selected step in view
   useEffect(() => {
     const el = list.current;
@@ -64,7 +68,7 @@ export function Rail({
                 <span className="rail-main">
                   <span className="rail-title">{META[s].title}</span>
                   {META[s].model && <ModelChips model={META[s].model} compact />}
-                  {last && state !== "todo" && <span className="rail-detail">{last.title}</span>}
+                  {last && state !== "todo" && <span className="rail-detail">{s === "result" && resultLine ? resultLine : last.title}</span>}
                 </span>
                 <span className="rail-meta mono num">
                   {sec > 0 && <span>{secs(sec)}</span>}
