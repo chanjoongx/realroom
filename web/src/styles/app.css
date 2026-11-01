@@ -153,12 +153,19 @@
   text-overflow: ellipsis;
 }
 
-.tb-ai {
+.tb-ai,
+.tb-ai-row {
   color: var(--text-3);
+}
+
+.tb-ai-row {
+  display: none;
 }
 
 .tb-clock {
   display: inline-flex;
+  flex: none;
+  white-space: nowrap;
   gap: 10px;
   font-size: 12px;
   color: var(--text-2);
@@ -2286,5 +2293,33 @@
   }
   .cand-grid.n3 .cand:nth-child(n) {
     grid-column: auto;
+  }
+}
+
+/* tablets and phones: the room name gets the first row of the top bar, the label and the controls the second */
+@media (max-width: 820px) {
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding: 10px 12px 10px 14px;
+  }
+  .tb-left {
+    flex: 1 1 100%;
+  }
+  .tb-ai-row {
+    display: inline-flex;
+    order: 1;
+  }
+  .tb-right {
+    order: 2;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .tb-controls .chip,
+  .tb-speed {
+    display: none;
   }
 }

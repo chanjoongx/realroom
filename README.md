@@ -6,7 +6,7 @@ Real catalog furniture in a photo of your own room, with every other pixel left 
 
 Realroom is an agent built on Meta's models. You give it a room photo and one sentence about what you want. It reads the room, plans what to add or replace, searches 4,375 real products for pieces that fit the space, and renders them into the photo. Then it checks its own work. SAM 3.1 finds each product again in the render, Muse Spark 1.3 compares it with the product's catalog photo, and anything that came out wrong is redrawn. Only the new products, their shadows and the spots that were cleared come from the image model. Everything else is copied back from your original photo, and the page lets you verify that count in your own browser.
 
-Built for the 27 Meta Global AI Developer Hackathon (2026). Try it at [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). The demo rooms replay recorded runs, and the upload box runs the whole agent on your own photo.
+Built for the Meta Global AI Developer Hackathon. The code, the catalog and the demo rooms were all made during its building period, October 27 to November 4, 2026. Try it at [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). The demo rooms replay recorded runs, and the upload box runs the whole agent on your own photo.
 
 ## Why
 

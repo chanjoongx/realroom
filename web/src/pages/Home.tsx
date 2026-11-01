@@ -162,7 +162,7 @@ export function Home() {
       <footer className="home-foot">
         <div>
           <Logo onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
-          <p className="faint">Built for the 27 Meta Global AI Developer Hackathon, 2026.</p>
+          <p className="faint">Built for the Meta Global AI Developer Hackathon, 2026.</p>
         </div>
         <div className="credits faint">
           <p>

@@ -45,7 +45,7 @@ export function TopBar({ run, rp }: { run: Run | null; rp: Replay | null }) {
               <button className="btn sm ghost" onClick={rp.restart} aria-label="Restart">
                 <RotateCcw size={14} />
               </button>
-              <button className="btn sm ghost" onClick={() => rp.setSpeed(rp.speed === 1 ? 2 : rp.speed === 2 ? 4 : 1)} aria-label="Speed">
+              <button className="btn sm ghost tb-speed" onClick={() => rp.setSpeed(rp.speed === 1 ? 2 : rp.speed === 2 ? 4 : 1)} aria-label="Speed">
                 <span className="mono">{rp.speed}×</span>
               </button>
               {!rp.finished && (
@@ -57,6 +57,8 @@ export function TopBar({ run, rp }: { run: Run | null; rp: Replay | null }) {
           )}
         </div>
       )}
+      {/* on a phone the label gets its own row next to the controls */}
+      {run?.room.ai_generated && <span className="chip tb-ai-row">AI-generated demo room</span>}
       {rp && rp.mode === "replay" && <span className="tb-progress" style={{ transform: `scaleX(${rp.progress})` }} />}
     </header>
   );
