@@ -112,9 +112,41 @@ def pick_instances(masks: dict, target: tuple, h: int, w: int, de: np.ndarray, c
         return []
     fresh = [s for s in scored if s[2] >= 0.35] or scored
     if count <= 1:
-        return [fresh[0][3]]
+        return [size_check(masks, fresh[0][3], target, h, w, de)]
     good = [m for _, inside, _, m in fresh if inside > 0.5][:count]
     return good or [fresh[0][3]]
+
+
+def _box_area(b) -> float:
+    return float(max(1, (b[2] - b[0]) * (b[3] - b[1])))
+
+
+def size_check(masks: dict, best: dict, target: tuple, h: int, w: int, de: np.ndarray) -> dict:
+    """The render does not always put a product where the plan said. When the instance picked near the target is
+    far smaller than planned (a 'nightstand' query also finds a floor lamp's built-in tray beside the bed), a
+    changed instance of a plausible size not far away is more likely the product."""
+    t_area = _box_area(target)
+
+    def ratio(b) -> float:
+        a = _box_area(b)
+        return min(a, t_area) / max(a, t_area)
+
+    r_best = ratio(best["box"])
+    if r_best >= 0.25:
+        return best
+    tx, ty = (target[0] + target[2]) / 2, (target[1] + target[3]) / 2
+    reach = 2.5 * max(float(np.hypot(target[2] - target[0], target[3] - target[1])), 0.15 * float(np.hypot(w, h)))
+    alts = []
+    for m in masks.values():
+        if m is best or not m["area"]:
+            continue
+        b = m["box"]
+        d = float(np.hypot((b[0] + b[2]) / 2 - tx, (b[1] + b[3]) / 2 - ty))
+        r = ratio(b)
+        changed = float((de[m["mask"]] > 8).mean())
+        if r >= max(0.25, 2 * r_best) and changed >= 0.35 and d <= reach:
+            alts.append((r * float(np.exp(-d / reach)), m))
+    return max(alts, key=lambda t: t[0])[1] if alts else best
 
 
 def segment_product(ledger, image_b: bytes, phrase: str, target: tuple, h: int, w: int, de: np.ndarray,
