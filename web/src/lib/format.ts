@@ -51,8 +51,8 @@ export const MODEL_INFO: Record<string, { label: string; color: string }> = {
   "sam-3.1": { label: "SAM 3.1", color: "var(--m-sam)" },
   "muse-image-1.0": { label: "Muse Image 1.0", color: "var(--m-image)" },
   "muse-spark-open": { label: "Muse Spark Open", color: "var(--m-open)" },
+  "pe-core-b16-224": { label: "PE-Core B16", color: "var(--m-open)" },
   index: { label: "Catalog index", color: "var(--m-index)" },
-  "siglip-2": { label: "SigLIP 2", color: "var(--m-index)" },
 };
 
 /** "muse-spark-1.3 + sam-3.1" -> ["muse-spark-1.3", "sam-3.1"]; free text maps to the index entry. */
@@ -62,7 +62,6 @@ export function modelsOf(model?: string): string[] {
     const k = m.trim().replace(/[()]/g, "");
     if (MODEL_INFO[k]) return k;
     if (k.startsWith("catalog index")) return "index";
-    if (/^siglip ?2$/i.test(k)) return "siglip-2";
     return k;
   });
 }

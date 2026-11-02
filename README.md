@@ -24,6 +24,7 @@
   <a href="#meta-models"><img alt="SAM 3.1" src="https://img.shields.io/badge/SAM-3.1-7fd6ff?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Muse Image 1.0" src="https://img.shields.io/badge/Muse_Image-1.0-ffb48c?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Muse Spark Open" src="https://img.shields.io/badge/Muse_Spark_Open-open_weights-d1b3ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="#meta-models"><img alt="Perception Encoder PE-Core B16" src="https://img.shields.io/badge/Perception_Encoder-PE--Core_B16-d1b3ff?style=flat-square&labelColor=1f2328"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
 </p>
 
@@ -34,7 +35,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/built-on-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="docs/built-on-light.png">
-    <img alt="Built on Meta Model API (Muse Spark 1.3, SAM 3.1 and Muse Image 1.0 run the agent in every live run), Baseten and Fireworks AI (Muse Spark Open, open weights, tagged 3,781 and 594 catalog products) and Modal (web app, live runs, catalog jobs, SigLIP 2 embeddings)" src="docs/built-on-light.png" width="100%">
+    <img alt="Built on Meta Model API (Muse Spark 1.3, SAM 3.1 and Muse Image 1.0 run the agent in every live run), Baseten and Fireworks AI (Muse Spark Open, open weights, tagged 3,781 and 594 catalog products) and Modal (web app, live runs, catalog jobs, Perception Encoder embeddings)" src="docs/built-on-light.png" width="100%">
   </picture>
 </p>
 
@@ -82,7 +83,7 @@ flowchart LR
 | Step | Models | What happens |
 |---|---|---|
 | Scan and plan | Muse Spark 1.3, SAM 3.1 | One Spark request returns schema-constrained JSON: every movable object with a box and a decision (keep, remove or replace), the fixed structure, the room's size and light, and a plan of slots (kind, add or replace, target box, size range in cm, look, color family). SAM 3.1 turns the boxes into exact masks with concept prompts, and with box prompts for objects the concepts miss. |
-| Search | catalog index, SigLIP 2 | For each slot: products of that kind, then only those whose real dimensions fit the slot's size range, ranked by text similarity to the Muse Spark Open description (45%) and SigLIP 2 text-to-image similarity (55%). 24 per slot. |
+| Search | catalog index, PE-Core B16 | For each slot: products of that kind, then only those whose real dimensions fit the slot's size range, ranked by text similarity to the Muse Spark Open description (45%) and Perception Encoder text-to-image similarity (55%). 24 per slot. The Perception Encoder runs in the app's own server, so this step makes no API call. |
 | Pick | Muse Spark 1.3 | Spark sees the room and a numbered sheet of candidates for every slot in a single request, so it chooses a set that works together. |
 | Render | Muse Image 1.0 | One `/images/edits` call with the room, a placement guide and the real product photos returns two or three candidates. The model's web and image search tools are switched off. |
 | Verify | SAM 3.1, Muse Spark 1.3 | Each candidate is aligned to the original (ECC homography) and color-matched. SAM 3.1 finds every new product again, and Spark judges each product crop against its catalog photo and the scene as a whole. The best candidate is kept. |
@@ -103,12 +104,13 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 | `sam-3.1` | Meta Model API | masks of room objects and of every rendered product, checking what clutter is left |
 | `muse-image-1.0` | Meta Model API | render candidates, redraws, clutter clearing, the demo rooms |
 | Muse Spark Open | Baseten, Fireworks | tags and descriptions for the whole catalog |
+| `pe-core-b16-224` | open weights, in the app's server (Modal, or your machine) | Perception Encoder: matches each slot's look against the catalog photos |
 
 ## What you can check
 
 - `before.png` and `after.png` are lossless. In the app, **Check it yourself** downloads both and compares them pixel by pixel in your browser, then shows the share that is identical.
 - `layers.png` colors every changed pixel as product, cleared or shadow. `masks.npz` holds every object and product mask.
-- `ledger.jsonl` lists every model call with its time and estimated cost.
+- `ledger.jsonl` lists every model call with its time and estimated cost. The Perception Encoder search is in it too, at no cost, because it runs in the app's own server.
 - `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.8 to 2.1 on the demo runs). Those pixels are the reason for the composite step.
 
 ## The catalog
@@ -119,7 +121,7 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 2. `modal_catalog.py --step score` and `abo_choose.py` pick one reference photo per product, preferring a clean cutout on white.
 3. `modal_catalog.py --step fetch` downloads that photo once, in Modal's cloud, and trims it.
 4. `modal_catalog.py --step tag` sends every photo with its listing to **Muse Spark Open**, Meta's open-weight model, served by Baseten (Fireworks as fallback). It returns a title, colors, materials, style, a visual description, a SAM phrase, a render-risk guess, and whether the photo really shows the listed product.
-5. `modal_catalog.py --step embed` computes SigLIP 2 image embeddings.
+5. `modal_catalog.py --step embed` embeds every photo with Meta's Perception Encoder (PE-Core B16-224) on Modal CPUs.
 6. `abo_finalize.py` writes `catalog.jsonl`: 4,375 products. It dropped 104 whose photo did not show the listed product and 133 that had no finished tag when the demo runs were recorded.
 
 Muse Spark Open tagged 3,781 of the 4,375 on Baseten and 594 on Fireworks. The tags are in [`catalog/index/catalog.jsonl`](catalog/index/catalog.jsonl). Product photos are not in the repository (about 760 MB); the scripts above rebuild them.
@@ -132,7 +134,7 @@ Python 3.12 and Node 20 or later. Put `MODEL_API_KEY=...` (Meta Model API) in a 
 
 ```bash
 python -m venv .venv
-.venv/bin/pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+.venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
 
@@ -161,7 +163,9 @@ The hosted version runs on Modal (`backend/modal_app.py`): one web container, th
 - Product photos and data: Amazon Berkeley Objects by **Amazon.com**, licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Dataset by Matthieu Guillaumin, Thomas Dideriksen, Kenan Deng and Himanshu Arora (Amazon.com), Jasmine Collins and Jitendra Malik (UC Berkeley). Changes: photos were trimmed and resized, products were tagged by Muse Spark Open, and products are redrawn into room photos by Muse Image 1.0. Realroom is not affiliated with or endorsed by Amazon.
 - Compute: Meta Model API credits from Meta, and credits from the hackathon's inference partners Baseten, Fireworks AI and Modal.
 - Built with Muse Spark Open. Its weights are released under the [Muse Model License](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B), and Realroom calls the model through Baseten and Fireworks AI to tag the catalog.
-- [SigLIP 2](https://huggingface.co/google/siglip2-base-patch16-256) by Google, Apache 2.0.
+- [Perception Encoder](https://github.com/facebookresearch/perception_models) (PE-Core B16-224) by Meta FAIR, Apache 2.0, loaded with [OpenCLIP](https://github.com/mlfoundations/open_clip) from the `timm/PE-Core-B-16` weights.
+- Python libraries: FastAPI (MIT), Uvicorn (BSD-3-Clause), NumPy and SciPy (BSD), OpenCV (Apache 2.0), Pillow (MIT-CMU), scikit-image (BSD-3-Clause), PyTorch and torchvision (BSD-3-Clause), OpenCLIP (MIT), timm (Apache 2.0), Requests (Apache 2.0), python-multipart (Apache 2.0), the Modal client (Apache 2.0) and Meta's `meta-sam-parser` (SAM License). The OpenAI Python SDK (Apache 2.0) is the client Meta's API docs show for the Meta Model API; here it only talks to api.meta.ai.
+- Web libraries: React, Vite and Motion (MIT), Lucide icons (ISC) and TypeScript (Apache 2.0).
 - Fonts: Geist and Geist Mono (Vercel) and Instrument Serif, all under the SIL Open Font License.
 - The demo rooms were generated with Muse Image 1.0.
 

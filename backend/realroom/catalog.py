@@ -4,9 +4,9 @@ The search narrows a slot the planner asked for ("a natural jute rug, about 160 
 short list an agent can look at:
 
   kind  ->  fits the room (real size within tolerance of the planned size)  ->  looks right
-  (text similarity over the open-weight model's product descriptions, plus SigLIP 2 image
-  embeddings when they are available)  ->  render-aware penalty (fine patterns and spindly shapes
-  are hard for image models to copy exactly)  ->  top k.
+  (text similarity over the open-weight model's product descriptions, plus Meta Perception Encoder
+  image embeddings when they are available)  ->  render-aware penalty (fine patterns and spindly
+  shapes are hard for image models to copy exactly)  ->  top k.
 
 Every step reports its count, so the interface can show the funnel (670 rugs -> 112 fit -> 24).
 """
@@ -16,10 +16,17 @@ import json
 import math
 import pathlib
 import re
+import sys
 from collections import Counter
 from dataclasses import dataclass, field
 
 import numpy as np
+
+# Meta Perception Encoder, PE-Core B16-224 (Meta FAIR, Apache 2.0), loaded through open_clip from
+# timm/PE-Core-B-16. The catalog photos are embedded once (catalog/modal_catalog.py --step embed);
+# a search runs only the text tower, on the look the planner wrote.
+EMB_MODEL, EMB_PRETRAINED, EMB_MODEL_ID = "PE-Core-B-16", "meta", "pe-core-b16-224"
+EMB_FILE, EMB_IDS = "emb_pe_core_b16.npy", "emb_pe_core_b16_ids.json"
 
 KINDS = [
     "rug", "runner_rug", "floor_lamp", "table_lamp", "throw_pillow", "throw_blanket", "bedding", "sofa",
@@ -86,8 +93,10 @@ class Product:
 
 
 class Catalog:
-    def __init__(self, root: str | pathlib.Path):
+    def __init__(self, root: str | pathlib.Path, photos: str | pathlib.Path | None = None):
+        """root holds catalog.jsonl and the embeddings; photos holds img/ and thumb/ (default: root)."""
         self.root = pathlib.Path(root)
+        self.photos = pathlib.Path(photos) if photos else self.root
         self.products: dict[str, Product] = {}
         for line in (self.root / "catalog.jsonl").read_text(encoding="utf-8").splitlines():
             if not line.strip():
@@ -106,10 +115,13 @@ class Catalog:
         self._index_text()
         self.emb = None
         self.emb_row: dict[str, int] = {}
-        ep, ip = self.root / "emb_siglip2.npy", self.root / "emb_ids.json"
+        self.emb_error: str | None = None
+        ep, ip = self.root / EMB_FILE, self.root / EMB_IDS
         if ep.exists() and ip.exists():
             self.emb = np.load(ep).astype(np.float32)
             self.emb_row = {pid: i for i, pid in enumerate(json.loads(ip.read_text()))}
+        else:
+            self.emb_error = f"no {EMB_FILE} in the catalog folder"
         self._text_model = None
 
     # ------------------------------------------------------------------ text index
@@ -142,21 +154,23 @@ class Catalog:
             return None
         try:
             if self._text_model is None:
+                import open_clip
                 import torch  # noqa: F401
-                from transformers import AutoModel, AutoProcessor
 
-                name = "google/siglip2-base-patch16-256"
-                self._text_model = (AutoModel.from_pretrained(name).eval(), AutoProcessor.from_pretrained(name))
+                model, _, _ = open_clip.create_model_and_transforms(EMB_MODEL, pretrained=EMB_PRETRAINED)
+                model.visual = None  # the photos are embedded already; a search needs only the text tower
+                self._text_model = (model.eval(), open_clip.get_tokenizer(EMB_MODEL))
             import torch
 
-            model, proc = self._text_model
+            model, tok = self._text_model
             with torch.no_grad():
-                t = proc(text=[text.lower()], padding="max_length", max_length=64, return_tensors="pt")
-                f = model.get_text_features(**t)
+                f = model.encode_text(tok([text.lower()]))
                 f = torch.nn.functional.normalize(f.float(), dim=-1)
             return f[0].numpy()
-        except Exception:  # noqa: BLE001  (no torch locally: text similarity alone still works)
+        except Exception as e:  # noqa: BLE001  (no torch or open_clip: text similarity alone still works)
             self.emb = None
+            self.emb_error = f"{type(e).__name__}: {e}"[:200]
+            print(f"catalog: {EMB_MODEL_ID} unavailable, ranking by text only ({self.emb_error})", file=sys.stderr)
             return None
 
     def image_sim(self, query: str, pids: list[str]) -> np.ndarray | None:
@@ -218,7 +232,7 @@ class Catalog:
         if isim is not None and not np.all(np.isnan(isim)):
             iz = np.where(np.isnan(isim), np.nanmean(isim), isim)
             score = 0.45 * score + 0.55 * (iz - iz.mean()) / (iz.std() + 1e-6)
-            used.append("siglip2")
+            used.append("pe-core")
         for i, p in enumerate(clean):
             score[i] -= 4 * RISK_PENALTY.get(p.render_risk, 0.06)
             if not p.cutout:
@@ -232,10 +246,10 @@ class Catalog:
         return {"funnel": funnel, "items": items}
 
     def image_path(self, pid: str) -> pathlib.Path:
-        return self.root / "img" / f"{pid}.jpg"
+        return self.photos / "img" / f"{pid}.jpg"
 
     def thumb_path(self, pid: str) -> pathlib.Path:
-        return self.root / "thumb" / f"{pid}.webp"
+        return self.photos / "thumb" / f"{pid}.webp"
 
 
 def contact_sheet(cat: Catalog, pids: list[str], cols: int = 6, tile: int = 256, label: bool = True) -> np.ndarray:

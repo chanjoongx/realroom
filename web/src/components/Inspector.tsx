@@ -198,7 +198,7 @@ function FunnelBars({ sl }: { sl: Slot }) {
   const rows = [
     { k: `${kindLabel(sl.kind).toLowerCase()} in catalog`, v: f.kind },
     { k: `fit ${sizeCm(sl.size_cm, sl.kind)} ±${Math.round(f.size_tolerance * 100)}%`, v: f.fits },
-    { k: `short list (${(f.ranked_by ?? ["text"]).map((r) => (r === "siglip2" ? "SigLIP 2" : r)).join(" + ")})`, v: f.shortlist ?? 0 },
+    { k: `short list (${(f.ranked_by ?? ["text"]).map((r) => (r === "pe-core" ? "PE-Core" : r)).join(" + ")})`, v: f.shortlist ?? 0 },
   ];
   const max = Math.max(1, f.kind);
   return (
@@ -242,8 +242,9 @@ export function SearchPanel({ run, events, focus, setFocus }: PanelProps) {
       ))}
       <p className="ins-foot faint">
         The catalog holds real products from Amazon Berkeley Objects, each with its listed dimensions. Muse Spark Open (open
-        weights, served on Baseten and Fireworks) wrote a visual description of every product photo; SigLIP 2 embeds the
-        photos. The search ranks by both.
+        weights, served on Baseten and Fireworks) wrote a visual description of every product photo. Meta's Perception
+        Encoder (PE-Core, open weights, run by the app's own server) compares the plan's wording with the photos
+        themselves. The search ranks by both.
       </p>
     </>
   );

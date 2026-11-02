@@ -83,7 +83,7 @@ class ApiError(RuntimeError):
 
 
 class Ledger:
-    """Append-only log of paid calls (kind, tag, seconds, tokens, estimated USD)."""
+    """Append-only log of model calls (kind, tag, seconds, tokens, estimated USD; 0 for the local Perception Encoder)."""
 
     def __init__(self, path: pathlib.Path):
         self.path = pathlib.Path(path)

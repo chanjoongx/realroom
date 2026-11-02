@@ -9,7 +9,8 @@ Runs in Modal's cloud so the home connection makes no bulk requests:
              margins, write img/<id>.jpg (1024 px) and thumb/<id>.webp (480 px square)
   4. tag     Muse Spark Open (open weights; Baseten first, Fireworks as fallback) reads each product
              photo with its listing and writes the tags the search uses (resumable, tags.jsonl)
-  5. embed   SigLIP 2 image embeddings (CPU) for text-to-image look search
+  5. embed   Meta Perception Encoder (PE-Core B16-224) image embeddings (CPU) for the text-to-image look
+             search; writes emb_pe_core_b16.npy and its id list next to catalog.jsonl
 
 usage:
   modal run catalog/modal_catalog.py --step score
@@ -27,7 +28,7 @@ import pathlib
 import modal
 
 S3 = "https://amazon-berkeley-objects.s3.amazonaws.com"
-EMB_MODEL = "google/siglip2-base-patch16-256"
+EMB_MODEL = "PE-Core-B-16"  # Meta Perception Encoder through open_clip (weights timm/PE-Core-B-16, Apache 2.0)
 UA = "Realroom catalog builder (Meta AI hackathon 2026, github.com/chanjoongx/realroom)"
 
 app = modal.App("realroom-catalog")
@@ -35,8 +36,8 @@ vol = modal.Volume.from_name("realroom-catalog", create_if_missing=True)
 cpu_image = modal.Image.debian_slim(python_version="3.12").pip_install("requests", "pillow", "numpy")
 # CPU only: the workspace has credits but no payment method, and Modal refuses GPU functions then
 emb_image = (modal.Image.debian_slim(python_version="3.12")
-             .pip_install("torch==2.6.0", index_url="https://download.pytorch.org/whl/cpu")
-             .pip_install("transformers==4.51.3", "pillow", "numpy", "sentencepiece", "protobuf"))
+             .pip_install("torch==2.6.0", "torchvision==0.21.0", index_url="https://download.pytorch.org/whl/cpu")
+             .pip_install("open_clip_torch==3.3.0", "timm==1.0.30", "pillow", "numpy"))
 
 DATA = pathlib.Path(os.environ.get("REALROOM_DATA", pathlib.Path(__file__).resolve().parents[1] / "data"))
 LOCAL = DATA / "abo"
@@ -194,13 +195,14 @@ def fetch_originals(items: list[dict]) -> list[dict]:
 @app.function(image=emb_image, volumes={"/cat": vol}, timeout=3600, cpu=8.0, memory=16384)
 def embed_images(ids: list[str]) -> dict:
     import numpy as np
+    import open_clip
     import torch
     from PIL import Image
-    from transformers import AutoModel, AutoProcessor
 
     torch.set_num_threads(8)
-    model = AutoModel.from_pretrained(EMB_MODEL).eval()
-    proc = AutoProcessor.from_pretrained(EMB_MODEL)
+    model, _, preprocess = open_clip.create_model_and_transforms(EMB_MODEL, pretrained="meta")
+    model.eval()
+    tok = open_clip.get_tokenizer(EMB_MODEL)
     vecs, kept = [], []
     bs = 64
     for i in range(0, len(ids), bs):
@@ -214,21 +216,18 @@ def embed_images(ids: list[str]) -> dict:
         if not ims:
             continue
         with torch.no_grad():
-            inp = proc(images=ims, return_tensors="pt")
-            f = model.get_image_features(**inp)
+            f = model.encode_image(torch.stack([preprocess(im) for im in ims]))
             f = torch.nn.functional.normalize(f.float(), dim=-1)
         vecs.append(f.cpu().numpy().astype(np.float16))
         kept += ok
     emb = np.concatenate(vecs, axis=0)
-    pathlib.Path("/cat/meta").mkdir(parents=True, exist_ok=True)
-    np.save("/cat/meta/emb_siglip2.npy", emb)
-    pathlib.Path("/cat/meta/emb_ids.json").write_text(json.dumps(kept))
+    np.save("/cat/emb_pe_core_b16.npy", emb)  # next to catalog.jsonl, where the app reads it
+    pathlib.Path("/cat/emb_pe_core_b16_ids.json").write_text(json.dumps(kept))
     # sanity: a few text queries against the catalog
     probes = ["a natural jute area rug", "a white floor lamp with a linen drum shade", "a green velvet accent chair",
               "a framed black and white photo", "a round wooden coffee table"]
     with torch.no_grad():
-        t = proc(text=probes, padding="max_length", max_length=64, return_tensors="pt")
-        tf = torch.nn.functional.normalize(model.get_text_features(**t).float(), dim=-1).cpu().numpy()
+        tf = torch.nn.functional.normalize(model.encode_text(tok(probes)).float(), dim=-1).cpu().numpy()
     sims = tf @ emb.astype(np.float32).T
     top = {q: [kept[j] for j in np.argsort(-sims[k])[:5]] for k, q in enumerate(probes)}
     vol.commit()

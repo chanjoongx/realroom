@@ -2,7 +2,7 @@
 
 One web container serves the site, the API and the catalog photos, and runs live jobs in
 background threads (so a run's files are visible to the page the moment they are written).
-Two volumes: `realroom-catalog` (product photos, catalog.jsonl, SigLIP 2 embeddings) and
+Two volumes: `realroom-catalog` (product photos, catalog.jsonl, Perception Encoder embeddings) and
 `realroom-runs` (recorded demo runs, live runs). API keys come from the `realroom-keys` secret.
 
 Live runs are capped at 40 a day, three per visitor and 60 dollars of model calls in all (each run
@@ -21,7 +21,7 @@ import time
 import modal
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SIGLIP = "google/siglip2-base-patch16-256"
+PE_CORE = "PE-Core-B-16"  # Meta Perception Encoder (open_clip name); the look search runs its text tower
 
 app = modal.App("realroom")
 cat_vol = modal.Volume.from_name("realroom-catalog")
@@ -30,18 +30,16 @@ runs_vol = modal.Volume.from_name("realroom-runs", create_if_missing=True)
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("fonts-dejavu-core")  # numbers on the pick sheets and labels on the guide image
-    .pip_install("torch==2.6.0", index_url="https://download.pytorch.org/whl/cpu")
+    .pip_install("torch==2.6.0", "torchvision==0.21.0", index_url="https://download.pytorch.org/whl/cpu")
     .pip_install(  # the versions in backend/requirements.txt
         "numpy==2.5.4", "opencv-python-headless==5.0.0.93", "pillow==13.0.0", "scikit-image==0.26.0",
         "scipy==1.18.1", "requests==2.34.2", "fastapi[standard]==0.162.0", "python-multipart==0.0.33",
-        "uvicorn==0.54.0", "openai==3.42.0", "meta-sam-parser==0.1.0", "transformers==4.51.3",
-        "sentencepiece==0.2.2", "protobuf==7.36.2",
+        "uvicorn==0.54.0", "openai==3.42.0", "meta-sam-parser==0.1.0", "open_clip_torch==3.3.0", "timm==1.0.30",
     )
-    .run_commands(
-        f"python -c \"from transformers import AutoModel, AutoProcessor; "
-        f"AutoModel.from_pretrained('{SIGLIP}'); AutoProcessor.from_pretrained('{SIGLIP}')\""
+    .run_commands(  # bake the weights into the image, so a live run never downloads a model
+        f"python -c \"import open_clip; open_clip.create_model_and_transforms('{PE_CORE}', pretrained='meta')\""
     )
-    .env({"HF_HUB_OFFLINE": "1", "TOKENIZERS_PARALLELISM": "false"})
+    .env({"HF_HUB_OFFLINE": "1"})
     .add_local_dir(ROOT / "backend" / "realroom", "/root/realroom")
     .add_local_dir(ROOT / "web" / "dist", "/web")
 )

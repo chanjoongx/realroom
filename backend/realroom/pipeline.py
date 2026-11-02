@@ -25,7 +25,7 @@ import numpy as np
 
 from . import composite as C
 from . import imgutil, meta, pick, render, scan, verify
-from .catalog import Catalog
+from .catalog import EMB_MODEL_ID, Catalog
 
 Event = Callable[[dict], None]
 
@@ -169,10 +169,17 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
         res = cat.search(s["kind"], s["look"], s["size_cm"], k=24, exclude=used, color_family=s.get("color_family"))
         shortlists[s["id"]] = [x["id"] for x in res["items"]]
         funnels[s["id"]] = res["funnel"]
-    R.event("search", f"Searched {len(cat.products):,} real products",
-            "; ".join(f"{s['kind'].replace('_', ' ')}: {funnels[s['id']]['kind']} > {funnels[s['id']]['fits']} fit > "
-                      f"{funnels[s['id']].get('shortlist', 0)}" for s in slots),
-            model="catalog index + siglip-2", sec=round(time.time() - t, 2), status="done")
+    sec = round(time.time() - t, 2)
+    # the look search runs Meta's Perception Encoder in this process (no API call, no cost); log it like the others
+    pe_used = any("pe-core" in f.get("ranked_by", []) for f in funnels.values())
+    if pe_used:
+        L.add(kind="pe_core", tag="search", model=EMB_MODEL_ID, sec=sec, n=len(slots), usd=0.0)
+    detail = "; ".join(f"{s['kind'].replace('_', ' ')}: {funnels[s['id']]['kind']} > {funnels[s['id']]['fits']} fit > "
+                       f"{funnels[s['id']].get('shortlist', 0)}" for s in slots)
+    if not pe_used:
+        detail += f". Ranked by text only ({cat.emb_error or 'no image embeddings'})."
+    R.event("search", f"Searched {len(cat.products):,} real products", detail,
+            model=f"catalog index + {EMB_MODEL_ID}" if pe_used else "catalog index", sec=sec, status="done")
 
     # ------------------------------------------------------------------ pick
     n0 = len(L.rows())

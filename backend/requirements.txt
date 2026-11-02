@@ -1,6 +1,7 @@
 # Realroom backend (Python 3.12). Tested with these versions.
-# torch: install the CPU wheel first, it is only used for SigLIP 2 text embeddings
-#   pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+# torch and torchvision: install the CPU wheels first. They run Meta Perception Encoder (PE-Core B16-224)
+# for the look search; without them the search ranks by the text index alone.
+#   pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 numpy==2.5.4
 opencv-python-headless==5.0.0.93
 pillow==13.0.0
@@ -12,8 +13,7 @@ python-multipart==0.0.33
 uvicorn==0.54.0
 openai==3.42.0
 meta-sam-parser==0.1.0
-transformers==4.51.3
-sentencepiece==0.2.2
-protobuf==7.36.2
+open_clip_torch==3.3.0
+timm==1.0.30
 # deploy and catalog build
 modal==1.6.3
