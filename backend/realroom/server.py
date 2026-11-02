@@ -27,6 +27,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from typing import Callable
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
@@ -49,6 +50,11 @@ MAX_PIXELS = 40_000_000
 MULTIPART_SLACK = 64 * 1024   # boundaries, part headers, brief and mode on top of the photo itself
 MAX_FIELD_BYTES = 16 * 1024   # brief and mode (the brief is cut to 280 characters anyway)
 DECODE_SLOTS = 2              # uploads decoded at the same time, each in a worker thread
+# Uploads being received at the same time; one more is refused at once instead of waiting, so a few slow
+# senders cannot hold every connection of the single container. A body still arriving after
+# UPLOAD_READ_S seconds is refused too (the page sends a JPEG of at most 1792 px, well under 2 MB).
+UPLOAD_SLOTS = 4
+UPLOAD_READ_S = 60
 
 # Security headers on every response. CSP is one switch: set it to "" to send no Content-Security-Policy.
 CSP = ("default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; "
@@ -88,16 +94,22 @@ def _global_ip(text: str | None) -> ipaddress.IPv4Address | ipaddress.IPv6Addres
         ip = ipaddress.ip_address(s)
     except ValueError:
         return None
-    if ip.version == 6 and ip.ipv4_mapped:
-        ip = ip.ipv4_mapped
+    if ip.version == 6:  # an IPv4 address carried inside IPv6 counts as that IPv4 address
+        if ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
+        elif ip.sixtofour:
+            ip = ip.sixtofour
+        elif ip.teredo:
+            ip = ip.teredo[1]
     return ip if ip.is_global else None
 
 
 def client_identity(request: Request) -> tuple[str, str]:
     """(bucket, source) for the per-visitor cap. The source is "peer" when the connection's own address
     is a public one (what Modal's proxy reports), else "forwarded" for the right-most public entry of
-    X-Forwarded-For (the one the nearest proxy added), else "unknown", which is one shared bucket.
-    An IPv6 visitor counts per /64, because one home or phone connection usually holds a whole /64."""
+    X-Forwarded-For (the one the nearest proxy added), else "unknown", which gets only the shared caps.
+    An IPv6 visitor counts per /64, because one home or phone connection usually holds a whole /64
+    (Limits also counts the /48 around it)."""
     source = "peer"
     ip = _global_ip(request.client.host if request.client else None)
     if ip is None:
@@ -113,6 +125,16 @@ def client_identity(request: Request) -> tuple[str, str]:
     return str(ip), source
 
 
+def _same_origin(origin: str, host: str | None) -> bool:
+    """The Origin header names the host the request was sent to (scheme default ports allowed for)."""
+    try:
+        o, h = urlsplit(origin), urlsplit("//" + (host or ""))
+        default = {"https": 443, "http": 80}.get(o.scheme)
+        return bool(o.hostname) and o.hostname == h.hostname and (o.port or default) == (h.port or default)
+    except ValueError:  # a malformed header or port
+        return False
+
+
 # ---------------------------------------------------------------- limits
 
 class QuotaStateError(RuntimeError):
@@ -123,12 +145,31 @@ def _utc_today() -> str:
     return dt.datetime.now(dt.timezone.utc).date().isoformat()
 
 
+def _utc_hour() -> str:
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H")
+
+
+def _wider_network(client: str) -> str | None:
+    """The /48 around an IPv6 /64 bucket, else None. Someone who holds many /64s (a cloud server, a
+    tunnel) usually holds them inside one /48, so the /48 as a whole gets a cap too."""
+    if ":" not in client:
+        return None
+    try:
+        net = ipaddress.ip_network(client, strict=False)
+    except ValueError:
+        return None
+    return str(net.supernet(new_prefix=48)) if net.version == 6 and net.prefixlen > 48 else None
+
+
 @dataclass
 class Limits:
     live: bool = False
     reason: str = ""
     per_day: int = 40
     per_client_per_day: int = 3
+    # 0 means no cap. Otherwise at most this many live runs start in one UTC hour, so someone with many
+    # addresses cannot use up the whole day's runs at once.
+    per_hour: int = 0
     max_upload_mb: int = 12
     # 0 means no cap. Otherwise live runs stop once the model calls of all live runs reach this many
     # dollars: each run reserves est_run_usd when it starts and settles to its own ledger total.
@@ -195,10 +236,11 @@ class Limits:
         try:
             spent = float(st.get("spent_usd", 0.0))
             total = int(st.get("total", 0))
+            hour_total = int(st.get("hour_total", 0))
         except (TypeError, ValueError):
             raise QuotaStateError("the usage counter holds a value that is not a number") from None
         if st.get("day") == today and isinstance(st.get("salt"), str) and isinstance(st.get("clients"), dict):
-            return {**st, "total": total, "spent_usd": spent}
+            return {**st, "total": total, "spent_usd": spent, "hour_total": hour_total}
         return {"day": today, "salt": secrets.token_hex(16), "total": total if st.get("day") == today else 0,
                 "clients": {}, "spent_usd": spent}
 
@@ -215,15 +257,31 @@ class Limits:
 
     # ---- checks
 
+    def _buckets(self, client: str) -> list[tuple[str, int]]:
+        """(bucket, cap) pairs a run from this visitor counts against: the visitor, and for IPv6 the
+        /48 around it at twice the cap. A visitor with no usable address ("unknown") gets only the shared
+        caps: one shared bucket would let a single person use up everyone's runs, and the daily, hourly
+        and dollar caps still bound the spend."""
+        if client == "unknown":
+            return []
+        out = [(client, self.per_client_per_day)]
+        wide = _wider_network(client)
+        if wide:
+            out.append((wide, 2 * self.per_client_per_day))
+        return out
+
     def _refuse_if_over(self, st: dict, client: str) -> None:
         if self.budget_usd and st["spent_usd"] + self.est_run_usd > self.budget_usd:
             raise HTTPException(429, "The live demo has used its model budget. The demo rooms show complete recorded runs.")
         if st["total"] >= self.per_day:
             raise HTTPException(429, "The live demo has used its runs for today. The demo rooms show complete recorded runs.")
-        # A visitor with no usable address ("unknown") gets only the caps above: one shared bucket would let
-        # a single person use up everyone's runs, and the daily and dollar caps still bound the spend.
-        if client != "unknown" and st["clients"].get(self._visitor(st, client), 0) >= self.per_client_per_day:
-            raise HTTPException(429, f"You have used your {self.per_client_per_day} live runs for today.")
+        if self.per_hour and st.get("hour") == _utc_hour() and st["hour_total"] >= self.per_hour:
+            raise HTTPException(429, "The live demo has used its runs for this hour. Please try again later; "
+                                     "the demo rooms show complete recorded runs.")
+        for n, (bucket, cap) in enumerate(self._buckets(client)):
+            if st["clients"].get(self._visitor(st, bucket), 0) >= cap:
+                raise HTTPException(429, f"You have used your {self.per_client_per_day} live runs for today." if n == 0
+                                    else "Your network has used its live runs for today.")
 
     def problem(self) -> str:
         """A plain reason when live runs must pause because the counter cannot be read, else ""."""
@@ -251,9 +309,13 @@ class Limits:
         with self._lock:
             st = self._current()
             self._refuse_if_over(st, client)
-            key = self._visitor(st, client)
+            for bucket, _ in self._buckets(client):
+                key = self._visitor(st, bucket)
+                st["clients"][key] = st["clients"].get(key, 0) + 1
+            hour = _utc_hour()
+            st["hour_total"] = (st["hour_total"] if st.get("hour") == hour else 0) + 1
+            st["hour"] = hour
             st["total"] += 1
-            st["clients"][key] = st["clients"].get(key, 0) + 1
             st["spent_usd"] = round(st["spent_usd"] + self.est_run_usd, 4)
             self._save(st)
 
@@ -267,10 +329,13 @@ class Limits:
                 return
             if st.get("day") == _utc_today() and isinstance(st.get("salt"), str):
                 st["total"] = max(0, int(st.get("total", 0)) - 1)
+                if st.get("hour") == _utc_hour():
+                    st["hour_total"] = max(0, int(st.get("hour_total", 0)) - 1)
                 clients = st.setdefault("clients", {})
-                key = self._visitor(st, client)
-                if clients.get(key):
-                    clients[key] -= 1
+                for bucket, _ in self._buckets(client):
+                    key = self._visitor(st, bucket)
+                    if clients.get(key):
+                        clients[key] -= 1
             st["spent_usd"] = round(max(0.0, float(st.get("spent_usd", 0.0)) - self.est_run_usd), 4)
             self._save(st)
 
@@ -330,9 +395,11 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
                launcher: Launcher | None = None, demos_file: pathlib.Path | None = None,
                refresh: Callable[[], None] | None = None,
                photo_dirs: list[pathlib.Path] | None = None,
-               is_active: Callable[[str], bool] | None = None) -> FastAPI:
+               is_active: Callable[[str], bool] | None = None,
+               allowed_hosts: list[str] | None = None) -> FastAPI:
     """is_active(run_id) says whether a worker in this process is still running that run. With it, a
-    run.json left "running" for STALE_RUN_S seconds by a worker that is gone is marked as stopped."""
+    run.json left "running" for STALE_RUN_S seconds by a worker that is gone is marked as stopped.
+    allowed_hosts, when given, refuses any other Host header (a local server uses it against DNS rebinding)."""
     app = FastAPI(title="Realroom", docs_url=None, redoc_url=None, openapi_url=None)
     runs_dir = pathlib.Path(runs_dir)
     catalog_dir = pathlib.Path(catalog_dir)
@@ -340,7 +407,12 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
     n_catalog = sum(1 for line in (catalog_dir / "catalog.jsonl").open(encoding="utf-8") if line.strip()) \
         if (catalog_dir / "catalog.jsonl").exists() else 0
     decode_slots = asyncio.Semaphore(DECODE_SLOTS)
+    upload_slots = asyncio.Semaphore(UPLOAD_SLOTS)
     demos_cache: dict = {}
+    if allowed_hosts:
+        from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
     @app.middleware("http")
     async def headers(request: Request, call_next):
@@ -350,11 +422,13 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
         if CSP:
             resp.headers.setdefault("Content-Security-Policy", CSP)
         p = request.url.path
-        if resp.status_code == 200:
-            if p.startswith("/runs/u"):  # a live run: someone's own room photo and what was made from it
-                resp.headers["Cache-Control"] = "private, no-store"
-                resp.headers["Cross-Origin-Resource-Policy"] = "same-origin"
-            elif p.startswith("/catalog/") or (p.startswith("/runs/") and not p.endswith(".json")):
+        if p.lower().startswith("/runs/u"):
+            # a live run: someone's own room photo and what was made from it, at every status (a 206 for a
+            # range request included) and in any letter case (a case-blind disk serves /runs/U... too)
+            resp.headers["Cache-Control"] = "private, no-store"
+            resp.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        elif resp.status_code == 200:
+            if p.startswith("/catalog/") or (p.startswith("/runs/") and not p.endswith(".json")):
                 resp.headers.setdefault("Cache-Control", "public, max-age=86400")
             elif p.startswith("/assets/"):
                 resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
@@ -425,8 +499,12 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
         log(f"POST /api/runs client source {source}")
         if not (limits.live and launcher):
             raise HTTPException(503, limits.reason or "Live runs are off on this server.")
+        # Another site's page must not spend runs: modern browsers send Sec-Fetch-Site, and older ones that
+        # do not still send Origin on a cross-site POST.
         site = request.headers.get("sec-fetch-site")
-        if site is not None and site not in ("same-origin", "none"):
+        origin = request.headers.get("origin")
+        if (site is not None and site not in ("same-origin", "none")) or \
+                (origin is not None and not _same_origin(origin, request.headers.get("host"))):
             raise HTTPException(403, "Live runs can only be started from the Realroom page itself.")
         # Size first, from the header, before a byte of the body is read or parsed.
         cap = limits.max_upload_mb * 1024 * 1024
@@ -438,15 +516,25 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
         if int(length) > cap + MULTIPART_SLACK:
             raise HTTPException(413, f"The photo is larger than {limits.max_upload_mb} MB.")
         limits.check(client)  # a visitor or a day that is used up is refused before the upload is read
-        async with request.form(max_files=1, max_fields=8, max_part_size=MAX_FIELD_BYTES) as form:
-            photo, brief, mode = form.get("photo"), form.get("brief", ""), form.get("mode", "refresh")
-            if not isinstance(photo, UploadFile):
-                raise HTTPException(400, "Attach a photo of a room.")
-            if not isinstance(brief, str):
-                raise HTTPException(400, "The brief must be plain text.")
-            if mode not in ("refresh", "furnish"):
-                raise HTTPException(400, "Unknown mode.")
-            raw = await photo.read(cap + 1)
+        if upload_slots.locked():  # no await between this check and taking the slot
+            raise HTTPException(503, "Realroom is receiving other photos right now. Please try again in a minute.")
+        async with upload_slots:
+            try:
+                form = await asyncio.wait_for(
+                    request.form(max_files=1, max_fields=8, max_part_size=MAX_FIELD_BYTES), UPLOAD_READ_S)
+            except TimeoutError:
+                raise HTTPException(408, "The upload took too long. Please try again.") from None
+            try:
+                photo, brief, mode = form.get("photo"), form.get("brief", ""), form.get("mode", "refresh")
+                if not isinstance(photo, UploadFile):
+                    raise HTTPException(400, "Attach a photo of a room.")
+                if not isinstance(brief, str):
+                    raise HTTPException(400, "The brief must be plain text.")
+                if mode not in ("refresh", "furnish"):
+                    raise HTTPException(400, "Unknown mode.")
+                raw = await photo.read(cap + 1)
+            finally:
+                await form.close()
         if len(raw) > cap:
             raise HTTPException(413, f"The photo is larger than {limits.max_upload_mb} MB.")
         async with decode_slots:
@@ -568,6 +656,7 @@ def _normalize_photo(raw: bytes) -> bytes:
     s = min(1.0, 1792 / max(w, h))
     if s < 1:
         im = im.resize((round(w * s), round(h * s)), Image.LANCZOS)
+    im.info.clear()  # Pillow would copy the upload's JPEG comment into the new file; nothing else carries over
     buf = io.BytesIO()
     im.save(buf, format="JPEG", quality=93)
     return buf.getvalue()

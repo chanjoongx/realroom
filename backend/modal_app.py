@@ -2,12 +2,14 @@
 
 One web container serves the site, the API and the catalog photos, and runs live jobs in
 background threads (so a run's files are visible to the page the moment they are written).
-Two volumes: `realroom-catalog` (product photos, catalog.jsonl, Perception Encoder embeddings) and
-`realroom-runs` (recorded demo runs, live runs). The Meta Model API key comes from the
-`realroom-keys` secret; the web container drops the catalog-tagging keys that share that secret.
+Two volumes: `realroom-catalog` (product photos, catalog.jsonl, Perception Encoder embeddings), mounted
+read-only, and `realroom-runs` (recorded demo runs, live runs). The web container gets one secret,
+`realroom-model`, which holds MODEL_API_KEY and nothing else; the catalog-tagging keys live in
+`realroom-keys`, which only catalog/modal_catalog.py uses.
 
-Live runs are capped at 40 a UTC day, three per visitor and 60 dollars of model calls in all (each
-run reserves 0.40 when it starts and settles to its ledger total). They are deleted 18 hours after
+Live runs are capped at 40 a UTC day, 8 a UTC hour, three per visitor (and six per IPv6 /48) and 60
+dollars of model calls in all (each run reserves 0.40 when it starts and settles to its ledger
+total). They are deleted 18 hours after
 the upload: the web container checks every hour, and a small scheduled function wakes it every
 three hours, so an uploaded photo is gone within about 21 hours even when nobody visits.
 
@@ -68,13 +70,14 @@ image = (
 MAX_PARALLEL_RUNS = 3
 RETAIN_HOURS = 18
 STALE_AT_START_S = 15 * 60  # at startup no worker here owns a run, so "running" this long means stopped
-UNUSED_KEYS = ("BASETEN_API_KEY", "FIREWORKS_API_KEY")  # catalog tagging only, never the web app
+# The web container decodes visitors' uploads, so it holds the one key a live run needs and no other.
+WEB_SECRET = "realroom-model"
 
 
 @app.function(
     image=image,
-    volumes={"/cat": cat_vol, "/runs": runs_vol},
-    secrets=[modal.Secret.from_name("realroom-keys")],
+    volumes={"/cat": cat_vol.read_only(), "/runs": runs_vol},
+    secrets=[modal.Secret.from_name(WEB_SECRET, required_keys=["MODEL_API_KEY"])],
     cpu=2.0,
     memory=4096,
     timeout=900,
@@ -94,9 +97,6 @@ def web():
     from realroom.catalog import Catalog
     from realroom.pipeline import run_pipeline
     from realroom.server import Limits, create_app, log, purge_expired, stop_run, sweep_interrupted
-
-    for name in UNUSED_KEYS:
-        os.environ.pop(name, None)
 
     runs = pathlib.Path("/runs")
     cat_box: dict = {}
@@ -196,6 +196,7 @@ def web():
     limits = Limits(live=live, reason="" if live else "Live runs are paused right now.",
                     per_day=int(os.environ.get("REALROOM_RUNS_PER_DAY", "40")),
                     per_client_per_day=int(os.environ.get("REALROOM_RUNS_PER_CLIENT", "3")),
+                    per_hour=int(os.environ.get("REALROOM_RUNS_PER_HOUR", "8")),
                     budget_usd=float(os.environ.get("REALROOM_BUDGET_USD", "60")),
                     state_file=runs / "_quota.json", on_change=lambda: commit("a usage counter change"))
     log(f"web container up, version {VERSION}")
