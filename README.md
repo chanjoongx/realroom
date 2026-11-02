@@ -16,6 +16,8 @@
   <a href="#demo-rooms">Demo rooms</a>
   &nbsp;·&nbsp;
   <a href="#run-it">Run it</a>
+  &nbsp;·&nbsp;
+  <a href="#use-your-own-catalog">Your own catalog</a>
 </h4>
 
 <p align="center">
@@ -28,8 +30,25 @@
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
 </p>
 
+<p align="center">
+  <b>English</b>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.ko.md">한국어</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.zh-CN.md">简体中文</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.ja.md">日本語</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.es.md">Español</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.pt-BR.md">Português</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.fr.md">Français</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.de.md">Deutsch</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.ru.md">Русский</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.hi.md">हिन्दी</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.ar.md">العربية</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.id.md">Bahasa Indonesia</a>
+</p>
+
 > [!NOTE]
 > Realroom is an entry in the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon), Indie Developer track, under the problem statement "Build for Your World". The agent, the web app, the catalog index and the demo rooms were all made during the building period, October 27 to November 4, 2026.
+>
+> The hosted app replays the three recorded runs and runs the whole agent live on an uploaded photo, up to 40 times a day. On your own machine the same app replays the runs with no key, or runs live with your own Meta Model API key. Both ways are in [Run it](#run-it).
 
 <p align="center">
   <picture>
@@ -90,7 +109,7 @@ flowchart LR
 | Fix | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | A product judged partial is cut out with its surroundings and redrawn larger against its catalog photo, two tries per round and up to two rounds. A try replaces the current version only if Spark scores it higher, and Spark's notes steer the next round. Clutter the render left behind gets its own pass, checked with SAM 3.1. If anything changed, Spark judges the finished room again. |
 | Composite | none | The result takes from the render only the product masks, a thin fringe around them, contact shadows and the footprints of removed objects. Every other pixel is the original. |
 
-The web app replays each run from its event log: the scan with every outline, the search funnel, the pick sheets, all render candidates, each fix with its before and after, and the final layers.
+The web app replays each run from its event log: the scan with every outline, the search funnel, the pick sheets, all render candidates, each fix with its before and after, and the final layers. Each step's header shows the ID of the model it called.
 
 ![The verify step of the living-room run](docs/verify.jpg)
 
@@ -112,21 +131,6 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 - `layers.png` colors every changed pixel as product, cleared or shadow. `masks.npz` holds every object and product mask.
 - `ledger.jsonl` lists every model call with its time and estimated cost. The Perception Encoder search is in it too, at no cost, because it runs in the app's own server.
 - `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.7 to 3.7 on the demo runs). Those pixels are the reason for the composite step.
-
-## The catalog
-
-[Amazon Berkeley Objects](https://amazon-berkeley-objects.s3.us-east-1.amazonaws.com/index.html) (ABO) is a public dataset of real Amazon product listings with photos and dimensions. `catalog/` builds the Realroom catalog from it:
-
-1. `abo_catalog.py` sorts amazon.com listings into 25 kinds (sofa, rug, floor lamp, wall art and so on), which matches 5,931 of them. It converts sizes to centimeters and drops listings with no dimensions or implausible ones, leaving 4,612 candidates.
-2. `modal_catalog.py --step score` and `abo_choose.py` pick one reference photo per product, preferring a clean cutout on white.
-3. `modal_catalog.py --step fetch` downloads that photo once, in Modal's cloud, and trims it.
-4. `modal_catalog.py --step tag` sends every photo with its listing to **Muse Spark Open**, Meta's open-weight model, served by Baseten (Fireworks as fallback). It returns a title, colors, materials, style, a visual description, a SAM phrase, a render-risk guess, and whether the photo really shows the listed product.
-5. `modal_catalog.py --step embed` embeds every photo with Meta's Perception Encoder (PE-Core B16-224) on Modal CPUs.
-6. `abo_finalize.py` writes `catalog.jsonl`: 4,375 products. It dropped 104 whose photo did not show the listed product and 133 that had no finished tag when the demo runs were recorded.
-
-Muse Spark Open tagged 3,781 of the 4,375 on Baseten and 594 on Fireworks. The tags are in [`catalog/index/catalog.jsonl`](catalog/index/catalog.jsonl). The repository holds only the product photos that the demo runs show. The full set is one file on the GitHub release (see [Run it](#run-it)), and the steps above rebuild it from ABO.
-
-A store with its own product feed would replace steps 1 to 3 with its own listings and photos. Search, pick, render and verify need only a kind, real dimensions and one clean photo per product, plus the tags and embeddings from steps 4 and 5.
 
 ## Run it
 
@@ -181,6 +185,69 @@ Use `--mode furnish` for an empty room. While `serve_local.py` is running, the f
 To rebuild the catalog, download the ABO listings and image metadata into `data/abo/`, then run the steps in [The catalog](#the-catalog). The Modal steps need a Modal account and, for tagging, `BASETEN_API_KEY` and `FIREWORKS_API_KEY` in a Modal secret named `realroom-keys`.
 
 The hosted version runs on Modal (`backend/modal_app.py`): one web container, the catalog and the runs on two volumes, at most three live runs at a time, 40 live runs a day, three per visitor and 60 dollars of model calls in all. Uploaded photos are deleted within 24 hours.
+
+## The catalog
+
+[Amazon Berkeley Objects](https://amazon-berkeley-objects.s3.us-east-1.amazonaws.com/index.html) (ABO) is a public dataset of real Amazon product listings with photos and dimensions. `catalog/` builds the Realroom catalog from it:
+
+1. `abo_catalog.py` sorts amazon.com listings into 25 kinds (sofa, rug, floor lamp, wall art and so on), which matches 5,931 of them. It converts sizes to centimeters and drops listings with no dimensions or implausible ones, leaving 4,612 candidates.
+2. `modal_catalog.py --step score` and `abo_choose.py` pick one reference photo per product, preferring a clean cutout on white.
+3. `modal_catalog.py --step fetch` downloads that photo once, in Modal's cloud, and trims it.
+4. `modal_catalog.py --step tag` sends every photo with its listing to **Muse Spark Open**, Meta's open-weight model, served by Baseten (Fireworks as fallback). It returns a title, colors, materials, style, a visual description, a SAM phrase, a render-risk guess, and whether the photo really shows the listed product.
+5. `modal_catalog.py --step embed` embeds every photo with Meta's Perception Encoder (PE-Core B16-224) on Modal CPUs.
+6. `abo_finalize.py` writes `catalog.jsonl`: 4,375 products. It dropped 104 whose photo did not show the listed product and 133 that had no finished tag when the demo runs were recorded.
+
+Muse Spark Open tagged 3,781 of the 4,375 on Baseten and 594 on Fireworks. The tags are in [`catalog/index/catalog.jsonl`](catalog/index/catalog.jsonl). The repository holds only the product photos that the demo runs show. The full set is one file on the GitHub release (see [Run it](#run-it)), and the steps above rebuild it from ABO.
+
+## Use your own catalog
+
+The agent itself does not depend on ABO. It reads a catalog folder (`--catalog`) with `catalog.jsonl` and two Perception Encoder files, and a photo folder (`--photos`) with `img/<id>.jpg` and `thumb/<id>.webp` for every product. This is the first line of [`catalog/index/catalog.jsonl`](catalog/index/catalog.jsonl), shortened:
+
+```json
+{
+  "id": "B075QFCHM9",
+  "kind": "bed",
+  "name": "Rivet York Modern Extended Platform Queen Bed, 90.2\"L, Grey",
+  "brand": "Rivet",
+  "size_cm": {"w": 229.0, "d": 182.9, "h": 107.5},
+  "url": "https://www.amazon.com/dp/B075QFCHM9",
+  "cutout": true,
+  "tag": {
+    "title": "Light Grey Upholstered Platform Bed",
+    "matches_listing": true,
+    "colors": ["light grey", "white", "light brown"],
+    "color_family": "grey",
+    "materials": ["polyester", "fabric", "wood"],
+    "style": ["modern", "minimal", "contemporary"],
+    "render_risk": "low",
+    "sam_phrase": "platform bed",
+    "visual_description": "Low-profile light grey polyester platform bed with tall rectangular headboard, extended surround frame and tapered wood legs shown with white mattress."
+  }
+}
+```
+
+- `kind` is one of the names in `KINDS` in `backend/realroom/catalog.py`. The plan asks for each slot by kind.
+- `size_cm` is width, depth and height. A product reaches the shortlist only if it fits the slot's size range.
+- `tag` is what Muse Spark Open wrote in step 4. The text search reads its title, colors, materials, style and description, SAM 3.1 finds the rendered product by its `sam_phrase`, and a product with `"matches_listing": false` is never offered. Without a tag the agent falls back to `name` and `kind`.
+- `cutout` marks a photo of the product alone on a plain background. Search ranks those photos higher.
+- `emb_pe_core_b16.npy` holds one Perception Encoder embedding per product photo, in the order of `emb_pe_core_b16_ids.json`. Step 5 writes both. Without them the search ranks by text alone.
+
+The scripts in `catalog/` build this folder from ABO. For another product feed, steps 1 to 3 are the part to rewrite, because they turn ABO listings into rows and photos. Then point `serve_local.py` or `run_demo.py` at the new folders with `--catalog` and `--photos`.
+
+## Repository layout
+
+```text
+backend/
+  realroom/      the agent: scan.py, pick.py, render.py, verify.py, composite.py and pipeline.py,
+                 catalog.py (search), meta.py (Meta Model API clients), server.py (API and site)
+  scripts/       serve_local.py, run_demo.py, make_rooms.py (the demo rooms), pack_demo_photos.py
+  modal_app.py   the hosted app on Modal
+catalog/         the catalog build from ABO, steps 1 to 6, plus get_photos.py and pack_photos.py
+  index/         catalog.jsonl (4,375 products) and the Perception Encoder embeddings
+demo-runs/       the three recorded runs (run.json, ledger.jsonl, masks and images) and their product photos
+web/             the React app (Vite): the home page, the run viewer and the pixel check
+docs/            README images and translations
+```
 
 ## Limits
 
