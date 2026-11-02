@@ -47,7 +47,7 @@ function Head({ stage, title, sub, events }: { stage: StageId; title: ReactNode;
       </div>
       <h2 className="ph-title serif">{title}</h2>
       {sub && <p className="ph-sub">{sub}</p>}
-      {c.model && <ModelChips model={c.model} />}
+      {c.model && <ModelChips model={c.model} ids />}
     </header>
   );
 }
