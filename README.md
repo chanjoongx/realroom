@@ -1,12 +1,44 @@
-# Realroom
+<p align="center">
+  <a href="https://chanjoongx--realroom.us-east.modal.run">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.jpg">
+      <source media="(prefers-color-scheme: light)" srcset="docs/banner-light.jpg">
+      <img alt="Realroom. Try real furniture in a photo of your room. Keep every other pixel." src="docs/banner-light.jpg" width="100%">
+    </picture>
+  </a>
+</p>
 
-Real catalog furniture in a photo of your own room, with every other pixel left as it was.
+<h4 align="center">
+  <a href="https://chanjoongx--realroom.us-east.modal.run">Live demo</a>
+  &nbsp;·&nbsp;
+  <a href="#how-a-run-works">How it works</a>
+  &nbsp;·&nbsp;
+  <a href="#demo-rooms">Demo rooms</a>
+  &nbsp;·&nbsp;
+  <a href="#run-it">Run it</a>
+</h4>
 
-![Three demo rooms before and after](docs/rooms.jpg)
+<p align="center">
+  <a href="https://cerebralvalley.ai/e/meta-ai-developer-hackathon"><img alt="Meta Global AI Developer Hackathon 2026" src="https://img.shields.io/badge/Meta_Global_AI_Developer_Hackathon-2026-eeebe5?style=flat-square&labelColor=1f2328"></a>
+  <a href="#meta-models"><img alt="Muse Spark 1.3" src="https://img.shields.io/badge/Muse_Spark-1.3-a5b8ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="#meta-models"><img alt="SAM 3.1" src="https://img.shields.io/badge/SAM-3.1-7fd6ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="#meta-models"><img alt="Muse Image 1.0" src="https://img.shields.io/badge/Muse_Image-1.0-ffb48c?style=flat-square&labelColor=1f2328"></a>
+  <a href="#meta-models"><img alt="Muse Spark Open" src="https://img.shields.io/badge/Muse_Spark_Open-open_weights-d1b3ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
+</p>
+
+> [!NOTE]
+> Realroom is an entry in the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon), Indie Developer track, under the problem statement "Build for Your World". The agent, the web app, the catalog index and the demo rooms were all made during the building period, October 27 to November 4, 2026.
+
+<p align="center">
+  <a href="https://chanjoongx--realroom.us-east.modal.run"><img src="docs/demo.webp" alt="The living-room run replayed in the app: the scan, the placement guide, the verify step and the before and after slider" width="100%"></a>
+  <br>
+  <sub>The living-room demo run, replayed in the app: scan, placement guide, verify, then the before and after slider.</sub>
+</p>
 
 Realroom is an agent built on Meta's models. You give it a room photo and one sentence about what you want. It reads the room, plans what to add or replace, searches 4,375 real products for pieces that fit the space, and renders them into the photo. Then it checks its own work. SAM 3.1 finds each product again in the render, Muse Spark 1.3 compares it with the product's catalog photo, and anything that came out wrong is redrawn. Only the new products, their shadows and the spots that were cleared come from the image model. Everything else is copied back from your original photo, and the page lets you verify that count in your own browser.
 
-Built for the Meta Global AI Developer Hackathon. The code, the catalog and the demo rooms were all made during its building period, October 27 to November 4, 2026. Try it at [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). The demo rooms replay recorded runs, and the upload box runs the whole agent on your own photo.
+Try it at [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). The demo rooms replay recorded runs, and the upload box runs the whole agent on your own photo.
 
 ## Why
 
@@ -14,17 +46,30 @@ Room makeover generators draw a pleasant room, but the sofa in it is not one you
 
 ## Demo rooms
 
+![Three demo rooms before and after](docs/rooms.jpg)
+
 The demo rooms were generated with Muse Image 1.0, so this repository holds no private photos. Each row is one recorded run. The numbers come from that run's own `run.json` and `ledger.jsonl` in [`demo-runs/`](demo-runs).
 
 | Room | Brief | Products | Matched | Untouched pixels | Time | Cost |
 |---|---|---|---|---|---|---|
-| Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, rug, floor lamp | 3 of 3, the rug after one round of redraws | 70.1% | 206 s | $0.25 |
-| Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | loveseat, rug, floor lamp, coffee table, planter | 5 of 5, the coffee table after one round of redraws | 62.5% | 203 s | $0.27 |
-| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | coverlet, rug, wall art | 3 of 3 | 67.9% | 150 s | $0.18 |
+| Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, rug, floor lamp | 3 of 3, the rug after one round of redraws | 70.1% | 206&nbsp;s | $0.25 |
+| Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | loveseat, rug, floor lamp, coffee table, planter | 5 of 5, the coffee table after one round of redraws | 62.5% | 203&nbsp;s | $0.27 |
+| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | coverlet, rug, wall art | 3 of 3 | 67.9% | 150&nbsp;s | $0.18 |
 
 "Matched" is Muse Spark 1.3's verdict on a close crop of each rendered product next to its catalog photo. Costs are estimates from Meta's published prices, logged per call.
 
 ## How a run works
+
+```mermaid
+flowchart LR
+    A(["Room photo<br>and one sentence"]) --> B["Scan and plan<br>Muse Spark 1.3 · SAM 3.1"]
+    B --> C["Search and pick<br>4,375 products"]
+    C --> D["Render candidates<br>Muse Image 1.0"]
+    D --> E("Verify each product<br>SAM 3.1 · Muse Spark 1.3")
+    E -- partial --> F["Redraw it larger<br>Muse Image 1.0"]
+    F --> E
+    E -- checked --> G(["Composite<br>original pixels elsewhere"])
+```
 
 | Step | Models | What happens |
 |---|---|---|
@@ -41,6 +86,15 @@ The web app replays each run from its event log: the scan with every outline, th
 ![The verify step of the living-room run](docs/verify.jpg)
 
 Above is the verify step of the living-room run. Muse Image drew three candidates, Spark scored all three products in each, and candidate 1 was kept. Its rug scored 4 of 10, so it went on to the fix step and came back at 9.
+
+## Meta models
+
+| Model | Access | Used for |
+|---|---|---|
+| `muse-spark-1.3` | Meta Model API | reading the room and planning, picking products, judging every product and scene |
+| `sam-3.1` | Meta Model API | masks of room objects and of every rendered product, checking what clutter is left |
+| `muse-image-1.0` | Meta Model API | render candidates, redraws, clutter clearing, the demo rooms |
+| Muse Spark Open | Baseten, Fireworks | tags and descriptions for the whole catalog |
 
 ## What you can check
 
@@ -62,14 +116,7 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 
 Muse Spark Open tagged 3,781 of the 4,375 on Baseten and 594 on Fireworks. The tags are in [`catalog/index/catalog.jsonl`](catalog/index/catalog.jsonl). Product photos are not in the repository (about 760 MB); the scripts above rebuild them.
 
-## Meta models
-
-| Model | Access | Used for |
-|---|---|---|
-| `muse-spark-1.3` | Meta Model API | reading the room and planning, picking products, judging every product and scene |
-| `sam-3.1` | Meta Model API | masks of room objects and of every rendered product, checking what clutter is left |
-| `muse-image-1.0` | Meta Model API | render candidates, redraws, clutter clearing, the demo rooms |
-| Muse Spark Open | Baseten, Fireworks | tags and descriptions for the whole catalog |
+A store with its own product feed would replace steps 1 to 3 with its own listings and photos. Search, pick, render and verify need only a kind, real dimensions and one clean photo per product, plus the tags and embeddings from steps 4 and 5.
 
 ## Run it
 
@@ -108,4 +155,4 @@ The hosted version runs on Modal (`backend/modal_app.py`): one web container, th
 - Fonts: Geist and Geist Mono (Vercel) and Instrument Serif, all under the SIL Open Font License.
 - The demo rooms were generated with Muse Image 1.0.
 
-Code: MIT, see [LICENSE](LICENSE).
+Built by [Chanjoong Kim](https://github.com/chanjoongx). Code: MIT, see [LICENSE](LICENSE).
