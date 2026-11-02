@@ -40,7 +40,6 @@
   &nbsp;·&nbsp; <a href="README.de.md">Deutsch</a>
   &nbsp;·&nbsp; <a href="README.hi.md">हिन्दी</a>
   &nbsp;·&nbsp; <a href="README.ar.md">العربية</a>
-  &nbsp;·&nbsp; <a href="README.id.md">Indonesia</a>
 </p>
 
 <p align="center"><sub><a href="../../README.md">영어 README</a>를 옮긴 번역본입니다. 두 문서의 내용이 다르면 영어 README가 맞습니다.</sub></p>

@@ -40,7 +40,6 @@
   &nbsp;·&nbsp; <a href="README.de.md">Deutsch</a>
   &nbsp;·&nbsp; <a href="README.hi.md">हिन्दी</a>
   &nbsp;·&nbsp; <a href="README.ar.md">العربية</a>
-  &nbsp;·&nbsp; <a href="README.id.md">Indonesia</a>
 </p>
 
 <p align="center"><sub>これは<a href="../../README.md">英語版の README</a> を翻訳したものです。内容が異なる場合は英語版を正とします。</sub></p>

@@ -40,7 +40,6 @@
   &nbsp;·&nbsp; <a href="README.de.md">Deutsch</a>
   &nbsp;·&nbsp; <a href="README.hi.md">हिन्दी</a>
   &nbsp;·&nbsp; <b>العربية</b>
-  &nbsp;·&nbsp; <a href="README.id.md">Indonesia</a>
 </p>
 
 <p align="center"><sub>هذه ترجمة عن <a href="../../README.md">ملف README الإنجليزي</a>. وإذا اختلف الملفان، فالملف الإنجليزي هو الصحيح.</sub></p>

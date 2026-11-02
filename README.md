@@ -40,7 +40,6 @@
   &nbsp;·&nbsp; <a href="docs/i18n/README.de.md">Deutsch</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.hi.md">हिन्दी</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.ar.md">العربية</a>
-  &nbsp;·&nbsp; <a href="docs/i18n/README.id.md">Indonesia</a>
 </p>
 
 > [!NOTE]

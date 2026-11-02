@@ -40,7 +40,6 @@
   &nbsp;·&nbsp; <a href="README.de.md">Deutsch</a>
   &nbsp;·&nbsp; <b>हिन्दी</b>
   &nbsp;·&nbsp; <a href="README.ar.md">العربية</a>
-  &nbsp;·&nbsp; <a href="README.id.md">Indonesia</a>
 </p>
 
 <p align="center"><sub>यह <a href="../../README.md">अंग्रेज़ी README</a> का अनुवाद है। दोनों में अंतर हो, तो अंग्रेज़ी वाला ही सही है।</sub></p>
