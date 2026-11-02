@@ -5,7 +5,7 @@
   GET  /api/runs/{id}         run.json (the interface replays or follows it)
   POST /api/runs              start a live run on an uploaded photo (capped, see Limits)
   GET  /runs/{id}/{file}      images a run wrote (jpg, png, webp only)
-  GET  /catalog/{thumb|img}/  product photos
+  GET  /catalog/{thumb|img}/  product photos (from the catalog folder, then any extra photo folders)
   GET  /*                     the built web app (single page, falls back to index.html)
 """
 from __future__ import annotations
@@ -109,10 +109,12 @@ class Limits:
 
 def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathlib.Path | None, limits: Limits,
                launcher: Launcher | None = None, demos_file: pathlib.Path | None = None,
-               refresh: Callable[[], None] | None = None) -> FastAPI:
+               refresh: Callable[[], None] | None = None,
+               photo_dirs: list[pathlib.Path] | None = None) -> FastAPI:
     app = FastAPI(title="Realroom", docs_url=None, redoc_url=None, openapi_url=None)
     runs_dir = pathlib.Path(runs_dir)
     catalog_dir = pathlib.Path(catalog_dir)
+    photo_roots = [catalog_dir, *(pathlib.Path(d) for d in photo_dirs or [])]
     n_catalog = sum(1 for line in (catalog_dir / "catalog.jsonl").open(encoding="utf-8") if line.strip()) \
         if (catalog_dir / "catalog.jsonl").exists() else 0
 
@@ -207,8 +209,8 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
         stem, _, ext = name.partition(".")
         if which not in ("thumb", "img") or not PID.match(stem) or ext != ("webp" if which == "thumb" else "jpg"):
             raise HTTPException(404)
-        p = catalog_dir / which / name
-        if not p.exists():
+        p = next((r / which / name for r in photo_roots if (r / which / name).exists()), None)
+        if p is None:
             raise HTTPException(404)
         return FileResponse(p, media_type=MEDIA["." + ext])
 

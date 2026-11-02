@@ -114,17 +114,17 @@ export function Home() {
       <section className="how" id="how">
         <div className="sec-head">
           <span className="label">How it works</span>
-          <h2 className="serif">Four Meta models, one agent loop.</h2>
+          <h2 className="serif">Five Meta models, one agent loop.</h2>
         </div>
         <ol className="how-list">
           <Step n="01" title="Scan" model="muse-spark-1.3 + sam-3.1">
             Muse Spark 1.3 lists every object and the fixed structure, and estimates the room's size from doors, beds and
             ceilings. SAM 3.1 turns each loose box into an exact outline.
           </Step>
-          <Step n="02" title="Plan and search" model="muse-spark-1.3 + muse-spark-open">
+          <Step n="02" title="Plan and search" model="muse-spark-1.3 + muse-spark-open + pe-core-b16-224">
             Spark decides what to add or replace and how big each piece should be. The catalog search keeps only products
             that fit. All {catalogN.toLocaleString("en-US")} products were described by Muse Spark Open, the open-weight
-            model, running on Baseten and Fireworks.
+            model, running on Baseten and Fireworks, and Meta's Perception Encoder compares the plan with their photos.
           </Step>
           <Step n="03" title="Pick" model="muse-spark-1.3">
             Spark sees the room and a numbered sheet of candidates for every slot in a single request, so it picks a set

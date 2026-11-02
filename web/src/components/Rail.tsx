@@ -7,7 +7,7 @@ import { ModelChips } from "./ModelChip";
 const META: Record<StageId, { title: string; model: string }> = {
   scan: { title: "Scan the room", model: "muse-spark-1.3 + sam-3.1" },
   plan: { title: "Plan the change", model: "muse-spark-1.3" },
-  search: { title: "Search the catalog", model: "muse-spark-open + index" },
+  search: { title: "Search the catalog", model: "muse-spark-open + pe-core-b16-224 + index" },
   pick: { title: "Pick real products", model: "muse-spark-1.3" },
   render: { title: "Render candidates", model: "muse-image-1.0" },
   verify: { title: "Verify every product", model: "sam-3.1 + muse-spark-1.3" },
@@ -37,6 +37,10 @@ export function Rail({
   const res = run.result;
   const matched = res ? res.products.filter((p) => p.verdict?.verdict === "match").length : 0;
   const resultLine = res ? `${matched} of ${res.products.length} products match their catalog photos` : null;
+  // a finished search names the models it used: without the Perception Encoder it ranked by text alone
+  const searched = run.events.find((e) => e.stage === "search" && e.status === "done");
+  const stageModel = (s: StageId) =>
+    s === "search" && searched && !searched.model?.includes("pe-core") ? "muse-spark-open + index" : META[s].model;
   // on narrow screens the rail is one scrolling row: keep the selected step in view
   useEffect(() => {
     const el = list.current;
@@ -67,7 +71,7 @@ export function Rail({
                 </span>
                 <span className="rail-main">
                   <span className="rail-title">{META[s].title}</span>
-                  {META[s].model && <ModelChips model={META[s].model} compact />}
+                  {stageModel(s) && <ModelChips model={stageModel(s)} compact />}
                   {last && state !== "todo" && <span className="rail-detail">{s === "result" && resultLine ? resultLine : last.title}</span>}
                 </span>
                 <span className="rail-meta mono num">

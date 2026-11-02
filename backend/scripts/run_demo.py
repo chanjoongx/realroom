@@ -1,7 +1,7 @@
 """Run the full Realroom agent on one room photo and write run.json plus images.
 
 usage: python backend/scripts/run_demo.py --room <png> --id R2 --mode refresh --slots 3 \
-           --brief "..." --catalog <dir with catalog.jsonl> --out <dir>
+           --brief "..." --catalog catalog/index --photos data/photos --out <dir>
 """
 from __future__ import annotations
 
@@ -30,12 +30,13 @@ def main() -> None:
     ap.add_argument("--fixes", type=int, default=2)
     ap.add_argument("--rounds", type=int, default=2, help="redraw rounds per weak product")
     ap.add_argument("--tries", type=int, default=2, help="redraws per round, all judged")
-    ap.add_argument("--catalog", required=True)
+    ap.add_argument("--catalog", required=True, help="catalog.jsonl and the embeddings (catalog/index)")
+    ap.add_argument("--photos", default=None, help="img/ and thumb/ for every product (default: --catalog)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
     t0 = time.time()
-    cat = Catalog(args.catalog)
+    cat = Catalog(args.catalog, args.photos)
     print(f"catalog {len(cat.products)} products, embeddings {'yes' if cat.emb is not None else 'no'} "
           f"({time.time() - t0:.1f} s)", flush=True)
     room = imgutil.load_rgb(args.room)

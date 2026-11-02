@@ -61,9 +61,9 @@ The demo rooms were generated with Muse Image 1.0, so this repository holds no p
 
 | Room | Brief | Products | Matched | Untouched pixels | Time | Cost |
 |---|---|---|---|---|---|---|
-| Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, rug, floor lamp | 3 of 3, the rug after one round of redraws | 70.1% | 206&nbsp;s | $0.25 |
-| Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | loveseat, rug, floor lamp, coffee table, planter | 5 of 5, the coffee table after one round of redraws | 62.5% | 203&nbsp;s | $0.27 |
-| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | coverlet, rug, wall art | 3 of 3 | 67.9% | 150&nbsp;s | $0.18 |
+| Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, rug, floor lamp | 3 of 3, the rug after one round of redraws | 70.3% | 216&nbsp;s | $0.24 |
+| Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofa, rug, floor lamp, coffee table, planter | 5 of 5, the rug after two rounds of redraws and the coffee table after one | 63.3% | 288&nbsp;s | $0.37 |
+| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | bed frame, bedding, rug | 3 of 3, the rug after two rounds of redraws | 70.7% | 244&nbsp;s | $0.30 |
 
 "Matched" is Muse Spark 1.3's verdict on a close crop of each rendered product next to its catalog photo. Costs are estimates from Meta's published prices, logged per call.
 
@@ -94,7 +94,7 @@ The web app replays each run from its event log: the scan with every outline, th
 
 ![The verify step of the living-room run](docs/verify.jpg)
 
-Above is the verify step of the living-room run. Muse Image drew three candidates, Spark scored all three products in each, and candidate 1 was kept. Its rug scored 4 of 10, so it went on to the fix step and came back at 9.
+Above is the verify step of the living-room run. Muse Image drew three candidates, Spark scored all three products in each, and candidate 2 was kept. Its rug scored 5 of 10, so it went on to the fix step and came back at 9.
 
 ## Meta models
 
@@ -111,7 +111,7 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 - `before.png` and `after.png` are lossless. In the app, **Check it yourself** downloads both and compares them pixel by pixel in your browser, then shows the share that is identical.
 - `layers.png` colors every changed pixel as product, cleared or shadow. `masks.npz` holds every object and product mask.
 - `ledger.jsonl` lists every model call with its time and estimated cost. The Perception Encoder search is in it too, at no cost, because it runs in the app's own server.
-- `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.8 to 2.1 on the demo runs). Those pixels are the reason for the composite step.
+- `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.7 to 3.7 on the demo runs). Those pixels are the reason for the composite step.
 
 ## The catalog
 
@@ -124,27 +124,59 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 5. `modal_catalog.py --step embed` embeds every photo with Meta's Perception Encoder (PE-Core B16-224) on Modal CPUs.
 6. `abo_finalize.py` writes `catalog.jsonl`: 4,375 products. It dropped 104 whose photo did not show the listed product and 133 that had no finished tag when the demo runs were recorded.
 
-Muse Spark Open tagged 3,781 of the 4,375 on Baseten and 594 on Fireworks. The tags are in [`catalog/index/catalog.jsonl`](catalog/index/catalog.jsonl). Product photos are not in the repository (about 760 MB); the scripts above rebuild them.
+Muse Spark Open tagged 3,781 of the 4,375 on Baseten and 594 on Fireworks. The tags are in [`catalog/index/catalog.jsonl`](catalog/index/catalog.jsonl). The repository holds only the product photos that the demo runs show. The full set is one file on the GitHub release (see [Run it](#run-it)), and the steps above rebuild it from ABO.
 
 A store with its own product feed would replace steps 1 to 3 with its own listings and photos. Search, pick, render and verify need only a kind, real dimensions and one clean photo per product, plus the tags and embeddings from steps 4 and 5.
 
 ## Run it
 
-Python 3.12 and Node 20 or later. Put `MODEL_API_KEY=...` (Meta Model API) in a `.env` file in the repository root or any folder above it.
+You need Python 3.12 and Node 20 or later. Install once:
 
 ```bash
 python -m venv .venv
 .venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
-
-# one run on your own photo (needs the catalog with its photos in data/catalog)
-.venv/bin/python backend/scripts/run_demo.py --room room.jpg --id my-room --brief "Warmer and less cluttered" \
-    --mode refresh --slots 3 --catalog data/catalog --out demo-runs/my-room
-
-# the web app with the recorded runs; --live also accepts uploads and calls the APIs
-.venv/bin/python backend/scripts/serve_local.py --runs demo-runs --catalog data/catalog --port 8787
 ```
+
+On Windows, write `.venv\Scripts\` where these commands say `.venv/bin/`.
+
+### Replay the recorded runs (no key)
+
+```bash
+.venv/bin/python backend/scripts/serve_local.py
+```
+
+Open http://127.0.0.1:8787. The demo rooms replay the runs in [`demo-runs/`](demo-runs) step by step, as on the hosted app. No model is called. The product photos those runs show are in `demo-runs/_photos`, and the upload box says that live runs are off.
+
+### Live runs with your own Meta Model API key
+
+1. Copy `.env.example` to `.env` and fill in `MODEL_API_KEY`. git ignores `.env`, and the server also finds one in any folder above the repository.
+2. Download the photos of all 4,375 products into `data/photos`. They are one file of about 730 MB on this repository's GitHub release.
+   ```bash
+   .venv/bin/python catalog/get_photos.py
+   ```
+3. Download the Perception Encoder weights once (`timm/PE-Core-B-16` on Hugging Face, about 1.8 GB). If you skip this, the first live search waits for the same download.
+   ```bash
+   .venv/bin/python -c "import open_clip; open_clip.create_model_and_transforms('PE-Core-B-16', pretrained='meta')"
+   ```
+4. Start the server with `--live`:
+   ```bash
+   .venv/bin/python backend/scripts/serve_local.py --live
+   ```
+
+`--live` is the only switch between replay and live. With it, the upload box runs the whole agent on your photo and the page follows the run while it works. One run costs about $0.2 to $0.4 at Meta's published prices, and its `ledger.jsonl` lists every call. The local server starts at most 10 live runs a day; `--per-day` changes that.
+
+To run the agent on one photo without the web app:
+
+```bash
+.venv/bin/python backend/scripts/run_demo.py --room room.jpg --id my-room --brief "Warmer and less cluttered" \
+    --mode refresh --slots 3 --catalog catalog/index --photos data/photos --out demo-runs/my-room
+```
+
+Use `--mode furnish` for an empty room. While `serve_local.py` is running, the finished run replays at http://127.0.0.1:8787/r/my-room.
+
+### Rebuild the catalog or host it
 
 To rebuild the catalog, download the ABO listings and image metadata into `data/abo/`, then run the steps in [The catalog](#the-catalog). The Modal steps need a Modal account and, for tagging, `BASETEN_API_KEY` and `FIREWORKS_API_KEY` in a Modal secret named `realroom-keys`.
 

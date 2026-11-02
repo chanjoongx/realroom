@@ -12,70 +12,70 @@
    "status": "start"
   },
   {
-   "t": 42.96,
+   "t": 46.41,
    "stage": "scan",
-   "title": "Found 8 objects and 9 fixed elements",
-   "detail": "bedroom, about 290 x 350 cm (medium confidence). Small renter bedroom with floor mattress on right, white desk under back window, wardrobe and clothing rack on left, and moving boxes as clutter.",
+   "title": "Found 12 objects and 10 fixed elements",
+   "detail": "bedroom, about 280 x 350 cm (medium confidence). Small bare rental bedroom with floor mattress, white desk and chair under window, freestanding wardrobe and clothing rack, and stacked moving boxes by the door.",
    "model": "muse-spark-1.3",
-   "sec": 25.9,
+   "sec": 29.0,
    "status": "done"
   },
   {
-   "t": 42.97,
+   "t": 46.43,
    "stage": "scan",
-   "title": "Outlined 8 objects with SAM 3.1",
-   "detail": "8 concept prompts found 7 objects, 1 box-prompt request(s) for the rest; Spark box vs SAM box IoU 0.373",
+   "title": "Outlined 12 objects with SAM 3.1",
+   "detail": "10 concept prompts found 11 objects, 1 box-prompt request(s) for the rest; Spark box vs SAM box IoU 0.353",
    "model": "sam-3.1",
-   "sec": 16.6,
-   "usd": 0.049,
+   "sec": 16.9,
+   "usd": 0.0574,
    "status": "done"
   },
   {
-   "t": 42.97,
+   "t": 46.43,
    "stage": "plan",
-   "title": "Calm Neutral First Bedroom",
-   "detail": "Layer warm neutrals and soft textures over the existing white and wood base to turn the mattress-on-floor setup into a calm adult bedroom.",
+   "title": "Calm First Apartment Bedroom",
+   "detail": "Lift the mattress onto a low platform, dress it in soft neutral linen, and warm the floor with a plain rug for a calm grown-up feel.",
    "model": "muse-spark-1.3",
    "status": "done",
    "slots": [
     {
      "id": "s1",
-     "kind": "bedding",
+     "kind": "bed",
      "action": "replace"
     },
     {
      "id": "s2",
-     "kind": "rug",
-     "action": "add"
+     "kind": "bedding",
+     "action": "replace"
     },
     {
      "id": "s3",
-     "kind": "wall_art",
+     "kind": "rug",
      "action": "add"
     }
    ]
   },
   {
-   "t": 56.31,
+   "t": 58.94,
    "stage": "search",
    "title": "Searched 4,375 real products",
-   "detail": "bedding: 17 > 7 fit > 7; rug: 640 > 231 fit > 24; wall art: 467 > 229 fit > 24",
-   "model": "catalog index + siglip-2",
-   "sec": 13.33,
+   "detail": "bed: 129 > 3 fit > 3; bedding: 17 > 7 fit > 7; rug: 640 > 231 fit > 24",
+   "model": "catalog index + pe-core-b16-224",
+   "sec": 12.5,
    "status": "done"
   },
   {
-   "t": 71.73,
+   "t": 69.01,
    "stage": "pick",
-   "title": "Chose Ivory Diamond Matelasse Coverlet, Geometric Wool Area Rug, Abstract Blue Beige Canvas Art",
-   "detail": "All three in ivory, beige and soft gray layer warm neutrals and soft texture over the white and light wood base for a calm adult bedroom.",
+   "title": "Chose Pine Platform Bed Frame, Ivory Diamond Matelasse Coverlet, Cream geometric criss-cross rug",
+   "detail": "All three stay in ivory, beige and light oak with plain matte surfaces, so the low oak platform, soft white bedding and ivory rug work together for a calm grown-up first-apartment feel in this bright small room.",
    "model": "muse-spark-1.3",
-   "sec": 15.4,
-   "usd": 0.0197,
+   "sec": 10.0,
+   "usd": 0.0137,
    "status": "done"
   },
   {
-   "t": 71.83,
+   "t": 69.11,
    "stage": "render",
    "title": "Drawing 3 candidates",
    "detail": "Muse Image 1.0 gets the room, a placement guide and 3 real product photos",
@@ -83,35 +83,71 @@
    "status": "start"
   },
   {
-   "t": 92.76,
+   "t": 88.55,
    "stage": "render",
-   "title": "3 candidates in 20 s",
+   "title": "3 candidates in 19 s",
    "detail": "",
    "model": "muse-image-1.0",
-   "sec": 20.4,
+   "sec": 18.8,
    "usd": 0.03,
    "status": "done"
   },
   {
-   "t": 144.6,
+   "t": 151.06,
    "stage": "verify",
-   "title": "Inspected 9 product renders, kept candidate 2",
-   "detail": "Ivory Diamond Matelasse Coverlet: match 9, Geometric Wool Area Rug: match 9, Abstract Blue Beige Canvas Art: match 9",
+   "title": "Inspected 9 product renders, kept candidate 1",
+   "detail": "Pine Platform Bed Frame: match 9, Ivory Diamond Matelasse Coverlet: match 9, Cream geometric criss-cross rug: partial 6",
    "model": "muse-spark-1.3 + sam-3.1",
-   "sec": 51.8,
-   "usd": 0.0838,
+   "sec": 62.5,
+   "usd": 0.0864,
    "status": "done",
    "scores": [
-    0.875,
-    0.9,
-    0.875
+    0.72,
+    0.5637,
+    0.5513
    ]
   },
   {
-   "t": 149.78,
+   "t": 151.07,
+   "stage": "fix",
+   "title": "Redrawing the Cream geometric criss-cross rug",
+   "detail": "pile looks thick shaggy high-pile vs flat low-pile in reference; diamond criss-cross pattern much bolder, thicker and larger scale than reference",
+   "model": "muse-image-1.0",
+   "status": "start"
+  },
+  {
+   "t": 183.12,
+   "stage": "fix",
+   "title": "Redrawing the Cream geometric criss-cross rug, round 2",
+   "detail": "pile looks thick shaggy high-pile vs flat low-pile in reference; diamond criss-cross pattern much bolder, thicker and larger scale than reference",
+   "model": "muse-image-1.0",
+   "status": "start"
+  },
+  {
+   "t": 226.24,
+   "stage": "fix",
+   "title": "Cream geometric criss-cross rug: partial 6 -> match 9",
+   "detail": "4 redraws in 2 rounds, each judged by Spark",
+   "model": "muse-image-1.0 + sam-3.1 + muse-spark-1.3",
+   "sec": 75.2,
+   "usd": 0.0904,
+   "status": "done"
+  },
+  {
+   "t": 242.48,
+   "stage": "fix",
+   "title": "Judged the finished room again",
+   "detail": "Overall 8, photoreal 8, cohesion 8. Tidied neutral styling is cohesive; lighting and shadows are plausible with no obvious compositing.",
+   "model": "muse-spark-1.3",
+   "sec": 13.4,
+   "usd": 0.0172,
+   "status": "done"
+  },
+  {
+   "t": 243.49,
    "stage": "result",
-   "title": "3 of 3 products verified as exact matches",
-   "detail": "67.9% of the photo is pixel-identical to the original (new products 25.7%, cleared 3.0%, shadows 3.4%). The image model drifted everywhere else (mean dE 2.0); those pixels were restored.",
+   "title": "3 of 3 products match their catalog photos",
+   "detail": "70.7% of the photo is pixel-identical to the original (new products 22.4%, cleared 3.3%, shadows 3.6%). The image model drifted everywhere else (mean dE 1.66); those pixels were restored.",
    "status": "done"
   }
  ],
@@ -125,8 +161,8 @@
  },
  "brief": "First apartment after graduation. I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting.",
  "mode": "refresh",
- "elapsed_s": 149.8,
- "cost_usd": 0.185,
+ "elapsed_s": 243.5,
+ "cost_usd": 0.2977,
  "scan": {
   "size": [
    1792,
@@ -138,213 +174,222 @@
    "problem": ""
   },
   "room_type": "bedroom",
-  "summary": "Small renter bedroom with floor mattress on right, white desk under back window, wardrobe and clothing rack on left, and moving boxes as clutter.",
+  "summary": "Small bare rental bedroom with floor mattress, white desk and chair under window, freestanding wardrobe and clothing rack, and stacked moving boxes by the door.",
   "dimensions_cm": {
-   "basis": "desk height ~73 cm and single floor mattress ~100x200 cm as scale; typical ceiling ~230 cm",
-   "ceiling": 230.0,
+   "basis": "desk height ~73cm, wardrobe height ~180cm and floor mattress length ~200cm as scale; ceiling standard ~230cm",
+   "ceiling": 230,
    "confidence": "medium",
-   "depth": 350.0,
-   "width": 290.0
+   "depth": 350,
+   "width": 280
   },
   "light": {
-   "color_temperature": "neutral daylight ~5000K",
-   "direction": "back",
+   "color_temperature": "neutral daylight mixed with cool-white ceiling ~5000K",
+   "direction": "from back window and overhead ceiling",
    "quality": "soft diffused"
   },
   "fixed": [
    {
     "name": "ceiling",
     "box": [
-     228,
+     222,
      0,
-     1640,
-     323
+     1684,
+     340
     ]
    },
    {
     "name": "floor",
     "box": [
-     297,
-     855,
+     357,
+     841,
      1140,
-     1343
+     1340
     ]
    },
    {
     "name": "back wall",
     "box": [
      527,
-     306,
-     1425,
-     866
+     309,
+     1394,
+     867
     ]
    },
    {
     "name": "right wall",
     "box": [
      1383,
-     4,
+     0,
      1791,
-     1202
+     1340
     ]
    },
    {
     "name": "left wall",
     "box": [
-     308,
-     222,
-     561,
-     679
+     229,
+     207,
+     548,
+     925
+    ]
+   },
+   {
+    "name": "doorway partition wall",
+    "box": [
+     90,
+     0,
+     401,
+     1340
+    ]
+   },
+   {
+    "name": "entrance doorway opening",
+    "box": [
+     0,
+     0,
+     246,
+     1340
     ]
    },
    {
     "name": "window",
     "box": [
-     579,
-     468,
-     1224,
-     715
+     584,
+     328,
+     1238,
+     712
     ]
    },
    {
-    "name": "roller blind",
+    "name": "installed roller blind",
     "box": [
-     579,
-     309,
-     1208,
-     504
-    ]
-   },
-   {
-    "name": "doorway opening",
-    "box": [
-     0,
-     0,
-     323,
-     1341
+     593,
+     336,
+     1219,
+     507
     ]
    },
    {
     "name": "ceiling light",
     "box": [
-     656,
-     4,
-     973,
-     171
+     633,
+     3,
+     918,
+     152
     ]
    }
   ],
   "plan": {
-   "idea": "Layer warm neutrals and soft textures over the existing white and wood base to turn the mattress-on-floor setup into a calm adult bedroom.",
+   "idea": "Lift the mattress onto a low platform, dress it in soft neutral linen, and warm the floor with a plain rug for a calm grown-up feel.",
    "palette": [
+    "ivory",
     "beige",
-    "off-white",
-    "warm gray",
-    "light wood"
+    "light oak",
+    "soft gray"
    ],
-   "style": "calm modern minimal",
-   "title": "Calm Neutral First Bedroom",
+   "style": "calm soft minimal",
+   "title": "Calm First Apartment Bedroom",
    "slots": [
     {
      "action": "replace",
      "color_family": "beige",
-     "kind": "bedding",
-     "look": "solid beige cotton duvet cover set with pillowcases, minimal calm",
-     "placement": "Dress the existing floor mattress against the right wall, head at back wall, duvet folded neatly.",
-     "replaces": "o2",
+     "kind": "bed",
+     "look": "low solid light oak platform bed frame for single mattress, no headboard, minimal",
+     "placement": "Place centered against right wall where mattress now sits, long side to wall, head at back window wall.",
+     "replaces": "o1",
      "size_cm": {
-      "d": 200.0,
-      "h": 15.0,
-      "w": 140.0
+      "d": 200,
+      "h": 30,
+      "w": 100
      },
      "slot": "s1",
      "target_box": [
-      620,
-      587,
-      987,
+      612,
+      562,
+      968,
       997
      ],
-     "why": "Instantly makes mattress-on-floor look intentional and grown-up and adds soft warmth.",
+     "why": "Lifts mattress off floor, instantly making room feel adult and orderly without blocking walkway.",
      "id": "s1",
      "target_px": [
-      1111,
-      789,
-      1769,
+      1097,
+      755,
+      1735,
       1340
+     ]
+    },
+    {
+     "action": "replace",
+     "color_family": "white",
+     "kind": "bedding",
+     "look": "plain warm white washed linen duvet cover set with pillowcases, matte soft",
+     "placement": "Dress mattress on new frame with duvet folded neatly, pillows at window end.",
+     "replaces": "o2",
+     "size_cm": {
+      "d": 200,
+      "h": 10,
+      "w": 150
+     },
+     "slot": "s2",
+     "target_box": [
+      613,
+      566,
+      965,
+      995
+     ],
+     "why": "Replaces rumpled gray bedding with light breathable texture for calm restful focal point.",
+     "id": "s2",
+     "target_px": [
+      1098,
+      761,
+      1729,
+      1337
      ]
     },
     {
      "action": "add",
      "color_family": "beige",
      "kind": "rug",
-     "look": "low-pile ivory beige rectangular rug with solid plain surface",
-     "placement": "Laid lengthwise in the center walkway between bed and wardrobe-desk, long edge parallel to bed.",
+     "look": "plain low-pile ivory beige rectangular wool rug, no pattern",
+     "placement": "Lay on wood floor in center walkway between bed and wardrobe, long edge parallel to bed, clear of desk chair.",
      "replaces": "",
      "size_cm": {
-      "d": 180.0,
-      "h": 2.0,
-      "w": 120.0
-     },
-     "slot": "s2",
-     "target_box": [
-      230,
-      720,
-      630,
-      998
-     ],
-     "why": "Softens the wood floor, defines zones and adds calm coziness without blocking walkway.",
-     "id": "s2",
-     "target_px": [
-      412,
-      968,
-      1129,
-      1341
-     ]
-    },
-    {
-     "action": "add",
-     "color_family": "beige",
-     "kind": "wall_art",
-     "look": "framed minimal abstract landscape print in beige and soft gray",
-     "placement": "Hung centered on right wall above the bed, about 40 cm above mattress, vertical orientation.",
-     "replaces": "",
-     "size_cm": {
-      "d": 3.0,
-      "h": 70.0,
-      "w": 50.0
+      "d": 180,
+      "h": 2,
+      "w": 120
      },
      "slot": "s3",
      "target_box": [
-      800,
-      320,
-      920,
-      540
+      248,
+      708,
+      622,
+      997
      ],
-     "why": "Fills the large empty wall to feel finished and adult without painting.",
+     "why": "Softens wood floor, defines sleep zone, and adds warmth without pattern clutter.",
      "id": "s3",
      "target_px": [
-      1434,
-      430,
-      1649,
-      726
+      444,
+      952,
+      1115,
+      1340
      ]
     }
    ]
   },
   "stats": {
-   "spark_sec": 25.9,
-   "sam_sec": 16.6,
-   "sam_requests": 9,
-   "sam_concepts": 8,
+   "spark_sec": 29.0,
+   "sam_sec": 16.9,
+   "sam_requests": 11,
+   "sam_concepts": 10,
    "sam_box_requests": 1,
-   "by_concept": 7,
-   "objects": 8,
-   "outlined": 8,
-   "mean_iou": 0.373,
+   "by_concept": 11,
+   "objects": 12,
+   "outlined": 12,
+   "mean_iou": 0.353,
    "classes": {
-    "keep": 6,
-    "replace": 1,
-    "remove": 1
+    "keep": 7,
+    "replace": 2,
+    "remove": 3
    }
   },
   "objects": [
@@ -352,39 +397,39 @@
     "id": "o1",
     "name": "floor mattress with gray sheet",
     "category": "bed",
-    "class": "keep",
-    "reason": "sleeping base to keep and dress with new bedding",
+    "class": "replace",
+    "reason": "on floor, lifting onto frame makes it feel adult",
     "sam_phrase": "floor mattress",
     "spark_box": [
-     1111,
-     789,
-     1769,
+     1098,
+     762,
+     1733,
      1340
     ],
     "box": [
-     1110,
-     768,
-     1758,
-     1277
+     1084,
+     764,
+     1754,
+     1292
     ],
-    "outline": "M1113 823 L1118 828 L1110 838 L1114 835 L1120 837 L1114 840 L1117 846 L1115 853 L1118 853 L1121 846 L1126 849 L1126 854 L1122 856 L1125 861 L1121 866 L1126 869 L1129 893 L1127 899 L1142 915 L1226 947 L1229 950 L1229 963 L1245 996 L1264 1015 L1272 1018 L1285 1030 L1303 1038 L1341 1038 L1371 1027 L1410 1033 L1427 1029 L1428 1023 L1440 1021 L1459 1025 L1463 1017 L1490 1000 L1521 1004 L1542 1002 L1552 1011 L1555 1006 L1560 1005 L1555 1002 L1558 997 L1564 1003 L1567 1001 L1562 996 L1579 973 L1581 945 L1577 924 L1571 911 L1552 892 L1521 875 L1503 869 L1468 864 L1446 851 L1391 829 L1359 795 L1335 781 L1297 776 L1267 768 L1247 772 L1241 782 L1222 783 L1216 778 L1197 785 L1191 774 L1187 774 L1185 778 L1176 775 L1169 777 L1157 792 L1142 795 L1145 801 L1121 808 L1124 813 L1122 819 Z M1584 1107 L1582 1107 L1580 1110 L1574 1111 L1572 1115 L1569 1115 L1568 1116 L1568 1118 L1573 1122 L1569 1124 L1567 1127 L1569 1129 L1572 1129 L1574 1131 L1572 1133 L1567 1135 L1568 1137 L1572 1138 L1574 1140 L1569 1146 L1571 1147 L1574 1151 L1580 1152 L1582 1155 L1585 1155 L1587 1152 L1590 1152 L1592 1154 L1592 1156 L1595 1157 L1597 1160 L1594 1161 L1592 1163 L1592 1166 L1590 1168 L1588 1168 L1586 1171 L1581 1171 L1578 1168 L1576 1168 L1576 1171 L1575 1172 L1571 1172 L1570 1173 L1570 1178 L1567 1181 L1567 1183 L1574 1185 L1576 1188 L1578 1188 L1581 1184 L1584 1184 L1587 1180 L1591 1179 L1591 1177 L1593 1175 L1599 1175 L1601 1178 L1603 1178 L1603 1176 L1600 1175 L1601 1172 L1603 1172 L1605 1175 L1608 1175 L1610 1174 L1613 1170 L1616 1170 L1616 1167 L1611 1164 L1613 1161 L1616 1160 L1616 1158 L1614 1157 L1611 1153 L1608 1153 L1604 1148 L1599 1147 L1598 1144 L1592 1142 L1592 1138 L1593 1137 L1597 1137 L1597 1135 L1594 1135 L1592 1138 L1588 1138 L1587 1137 L1587 1135 L1589 1133 L1591 1133 L1591 1131 L1594 1128 L1597 1129 L1599 1131 L1599 1133 L1602 1134 L1605 1132 L1605 1129 L1609 1127 L1609 1126 L1605 1123 L1605 1120 L1599 1119 L1597 1116 L1594 1116 L1591 1120 L1588 1120 L1587 1121 L1587 1123 L1590 1124 L1592 1126 L1592 1128 L1591 1129 L1588 1129 L1587 1132 L1583 1134 L1579 1131 L1582 1128 L1586 1128 L1585 1125 L1581 1125 L1580 1124 L1580 1120 L1582 1118 L1585 1118 L1585 1117 L1580 1113 L1580 1110 L1581 1109 L1584 1109 L1585 1108 Z",
-    "iou": 0.838,
-    "conf": 0.65234375,
-    "area_frac": 0.0366,
+    "outline": "M1097 807 L1102 812 L1101 823 L1108 827 L1103 832 L1107 837 L1103 842 L1110 841 L1113 851 L1103 860 L1107 864 L1104 870 L1111 871 L1107 878 L1102 879 L1113 886 L1112 893 L1116 899 L1120 899 L1119 891 L1123 885 L1126 893 L1122 902 L1129 903 L1142 915 L1223 944 L1229 949 L1229 963 L1246 996 L1263 1014 L1285 1030 L1303 1038 L1340 1038 L1371 1027 L1410 1033 L1437 1021 L1455 1021 L1459 1024 L1462 1017 L1490 999 L1552 1002 L1566 992 L1578 975 L1580 943 L1577 925 L1568 908 L1550 891 L1505 870 L1467 864 L1445 851 L1391 829 L1365 800 L1335 781 L1298 775 L1279 766 L1259 765 L1250 770 L1241 768 L1230 775 L1214 773 L1204 767 L1197 770 L1191 764 L1166 766 L1167 772 L1155 780 L1150 780 L1146 773 L1135 772 L1138 775 L1136 781 L1129 776 L1124 791 L1128 795 L1135 794 L1139 801 L1110 801 Z",
+    "iou": 0.87,
+    "conf": 0.6953125,
+    "area_frac": 0.0367,
     "how": "box"
    },
    {
     "id": "o2",
-    "name": "rumpled gray duvet and pillow",
+    "name": "rumpled gray duvet",
     "category": "bedding",
     "class": "replace",
-    "reason": "messy and dorm-like, new calm bedding will replace it",
+    "reason": "rumpled and dull, replace with calm bedding",
     "sam_phrase": "duvet",
     "spark_box": [
-     1161,
-     759,
-     1715,
-     1042
+     1134,
+     762,
+     1643,
+     1040
     ],
     "box": [
      1012,
@@ -392,24 +437,49 @@
      1580,
      1038
     ],
-    "outline": "M1012 861 L1016 878 L1039 891 L1089 905 L1128 908 L1185 931 L1217 940 L1228 950 L1239 980 L1263 1010 L1287 1029 L1308 1037 L1338 1036 L1368 1025 L1390 1030 L1411 1029 L1434 1019 L1461 1015 L1478 1005 L1485 995 L1517 999 L1552 996 L1565 990 L1578 972 L1577 934 L1571 913 L1545 888 L1509 872 L1467 864 L1394 829 L1363 799 L1341 784 L1275 766 L1249 769 L1237 777 L1220 778 L1192 787 L1173 787 L1170 791 L1141 798 L1102 800 L1074 818 L1068 832 L1061 838 L1018 854 Z",
-    "iou": 0.578,
+    "outline": "M1012 861 L1016 878 L1039 891 L1089 905 L1128 908 L1185 931 L1217 940 L1228 950 L1239 980 L1263 1010 L1287 1029 L1308 1037 L1338 1036 L1368 1025 L1390 1030 L1411 1029 L1434 1019 L1461 1015 L1478 1005 L1485 995 L1517 999 L1552 996 L1565 990 L1578 972 L1577 934 L1571 913 L1545 888 L1509 872 L1464 863 L1394 829 L1363 799 L1341 784 L1300 775 L1276 766 L1261 766 L1249 769 L1237 777 L1220 778 L1192 787 L1173 787 L1170 791 L1141 798 L1102 800 L1074 818 L1068 832 L1061 838 L1018 854 Z",
+    "iou": 0.694,
     "conf": 0.5775577425956726,
     "area_frac": 0.0364,
     "how": "concept"
    },
    {
     "id": "o3",
+    "name": "gray pillow",
+    "category": "bedding",
+    "class": "keep",
+    "reason": "functional, dress with new cover",
+    "sam_phrase": "pillow",
+    "spark_box": [
+     1172,
+     731,
+     1441,
+     808
+    ],
+    "box": [
+     1047,
+     731,
+     1279,
+     806
+    ],
+    "outline": "M1278 763 L1271 757 L1269 757 L1261 752 L1245 746 L1242 746 L1240 744 L1226 739 L1220 739 L1194 733 L1177 732 L1176 731 L1162 731 L1161 732 L1125 734 L1124 735 L1109 734 L1086 738 L1075 742 L1064 744 L1056 748 L1047 757 L1047 763 L1058 772 L1057 791 L1056 792 L1057 799 L1061 802 L1073 805 L1087 805 L1099 799 L1106 797 L1122 796 L1123 795 L1157 791 L1170 778 L1177 775 L1195 776 L1198 779 L1203 781 L1219 777 L1235 777 L1243 773 L1247 769 L1253 767 L1257 767 L1261 765 L1271 765 L1272 766 L1276 765 Z",
+    "iou": 0.267,
+    "conf": 0.8439024686813354,
+    "area_frac": 0.0044,
+    "how": "concept"
+   },
+   {
+    "id": "o4",
     "name": "white desk",
     "category": "desk",
     "class": "keep",
-    "reason": "functional work desk to keep",
+    "reason": "functional work surface, good condition",
     "sam_phrase": "desk",
     "spark_box": [
-     581,
+     552,
      714,
      1090,
-     957
+     927
     ],
     "box": [
      678,
@@ -418,23 +488,23 @@
      922
     ],
     "outline": "M866 681 L859 683 L854 693 L853 732 L855 746 L857 747 L864 746 L902 747 L906 750 L907 753 L908 777 L907 778 L907 817 L906 820 L907 821 L907 868 L908 869 L908 917 L911 921 L915 917 L917 893 L920 880 L923 874 L926 854 L926 840 L924 835 L926 817 L925 750 L926 749 L926 726 L927 725 L926 720 L927 719 L927 702 L929 697 L929 683 L927 682 Z M712 689 L705 690 L697 695 L692 696 L680 703 L678 706 L678 709 L683 716 L685 724 L687 769 L690 788 L693 866 L694 867 L696 903 L698 907 L700 907 L705 902 L708 895 L718 885 L722 872 L721 866 L722 863 L724 861 L731 862 L737 856 L737 855 L724 856 L720 852 L722 846 L718 842 L722 839 L725 832 L725 822 L723 813 L724 776 L722 765 L715 752 L700 751 L697 747 L697 744 L699 742 L724 742 L727 739 L726 727 L721 708 Z",
-    "iou": 0.397,
+    "iou": 0.426,
     "conf": 0.9649122953414917,
     "area_frac": 0.0061,
     "how": "concept"
    },
    {
-    "id": "o4",
+    "id": "o5",
     "name": "black office chair",
-    "category": "chair",
+    "category": "office chair",
     "class": "keep",
-    "reason": "functional seating to keep",
+    "reason": "functional, keep for desk",
     "sam_phrase": "office chair",
     "spark_box": [
-     586,
-     716,
-     713,
-     1021
+     559,
+     714,
+     722,
+     992
     ],
     "box": [
      713,
@@ -443,23 +513,23 @@
      960
     ],
     "outline": "M715 679 L713 684 L723 707 L729 735 L728 744 L722 752 L726 772 L727 833 L723 849 L717 945 L724 944 L730 860 L735 832 L749 824 L760 827 L763 873 L768 878 L768 826 L824 827 L835 832 L843 831 L848 840 L845 955 L852 958 L854 822 L861 808 L866 809 L869 815 L870 849 L876 888 L881 889 L872 798 L881 749 L869 748 L856 753 L853 750 L852 685 L844 680 Z",
-    "iou": 0.0,
+    "iou": 0.024,
     "conf": 0.6908212304115295,
     "area_frac": 0.0098,
     "how": "concept"
    },
    {
-    "id": "o5",
+    "id": "o6",
     "name": "laptop on desk",
     "category": "electronics",
     "class": "keep",
-    "reason": "personal work item to keep",
+    "reason": "personal work item",
     "sam_phrase": "laptop",
     "spark_box": [
-     631,
+     633,
      650,
-     735,
-     722
+     706,
+     716
     ],
     "box": [
      761,
@@ -474,17 +544,17 @@
     "how": "concept"
    },
    {
-    "id": "o6",
+    "id": "o7",
     "name": "white freestanding wardrobe",
-    "category": "storage",
+    "category": "wardrobe",
     "class": "keep",
-    "reason": "main closed storage to keep",
+    "reason": "main closed storage, keep",
     "sam_phrase": "wardrobe",
     "spark_box": [
-     380,
-     425,
-     613,
-     960
+     383,
+     427,
+     577,
+     958
     ],
     "box": [
      448,
@@ -492,24 +562,24 @@
      674,
      922
     ],
-    "outline": "M456 403 L448 407 L448 441 L457 568 L463 573 L520 569 L532 575 L537 582 L543 625 L549 635 L548 646 L567 719 L560 737 L554 743 L554 761 L574 913 L583 920 L607 921 L666 864 L673 843 L673 792 L665 692 L652 421 L649 416 L582 394 Z M495 892 L495 894 L497 896 L498 899 L509 910 L510 910 L513 913 L521 913 L522 914 L535 914 L536 915 L543 915 L544 916 L553 916 L554 915 L559 915 L560 914 L561 914 L561 913 L562 912 L562 902 L561 901 L561 894 L560 893 L560 891 L559 890 L559 886 L558 885 L558 873 L557 872 L557 865 L556 864 L544 864 L543 863 L535 863 L534 864 L532 864 L531 863 L519 863 L518 864 L517 864 L515 867 L515 870 L514 871 L514 875 L513 876 L513 878 L512 879 L512 880 L509 883 L508 883 L506 885 L505 885 L504 886 L502 886 L501 887 L498 888 L496 890 L496 891 Z",
-    "iou": 0.506,
-    "conf": 0.6952381134033203,
+    "outline": "M456 403 L448 407 L448 441 L457 568 L464 573 L520 569 L531 574 L537 582 L543 625 L549 635 L548 646 L567 719 L560 737 L554 743 L554 761 L574 912 L579 919 L607 921 L666 864 L673 843 L673 792 L665 692 L652 421 L649 416 L582 394 Z M495 892 L495 894 L497 896 L497 898 L511 912 L512 912 L513 913 L521 913 L522 914 L535 914 L536 915 L543 915 L544 916 L554 916 L555 915 L559 915 L560 914 L561 914 L561 913 L562 912 L562 902 L561 901 L561 894 L560 893 L560 891 L559 890 L559 886 L558 885 L558 873 L557 872 L557 865 L556 864 L545 864 L544 863 L535 863 L534 864 L532 864 L531 863 L519 863 L518 864 L517 864 L515 867 L515 870 L514 871 L514 875 L513 876 L513 878 L512 879 L512 880 L509 883 L508 883 L506 885 L505 885 L504 886 L502 886 L501 887 L498 888 L496 890 L496 891 Z",
+    "iou": 0.403,
+    "conf": 0.6995305418968201,
     "area_frac": 0.031,
     "how": "concept"
    },
    {
-    "id": "o7",
-    "name": "clothing rack with clothes",
-    "category": "storage",
+    "id": "o8",
+    "name": "white clothing rack frame",
+    "category": "clothes rack",
     "class": "keep",
-    "reason": "used for daily clothes, keep tidy",
+    "reason": "useful open hanging, keep tidy",
     "sam_phrase": "clothing rack",
     "spark_box": [
-     240,
-     605,
-     486,
-     1000
+     274,
+     602,
+     482,
+     985
     ],
     "box": [
      334,
@@ -517,77 +587,204 @@
      583,
      961
     ],
-    "outline": "M551 740 L547 740 L545 742 L551 813 L555 832 L555 847 L557 850 L564 897 L565 924 L562 928 L558 926 L521 924 L508 920 L493 920 L489 916 L493 904 L493 898 L488 894 L482 898 L485 906 L484 912 L486 916 L478 927 L460 941 L459 946 L463 948 L485 933 L493 930 L531 935 L544 935 L553 937 L555 939 L553 944 L540 958 L542 960 L546 960 L551 958 L568 942 L582 940 L581 933 L577 928 L573 917 L561 810 L559 804 L558 784 L554 765 L553 744 Z M545 633 L541 629 L540 606 L536 585 L533 579 L528 574 L518 571 L500 572 L499 573 L478 574 L469 576 L458 576 L441 579 L424 579 L423 580 L414 580 L404 582 L376 583 L370 585 L361 585 L353 587 L340 587 L339 586 L336 587 L334 590 L338 598 L364 599 L369 597 L381 596 L384 594 L405 592 L406 591 L428 590 L438 593 L448 589 L459 588 L475 584 L479 585 L482 588 L484 585 L491 582 L498 582 L505 580 L518 580 L523 583 L527 587 L529 599 L531 603 L530 627 L539 633 L544 635 Z",
-    "iou": 0.386,
+    "outline": "M551 740 L547 740 L545 742 L551 813 L555 832 L555 847 L557 850 L564 897 L565 924 L562 928 L558 926 L521 924 L508 920 L493 920 L489 916 L493 904 L493 898 L488 894 L482 898 L485 906 L484 912 L486 916 L478 927 L460 941 L459 946 L463 948 L485 933 L493 930 L531 935 L544 935 L553 937 L555 939 L553 944 L540 958 L542 960 L546 960 L551 958 L568 942 L582 940 L581 933 L577 928 L573 917 L561 810 L559 804 L558 784 L554 765 L553 744 Z M545 633 L541 629 L540 606 L536 585 L533 579 L528 574 L518 571 L500 572 L499 573 L478 574 L469 576 L458 576 L441 579 L424 579 L423 580 L414 580 L404 582 L376 583 L370 585 L361 585 L353 587 L340 587 L339 586 L336 587 L334 590 L338 598 L364 599 L369 597 L381 596 L384 594 L405 592 L406 591 L428 590 L438 593 L448 589 L459 588 L475 584 L479 585 L482 588 L484 585 L491 582 L498 582 L505 580 L518 580 L523 583 L527 587 L529 599 L531 603 L530 627 L537 632 L544 635 Z",
+    "iou": 0.43,
     "conf": 0.9532163739204407,
     "area_frac": 0.0027,
     "how": "concept"
    },
    {
-    "id": "o8",
-    "name": "stack of cardboard moving boxes",
-    "category": "boxes",
+    "id": "o9",
+    "name": "hanging shirts group",
+    "category": "clothes",
+    "class": "keep",
+    "reason": "everyday clothes, keep organized",
+    "sam_phrase": "shirts",
+    "spark_box": [
+     276,
+     641,
+     500,
+     952
+    ],
+    "box": [
+     342,
+     623,
+     530,
+     926
+    ],
+    "outline": "M357 633 L345 641 L345 645 L342 649 L344 678 L348 690 L355 696 L362 712 L364 721 L361 727 L361 737 L367 748 L380 781 L380 785 L375 796 L364 811 L365 827 L369 835 L399 839 L407 845 L412 878 L418 902 L420 920 L422 920 L426 925 L430 925 L427 922 L429 912 L432 909 L437 911 L439 910 L441 899 L438 869 L434 860 L435 850 L431 825 L431 817 L433 812 L433 794 L440 786 L443 772 L447 767 L447 761 L442 753 L432 716 L429 711 L427 691 L421 675 L417 669 L405 660 L381 646 L365 639 Z M445 623 L435 627 L432 630 L432 632 L460 648 L469 658 L473 671 L479 681 L481 692 L485 701 L485 706 L491 730 L496 744 L496 754 L492 760 L492 770 L490 775 L483 782 L480 797 L482 832 L486 843 L486 863 L489 881 L494 883 L504 882 L509 879 L510 875 L509 856 L511 851 L510 842 L511 791 L509 767 L511 764 L511 758 L528 737 L529 730 L527 720 L522 711 L521 704 L516 692 L516 688 L508 671 L507 660 L503 656 L501 648 L480 633 L475 633 L470 630 Z",
+    "iou": 0.552,
+    "conf": 0.5586206912994385,
+    "area_frac": 0.0098,
+    "how": "concept"
+   },
+   {
+    "id": "o10",
+    "name": "cardboard moving box bottom",
+    "category": "moving box",
     "class": "remove",
-    "reason": "move-in clutter that prevents calm grown-up feel",
+    "reason": "moving clutter to unpack and clear",
     "sam_phrase": "cardboard box",
     "spark_box": [
-     301,
-     905,
-     466,
-     1277
+     312,
+     1030,
+     412,
+     1177
+    ],
+    "box": [
+     411,
+     1020,
+     509,
+     1189
+    ],
+    "outline": "M485 1022 L474 1021 L473 1020 L468 1020 L463 1022 L459 1027 L450 1033 L445 1039 L442 1040 L432 1049 L429 1050 L420 1059 L416 1061 L411 1067 L411 1075 L412 1076 L413 1085 L417 1096 L419 1106 L422 1113 L422 1117 L424 1121 L424 1125 L425 1126 L425 1129 L428 1138 L428 1145 L429 1146 L429 1150 L432 1159 L432 1163 L435 1169 L435 1173 L438 1180 L438 1183 L439 1185 L443 1188 L446 1188 L453 1183 L471 1159 L478 1152 L485 1142 L491 1135 L495 1132 L497 1128 L507 1117 L508 1114 L508 1103 L504 1093 L503 1081 L502 1080 L502 1071 L501 1070 L501 1065 L500 1064 L500 1061 L498 1056 L498 1050 L497 1049 L496 1034 L494 1029 L490 1024 Z",
+    "iou": 0.005,
+    "conf": 0.949367105960846,
+    "area_frac": 0.0044,
+    "how": "concept"
+   },
+   {
+    "id": "o11",
+    "name": "cardboard moving box middle",
+    "category": "moving box",
+    "class": "remove",
+    "reason": "moving clutter to unpack and clear",
+    "sam_phrase": "cardboard box",
+    "spark_box": [
+     310,
+     899,
+     414,
+     1052
     ],
     "box": [
      367,
      838,
-     558,
-     1189
+     419,
+     946
     ],
-    "outline": "M369 838 L367 840 L369 865 L383 942 L388 945 L385 949 L405 1052 L407 1060 L413 1063 L411 1067 L413 1085 L422 1113 L439 1185 L446 1188 L453 1183 L507 1117 L508 1103 L504 1093 L502 1071 L504 1071 L507 1094 L513 1100 L522 1086 L556 1047 L556 1029 L547 969 L544 963 L536 960 L463 951 L460 956 L463 995 L455 956 L455 943 L452 936 L444 932 L415 928 L418 926 L418 917 L407 847 L401 841 Z",
-    "iou": 0.28,
+    "outline": "M369 838 L367 840 L367 846 L368 847 L368 858 L369 859 L369 865 L370 866 L370 870 L371 871 L371 875 L372 876 L372 879 L373 880 L373 885 L374 886 L374 890 L375 891 L375 896 L376 897 L376 905 L377 906 L377 909 L378 910 L378 916 L379 917 L379 921 L380 922 L380 924 L381 925 L381 930 L382 931 L382 938 L383 939 L383 942 L385 944 L387 944 L388 945 L389 944 L390 944 L393 941 L394 941 L397 938 L398 938 L400 936 L401 936 L403 934 L410 931 L412 929 L413 929 L418 926 L418 917 L417 916 L417 910 L416 909 L416 905 L415 904 L415 900 L414 899 L414 894 L413 893 L413 885 L412 884 L412 881 L411 880 L411 875 L410 874 L410 869 L409 868 L409 863 L408 862 L408 855 L407 854 L407 847 L405 845 L405 844 L401 841 L395 841 L394 840 L389 840 L388 839 L376 839 L375 838 Z",
+    "iou": 0.114,
+    "conf": 0.9101123809814453,
+    "area_frac": 0.0016,
+    "how": "concept"
+   },
+   {
+    "id": "o12",
+    "name": "cardboard moving box small",
+    "category": "moving box",
+    "class": "remove",
+    "reason": "moving clutter to unpack and clear",
+    "sam_phrase": "cardboard box",
+    "spark_box": [
+     366,
+     958,
+     464,
+     1117
+    ],
+    "box": [
+     385,
+     928,
+     467,
+     1064
+    ],
+    "outline": "M419 928 L418 929 L414 929 L409 933 L407 933 L403 935 L394 942 L393 942 L390 945 L389 945 L385 949 L385 951 L386 952 L386 957 L387 958 L387 961 L388 962 L388 968 L389 969 L389 974 L390 975 L391 986 L392 987 L392 991 L393 992 L393 996 L394 997 L395 1004 L397 1008 L397 1014 L398 1015 L398 1018 L399 1019 L399 1022 L400 1023 L400 1026 L401 1027 L401 1033 L402 1034 L403 1040 L404 1041 L405 1052 L406 1053 L407 1060 L409 1062 L412 1062 L413 1063 L424 1053 L425 1053 L429 1049 L434 1046 L439 1041 L443 1039 L451 1031 L452 1031 L457 1026 L458 1026 L465 1019 L465 1017 L466 1016 L466 1013 L465 1012 L465 1003 L464 1002 L464 999 L463 998 L463 995 L462 994 L462 991 L461 990 L461 982 L460 981 L460 978 L459 977 L459 968 L458 967 L457 960 L455 956 L455 943 L454 942 L454 939 L451 935 L447 934 L444 932 L436 932 L435 931 L432 931 L431 930 L426 930 L425 929 L420 929 Z",
+    "iou": 0.456,
     "conf": 0.9336099624633789,
-    "area_frac": 0.0128,
+    "area_frac": 0.0032,
     "how": "concept"
    }
   ]
  },
  "plan": {
-  "title": "Calm Neutral First Bedroom",
-  "idea": "Layer warm neutrals and soft textures over the existing white and wood base to turn the mattress-on-floor setup into a calm adult bedroom.",
-  "style": "calm modern minimal",
+  "title": "Calm First Apartment Bedroom",
+  "idea": "Lift the mattress onto a low platform, dress it in soft neutral linen, and warm the floor with a plain rug for a calm grown-up feel.",
+  "style": "calm soft minimal",
   "palette": [
+   "ivory",
    "beige",
-   "off-white",
-   "warm gray",
-   "light wood"
+   "light oak",
+   "soft gray"
   ],
-  "set_comment": "All three in ivory, beige and soft gray layer warm neutrals and soft texture over the white and light wood base for a calm adult bedroom.",
+  "set_comment": "All three stay in ivory, beige and light oak with plain matte surfaces, so the low oak platform, soft white bedding and ivory rug work together for a calm grown-up first-apartment feel in this bright small room.",
   "slots": [
    {
     "action": "replace",
     "color_family": "beige",
-    "kind": "bedding",
-    "look": "solid beige cotton duvet cover set with pillowcases, minimal calm",
-    "placement": "Dress the existing floor mattress against the right wall, head at back wall, duvet folded neatly.",
-    "replaces": "o2",
+    "kind": "bed",
+    "look": "low solid light oak platform bed frame for single mattress, no headboard, minimal",
+    "placement": "Place centered against right wall where mattress now sits, long side to wall, head at back window wall.",
+    "replaces": "o1",
     "size_cm": {
-     "d": 200.0,
-     "h": 15.0,
-     "w": 140.0
+     "d": 200,
+     "h": 30,
+     "w": 100
     },
     "slot": "s1",
     "target_box": [
-     620,
-     587,
-     987,
+     612,
+     562,
+     968,
      997
     ],
-    "why": "Instantly makes mattress-on-floor look intentional and grown-up and adds soft warmth.",
+    "why": "Lifts mattress off floor, instantly making room feel adult and orderly without blocking walkway.",
     "id": "s1",
     "target_px": [
-     1111,
-     789,
-     1769,
+     1097,
+     755,
+     1735,
      1340
+    ],
+    "funnel": {
+     "kind": 129,
+     "fits": 3,
+     "size_tolerance": 0.4,
+     "clean": 3,
+     "shortlist": 3,
+     "ranked_by": [
+      "text",
+      "pe-core"
+     ]
+    },
+    "shortlist": [
+     "B0856FK4BW",
+     "B0856FL9HR",
+     "B075QDV244"
+    ],
+    "sheet": "sheet_s1.jpg",
+    "pick": "B0856FK4BW",
+    "alternates": [
+     "B0856FL9HR",
+     "B075QDV244"
+    ],
+    "reason": "Light natural oak low platform with no headboard keeps the small room open and matches the light wood floor; simple solid shape will stay clear when redrawn.",
+    "pick_number": 1
+   },
+   {
+    "action": "replace",
+    "color_family": "white",
+    "kind": "bedding",
+    "look": "plain warm white washed linen duvet cover set with pillowcases, matte soft",
+    "placement": "Dress mattress on new frame with duvet folded neatly, pillows at window end.",
+    "replaces": "o2",
+    "size_cm": {
+     "d": 200,
+     "h": 10,
+     "w": 150
+    },
+    "slot": "s2",
+    "target_box": [
+     613,
+     566,
+     965,
+     995
+    ],
+    "why": "Replaces rumpled gray bedding with light breathable texture for calm restful focal point.",
+    "id": "s2",
+    "target_px": [
+     1098,
+     761,
+     1729,
+     1337
     ],
     "funnel": {
      "kind": 17,
@@ -597,7 +794,7 @@
      "shortlist": 7,
      "ranked_by": [
       "text",
-      "siglip2"
+      "pe-core"
      ]
     },
     "shortlist": [
@@ -605,45 +802,45 @@
      "B00IAHQEB4",
      "B00IAHQHLQ",
      "B07JMV1QC3",
-     "B07JN9FYTQ",
      "B07JNRS5DJ",
-     "B07JP3LGSD"
+     "B07JP3LGSD",
+     "B07JN9FYTQ"
     ],
-    "sheet": "sheet_s1.jpg",
+    "sheet": "sheet_s2.jpg",
     "pick": "B00IAHQEB4",
     "alternates": [
      "B00IAHQHLQ",
      "B06XG1JBJ2"
     ],
-    "reason": "Warm ivory solid quilt with soft simple texture feels calm and adult, matches the beige off-white palette and bright white walls.",
+    "reason": "Soft warm-white plain set looks like washed linen, matte and calm to keep the bed bright against white walls; bedding is shown clearly with no bold print.",
     "pick_number": 2
    },
    {
     "action": "add",
     "color_family": "beige",
     "kind": "rug",
-    "look": "low-pile ivory beige rectangular rug with solid plain surface",
-    "placement": "Laid lengthwise in the center walkway between bed and wardrobe-desk, long edge parallel to bed.",
+    "look": "plain low-pile ivory beige rectangular wool rug, no pattern",
+    "placement": "Lay on wood floor in center walkway between bed and wardrobe, long edge parallel to bed, clear of desk chair.",
     "replaces": "",
     "size_cm": {
-     "d": 180.0,
-     "h": 2.0,
-     "w": 120.0
+     "d": 180,
+     "h": 2,
+     "w": 120
     },
-    "slot": "s2",
+    "slot": "s3",
     "target_box": [
-     230,
-     720,
-     630,
-     998
+     248,
+     708,
+     622,
+     997
     ],
-    "why": "Softens the wood floor, defines zones and adds calm coziness without blocking walkway.",
-    "id": "s2",
+    "why": "Softens wood floor, defines sleep zone, and adds warmth without pattern clutter.",
+    "id": "s3",
     "target_px": [
-     412,
-     968,
-     1129,
-     1341
+     444,
+     952,
+     1115,
+     1340
     ],
     "funnel": {
      "kind": 640,
@@ -653,120 +850,149 @@
      "shortlist": 24,
      "ranked_by": [
       "text",
-      "siglip2"
+      "pe-core"
      ]
     },
     "shortlist": [
-     "B07B4ZFF2B",
      "B07B4SF2F3",
-     "B07TVD4QNC",
      "B07B4WKN9L",
      "B07B4WKMYK",
-     "B07TVD3Z6Q",
-     "B07B4WH9D2",
-     "B07B4ZWQ4T",
-     "B07B4WKMB1",
-     "B071LQJ4XF",
-     "B071LQHVQ8",
+     "B07B4ZFF2B",
+     "B07TVD4QNC",
+     "B071ZJ6C4W",
+     "B07B4WGHDG",
+     "B0735VGDT3",
+     "B071ZJ5X4Y",
      "B0732DDNMQ",
      "B07B4ZW7CH",
-     "B07TZMWH7X",
-     "B072C5W36Q",
-     "B07B4WKMZ3",
+     "B075Z8GZ45",
+     "B072JC97G7",
+     "B0735S6D1P",
+     "B072LY33XF",
      "B072PX31T8",
-     "B071ZJ6C4W",
-     "B07B4YQGFJ",
+     "B07B4WH9D2",
+     "B071LQHVYN",
      "B07121ZVVT",
-     "B07B4WKCMB",
+     "B07QJMFC4D",
+     "B07B4WKMZ3",
+     "B0735SLC3P",
      "B072JC982F",
-     "B07B5185LJ",
-     "B071LQHW1P"
-    ],
-    "sheet": "sheet_s2.jpg",
-    "pick": "B07B4SF2F3",
-    "alternates": [
-     "B071LQJ4XF",
-     "B072C5W36Q"
-    ],
-    "reason": "Solid light-beige low-pile rectangle with plain flat surface warms up the light wood floor without competing with bedding and stays clear when redrawn.",
-    "pick_number": 2
-   },
-   {
-    "action": "add",
-    "color_family": "beige",
-    "kind": "wall_art",
-    "look": "framed minimal abstract landscape print in beige and soft gray",
-    "placement": "Hung centered on right wall above the bed, about 40 cm above mattress, vertical orientation.",
-    "replaces": "",
-    "size_cm": {
-     "d": 3.0,
-     "h": 70.0,
-     "w": 50.0
-    },
-    "slot": "s3",
-    "target_box": [
-     800,
-     320,
-     920,
-     540
-    ],
-    "why": "Fills the large empty wall to feel finished and adult without painting.",
-    "id": "s3",
-    "target_px": [
-     1434,
-     430,
-     1649,
-     726
-    ],
-    "funnel": {
-     "kind": 467,
-     "fits": 229,
-     "size_tolerance": 0.4,
-     "clean": 229,
-     "shortlist": 24,
-     "ranked_by": [
-      "text",
-      "siglip2"
-     ]
-    },
-    "shortlist": [
-     "B073P1J8FH",
-     "B073P1N3B7",
-     "B075YLTDZP",
-     "B073P5PZ5T",
-     "B073P1H7JQ",
-     "B073P6BG6M",
-     "B073P13P7Q",
-     "B073P1J9CR",
-     "B073P1HZQM",
-     "B073P66TYG",
-     "B073P13JKT",
-     "B073NZPN4S",
-     "B073P1CJGD",
-     "B073P1J8FB",
-     "B073P1JGQ5",
-     "B075YL2RQN",
-     "B073P1F31Y",
-     "B075HX5QD6",
-     "B073P1JNF6",
-     "B075YNL6YB",
-     "B073P6HGSG",
-     "B073NZWZLS",
-     "B073NZPPP8",
-     "B073P5Y9K3"
+     "B0732D26B2"
     ],
     "sheet": "sheet_s3.jpg",
-    "pick": "B073P1J9CR",
+    "pick": "B0735S6D1P",
     "alternates": [
-     "B073P13JKT",
-     "B075HX5QD6"
+     "B07B4SF2F3",
+     "B07B4WKN9L"
     ],
-    "reason": "Soft beige-to-gray horizontal landscape is minimal and calm, ties walls, floor and bedding together, large plain bands stay recognisable.",
-    "pick_number": 8
+    "reason": "Solid ivory-cream low-pile rectangle warms the oak floor with no pattern, keeping the look calm and the rectangular shape easy to recognise.",
+    "pick_number": 14
    }
   ]
  },
  "products": {
+  "B0856FK4BW": {
+   "id": "B0856FK4BW",
+   "kind": "bed",
+   "title": "Pine Platform Bed Frame",
+   "name": "Rivet Modern Solid Pine Wood Platform Bed, Full, 53.9\"W, Antique Espresso",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 136.9,
+    "d": 190.6,
+    "h": 35.6
+   },
+   "size_in": {
+    "w": 53.9,
+    "d": 75.0,
+    "h": 14.0
+   },
+   "color": "medium brown, light beige, cream",
+   "materials": [
+    "pine",
+    "wood",
+    "slats"
+   ],
+   "style": [
+    "modern",
+    "minimal",
+    "platform"
+   ],
+   "description": "Low rectangular pine platform bed frame in medium brown with light wood slats and four straight legs.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B0856FK4BW",
+   "thumb": "catalog/thumb/B0856FK4BW.webp",
+   "image": "catalog/img/B0856FK4BW.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B0856FL9HR": {
+   "id": "B0856FL9HR",
+   "kind": "bed",
+   "title": "Solid Pine Platform Bed",
+   "name": "Rivet Modern Solid Pine Wood Platform Bed, Twin, 38.39\"W, Antique Espresso",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 97.5,
+    "d": 190.6,
+    "h": 35.6
+   },
+   "size_in": {
+    "w": 38.4,
+    "d": 75.0,
+    "h": 14.0
+   },
+   "color": "espresso brown, medium brown",
+   "materials": [
+    "pine",
+    "wood",
+    "solid wood"
+   ],
+   "style": [
+    "modern",
+    "minimal",
+    "platform"
+   ],
+   "description": "Low rectangular platform bed frame in glossy antique espresso pine with tapered legs and spaced white slats.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B0856FL9HR",
+   "thumb": "catalog/thumb/B0856FL9HR.webp",
+   "image": "catalog/img/B0856FL9HR.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B075QDV244": {
+   "id": "B075QDV244",
+   "kind": "bed",
+   "title": "Upholstered Backless Daybed With Trundle",
+   "name": "Rivet Meredith Twin Backless Daybed Frame With Trundle, 42.5\"W (Mattress Not Included)",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 108.0,
+    "d": 215.5,
+    "h": 88.9
+   },
+   "size_in": {
+    "w": 42.5,
+    "d": 84.8,
+    "h": 35.0
+   },
+   "color": "cream, off-white, beige",
+   "materials": [
+    "polyester",
+    "fabric",
+    "upholstered"
+   ],
+   "style": [
+    "modern",
+    "minimal",
+    "upholstered"
+   ],
+   "description": "Low rectangular upholstered daybed in cream fabric with high side arms, white mattress, and low pull-out trundle drawer underneath.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B075QDV244",
+   "thumb": "catalog/thumb/B075QDV244.webp",
+   "image": "catalog/img/B075QDV244.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
   "B00IAHQEB4": {
    "id": "B00IAHQEB4",
    "kind": "bedding",
@@ -864,6 +1090,40 @@
    "image": "catalog/img/B06XG1JBJ2.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
+  "B0735S6D1P": {
+   "id": "B0735S6D1P",
+   "kind": "rug",
+   "title": "Cream geometric criss-cross rug",
+   "name": "Rivet Geometric Criss-Cross Woven Wool Area Rug, 4 x 6 Foot, Cream",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 182.9,
+    "d": 121.9,
+    "h": 1.3
+   },
+   "size_in": {
+    "w": 72.0,
+    "d": 48.0,
+    "h": 0.5
+   },
+   "color": "cream, ivory, beige",
+   "materials": [
+    "wool",
+    "cotton",
+    "woven"
+   ],
+   "style": [
+    "modern",
+    "minimal",
+    "geometric"
+   ],
+   "description": "Rectangular low-pile area rug in cream with subtle raised criss-cross geometric weave and soft woven wool texture.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B0735S6D1P",
+   "thumb": "catalog/thumb/B0735S6D1P.webp",
+   "image": "catalog/img/B0735S6D1P.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
   "B07B4SF2F3": {
    "id": "B07B4SF2F3",
    "kind": "rug",
@@ -898,170 +1158,36 @@
    "image": "catalog/img/B07B4SF2F3.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
-  "B071LQJ4XF": {
-   "id": "B071LQJ4XF",
+  "B07B4WKN9L": {
+   "id": "B07B4WKN9L",
    "kind": "rug",
-   "title": "Bordered Sisal Area Rug",
-   "name": "Rivet Woven Bordered Sisal Area Rug, 3' 6'' x 5' 6'', Ivory",
-   "brand": "Rivet",
+   "title": "Ivory Geometric Wool Area Rug",
+   "name": "Stone & Beam Casual Geometric Wool Area Rug, 5' 9\" x 3' 9\", Ivory",
+   "brand": "Stone & Beam",
    "size_cm": {
-    "w": 167.6,
-    "d": 106.7,
-    "h": 1.3
+    "w": 175.3,
+    "d": 114.3,
+    "h": 0.6
    },
    "size_in": {
-    "w": 66.0,
-    "d": 42.0,
-    "h": 0.5
+    "w": 69.0,
+    "d": 45.0,
+    "h": 0.2
    },
-   "color": "ivory, beige, cream",
+   "color": "cream, ivory, beige",
    "materials": [
-    "sisal",
-    "natural fiber",
-    "woven"
+    "wool"
    ],
    "style": [
-    "transitional",
+    "casual",
     "minimal",
-    "natural"
+    "modern"
    ],
-   "description": "Rectangular ivory woven sisal rug with subtle basketweave texture and thin bordered edge in angled perspective view.",
+   "description": "Rectangular ivory wool area rug with subtle basketweave geometric texture and thick low pile.",
    "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B071LQJ4XF",
-   "thumb": "catalog/thumb/B071LQJ4XF.webp",
-   "image": "catalog/img/B071LQJ4XF.jpg",
-   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
-  },
-  "B072C5W36Q": {
-   "id": "B072C5W36Q",
-   "kind": "rug",
-   "title": "Beige Modern Wave Rug",
-   "name": "Rivet Modern Wave Cosmopolitan Area Rug, 5 x 7 Foot, Beige",
-   "brand": "Rivet",
-   "size_cm": {
-    "w": 213.4,
-    "d": 152.4,
-    "h": 1.3
-   },
-   "size_in": {
-    "w": 84.0,
-    "d": 60.0,
-    "h": 0.5
-   },
-   "color": "beige, cream, off-white",
-   "materials": [
-    "polyethylene",
-    "synthetic",
-    "textile"
-   ],
-   "style": [
-    "modern",
-    "contemporary",
-    "minimal"
-   ],
-   "description": "Rectangular beige synthetic rug in angled perspective with raised tonal wavy line pattern across entire surface.",
-   "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B072C5W36Q",
-   "thumb": "catalog/thumb/B072C5W36Q.webp",
-   "image": "catalog/img/B072C5W36Q.jpg",
-   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
-  },
-  "B073P1J9CR": {
-   "id": "B073P1J9CR",
-   "kind": "wall_art",
-   "title": "Abstract Blue Beige Canvas Art",
-   "name": "Stone & Beam Modern Abstract Blue and Tan Ocean Print Wall Art on Canvas, 24\" x 28\"",
-   "brand": "Stone & Beam",
-   "size_cm": {
-    "w": 61.0,
-    "d": 3.8,
-    "h": 71.1
-   },
-   "size_in": {
-    "w": 24.0,
-    "d": 1.5,
-    "h": 28.0
-   },
-   "color": "navy blue, beige, light gray",
-   "materials": [
-    "canvas"
-   ],
-   "style": [
-    "abstract",
-    "modern",
-    "minimal"
-   ],
-   "description": "Square stretched canvas with horizontal abstract washes fading from pale beige at top to dark navy blue at bottom with visible brush texture.",
-   "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B073P1J9CR",
-   "thumb": "catalog/thumb/B073P1J9CR.webp",
-   "image": "catalog/img/B073P1J9CR.jpg",
-   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
-  },
-  "B073P13JKT": {
-   "id": "B073P13JKT",
-   "kind": "wall_art",
-   "title": "Abstract Blue Tan Ocean Canvas",
-   "name": "Stone & Beam Modern Abstract Blue and Tan Ocean Print Wall Art on Canvas, 17\" x 20\"",
-   "brand": "Stone & Beam",
-   "size_cm": {
-    "w": 43.2,
-    "d": 3.8,
-    "h": 50.8
-   },
-   "size_in": {
-    "w": 17.0,
-    "d": 1.5,
-    "h": 20.0
-   },
-   "color": "navy blue, beige, light gray",
-   "materials": [
-    "canvas"
-   ],
-   "style": [
-    "abstract",
-    "modern",
-    "minimalist"
-   ],
-   "description": "Rectangular stretched canvas with horizontal abstract brushstrokes fading from pale beige on top to deep navy blue at bottom.",
-   "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B073P13JKT",
-   "thumb": "catalog/thumb/B073P13JKT.webp",
-   "image": "catalog/img/B073P13JKT.jpg",
-   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
-  },
-  "B075HX5QD6": {
-   "id": "B075HX5QD6",
-   "kind": "wall_art",
-   "title": "Abstract Gold Flecks Canvas Painting",
-   "name": "Rivet Abstract Gold and White Flecks Painting on Canvas Wall Art Decor, 24\" x 24\"",
-   "brand": "Rivet",
-   "size_cm": {
-    "w": 61.0,
-    "d": 3.8,
-    "h": 61.0
-   },
-   "size_in": {
-    "w": 24.0,
-    "d": 1.5,
-    "h": 24.0
-   },
-   "color": "white, gold, gray",
-   "materials": [
-    "canvas",
-    "paint",
-    "metal leaf"
-   ],
-   "style": [
-    "abstract",
-    "modern",
-    "minimalist"
-   ],
-   "description": "Square white canvas with textured abstract horizontal gold leaf flecks and soft gray brushstrokes across the center.",
-   "render_risk": "medium",
-   "url": "https://www.amazon.com/dp/B075HX5QD6",
-   "thumb": "catalog/thumb/B075HX5QD6.webp",
-   "image": "catalog/img/B075HX5QD6.jpg",
+   "url": "https://www.amazon.com/dp/B07B4WKN9L",
+   "thumb": "catalog/thumb/B07B4WKN9L.webp",
+   "image": "catalog/img/B07B4WKN9L.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   }
  },
@@ -1069,51 +1195,56 @@
   "candidates": [
    {
     "index": 1,
-    "score": 0.875,
+    "score": 0.72,
     "judge": {
      "products": [
       {
-       "color": "ivory white",
-       "fix": "No fix needed, keep as is.",
+       "color": "medium-dark walnut brown",
+       "fix": "No fix needed.",
        "index": 1,
        "issues": [],
-       "material_pattern": "diamond matelasse quilt with textured stitching",
+       "material_pattern": "solid pine wood, no pattern",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "rectangular quilted coverlet with matching pillow shams draped over single bed",
+       "shape": "low rectangular platform frame with square legs",
        "verdict": "match"
       },
       {
-       "color": "light beige / ivory",
-       "fix": "No fix needed, keep as is.",
+       "color": "ivory off-white",
+       "fix": "No fix needed.",
        "index": 2,
        "issues": [],
-       "material_pattern": "embossed geometric nested octagon-square wool weave",
+       "material_pattern": "diamond matelasse quilted texture",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "rectangular flat area rug",
+       "shape": "rectangular coverlet with matching pillow shams",
        "verdict": "match"
       },
       {
-       "color": "beige to navy blue gradient",
-       "fix": "No fix needed, keep as is.",
+       "color": "cream off-white",
+       "fix": "Replace with flat-weave cream rug with fine subtle diamond texture.",
        "index": 3,
-       "issues": [],
-       "material_pattern": "abstract horizontal brushstroke ombre on canvas",
+       "issues": [
+        "pile looks thick shaggy high-pile vs flat low-pile in reference",
+        "diamond criss-cross pattern much bolder, thicker and larger scale than reference"
+       ],
+       "material_pattern": "chunky shaggy criss-cross diamond",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 9,
-       "shape": "vertical rectangular gallery-wrapped canvas",
-       "verdict": "match"
+       "score": 6,
+       "shape": "rectangular rug",
+       "verdict": "partial"
       }
      ],
      "scene": {
-      "artifacts": [],
+      "artifacts": [
+       "faint transparent ghosting on floor where boxes were removed near clothing rack"
+      ],
       "cohesion": 8,
-      "comment": "Clean tidy staging with cohesive neutral palette; walls, floor, window and fixtures unchanged and boxes cleanly removed.",
-      "overall": 8,
+      "comment": "Tidy small bedroom with cohesive neutral palette; frame and bedding look natural, but rug texture is bolder than reference and faint removal ghosting remains.",
+      "overall": 7,
       "photoreal": 8,
       "removals_ok": true,
       "renter_rule_ok": true
@@ -1122,99 +1253,107 @@
     "raw": "cand_1_raw.jpg",
     "comp": "cand_1.jpg",
     "drift": {
-     "static_frac": 0.59,
-     "dE_mean": 2.12,
-     "dE_p95": 4.48,
-     "changed_frac_dE10": 0.0141,
-     "ssim_static": 0.9417
+     "static_frac": 0.643,
+     "dE_mean": 1.66,
+     "dE_p95": 3.7,
+     "changed_frac_dE10": 0.0052,
+     "ssim_static": 0.9449
     },
     "align": {
      "ok": true,
-     "cc": 0.9958863205831486,
-     "max_corner_shift_px": 11.72,
+     "cc": 0.998318183045589,
+     "max_corner_shift_px": 6.76,
      "flow": {
-      "refined": true,
-      "coverage": 0.1338,
-      "static_dE_before": 2.212,
-      "static_dE_after": 2.124,
-      "mean_shift_px": 0.9,
-      "max_shift_px": 7.2
+      "refined": false,
+      "coverage": 0.1411,
+      "static_dE_before": 1.66,
+      "static_dE_after": 1.635,
+      "mean_shift_px": 0.73,
+      "max_shift_px": 9.62
      }
     },
     "seg_how": [
+     "concept:bed frame",
      "concept:bed coverlet",
-     "concept:area rug",
-     "concept:canvas wall art"
+     "concept:area rug"
     ],
     "boxes": [
      [
-      916,
-      799,
-      1785,
-      1344
+      970,
+      1024,
+      1672,
+      1279
      ],
      [
-      458,
-      965,
-      931,
-      1344
+      971,
+      785,
+      1667,
+      1154
      ],
      [
-      1383,
-      271,
-      1625,
-      632
+      483,
+      930,
+      940,
+      1303
      ]
     ]
    },
    {
     "index": 2,
-    "score": 0.9,
+    "score": 0.5637,
     "judge": {
      "products": [
       {
-       "color": "ivory off-white",
-       "fix": "No fix needed, keep as is.",
+       "color": "dark espresso-brown in edit vs medium honey-pine in reference",
+       "fix": "Re-render the frame in the light honey-pine finish with slim rails to match reference.",
        "index": 1,
-       "issues": [],
-       "material_pattern": "matelasse cotton with diamond stitch and dotted texture",
+       "issues": [
+        "frame color much darker than light pine reference",
+        "foot rail and legs look thicker and chunkier than slim reference rails"
+       ],
+       "material_pattern": "smooth stained wood, solid with no pattern",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 9,
-       "shape": "rectangular coverlet draped over single bed with matching pillow shams",
-       "verdict": "match"
+       "score": 6,
+       "shape": "low rectangular platform frame with square corner legs, no headboard",
+       "verdict": "partial"
       },
       {
-       "color": "light beige ivory",
-       "fix": "No fix needed, keep as is.",
+       "color": "ivory white",
+       "fix": "No fix needed, product matches.",
        "index": 2,
        "issues": [],
-       "material_pattern": "wool with embossed geometric octagon-and-square line pattern",
+       "material_pattern": "diamond matelasse quilt with dotted stitch texture",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "rectangular area rug laid flat on floor",
+       "shape": "draped coverlet with matching pillow shams on single bed",
        "verdict": "match"
       },
       {
-       "color": "pale beige to light grey to dark navy blue",
-       "fix": "No fix needed, keep as is.",
+       "color": "off-white cream",
+       "fix": "Replace with a low-pile cream rug with fine subtle criss-cross pattern.",
        "index": 3,
-       "issues": [],
-       "material_pattern": "abstract horizontal brushstroke on gallery-wrapped canvas",
+       "issues": [
+        "pile much thicker and shaggier high-pile shag vs low-pile flat reference",
+        "diamond lattice much larger and bolder than fine subtle criss-cross in reference"
+       ],
+       "material_pattern": "thick high-pile shag with large bold diamond lattice",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 9,
-       "shape": "rectangular portrait canvas with thick wrap edge",
-       "verdict": "match"
+       "score": 5,
+       "shape": "rectangular area rug",
+       "verdict": "partial"
       }
      ],
      "scene": {
-      "artifacts": [],
-      "cohesion": 9,
-      "comment": "Bedding replaced with neat coverlet, rug and abstract art added in cohesive neutrals; structure unchanged and box stack cleanly removed with continuous floor.",
-      "overall": 9,
-      "photoreal": 9,
+      "artifacts": [
+       "faint semi-transparent ghost of clothing-rack bar on floor left of rug"
+      ],
+      "cohesion": 8,
+      "comment": "Room tidied with boxes cleanly removed; neutral bedding and rug suit the small room and look photographic, but rug pile/pattern and bed-frame stain deviate from references.",
+      "overall": 7,
+      "photoreal": 8,
       "removals_ok": true,
       "renter_rule_ok": true
      }
@@ -1222,98 +1361,105 @@
     "raw": "cand_2_raw.jpg",
     "comp": "cand_2.jpg",
     "drift": {
-     "static_frac": 0.59,
-     "dE_mean": 2.0,
-     "dE_p95": 4.17,
-     "changed_frac_dE10": 0.0116,
-     "ssim_static": 0.9439
+     "static_frac": 0.643,
+     "dE_mean": 1.66,
+     "dE_p95": 3.7,
+     "changed_frac_dE10": 0.0046,
+     "ssim_static": 0.9458
     },
     "align": {
      "ok": true,
-     "cc": 0.9960081442765576,
-     "max_corner_shift_px": 8.74,
+     "cc": 0.9985703830845022,
+     "max_corner_shift_px": 13.27,
      "flow": {
       "refined": true,
-      "coverage": 0.1352,
-      "static_dE_before": 2.08,
-      "static_dE_after": 1.996,
-      "mean_shift_px": 0.77,
-      "max_shift_px": 9.12
+      "coverage": 0.1394,
+      "static_dE_before": 1.719,
+      "static_dE_after": 1.656,
+      "mean_shift_px": 0.95,
+      "max_shift_px": 13.76
      }
     },
     "seg_how": [
+     "concept:bed frame",
      "concept:bed coverlet",
-     "concept:area rug",
-     "concept:canvas wall art"
+     "concept:area rug"
     ],
     "boxes": [
      [
-      893,
-      794,
-      1771,
-      1344
+      971,
+      1085,
+      1658,
+      1286
      ],
      [
-      559,
-      966,
-      932,
-      1329
+      960,
+      772,
+      1651,
+      1160
      ],
      [
-      1389,
-      305,
-      1608,
-      634
+      449,
+      928,
+      922,
+      1305
      ]
     ]
    },
    {
     "index": 3,
-    "score": 0.875,
+    "score": 0.5513,
     "judge": {
      "products": [
       {
-       "color": "ivory / off-white",
-       "fix": "No fix needed.",
+       "color": "dark walnut-brown, darker and redder than the medium honey-brown reference",
+       "fix": "Replace with the exact headboard-less medium-brown slatted platform frame from the reference.",
        "index": 1,
-       "issues": [],
-       "material_pattern": "diamond matelasse quilt with textured dotted diamond stitching",
+       "issues": [
+        "headboard present in edit but no headboard in reference",
+        "wood tone darker than reference",
+        "foot-end legs appear thicker and blockier"
+       ],
+       "material_pattern": "solid stained pine wood, matte",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 9,
-       "shape": "rectangular single-bed coverlet with matching sham, draped over bed",
-       "verdict": "match"
+       "score": 6,
+       "shape": "low wooden platform bed with integrated headboard",
+       "verdict": "partial"
       },
       {
-       "color": "light beige / cream",
-       "fix": "No fix needed.",
+       "color": "ivory white",
+       "fix": "No fix needed, bedding matches reference.",
        "index": 2,
        "issues": [],
-       "material_pattern": "wool with geometric octagon-square line motif",
+       "material_pattern": "diamond matelasse with textured dotted lines",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "rectangular area rug",
+       "shape": "rectangular coverlet draped over bed with two matching pillow shams",
        "verdict": "match"
       },
       {
-       "color": "pale beige-cream fading to navy-blue",
-       "fix": "No fix needed.",
+       "color": "off-white cream",
+       "fix": "Replace with flat low-pile cream rug with small subtle criss-cross pattern.",
        "index": 3,
-       "issues": [],
-       "material_pattern": "abstract horizontal brushed gradient on canvas",
+       "issues": [
+        "pile much thicker and chunkier high-pile shag vs low-pile flat weave in reference",
+        "diamond motif much larger, bolder and raised vs small subtle pattern in reference"
+       ],
+       "material_pattern": "chunky high-pile shag with large raised diamond lattice",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 9,
-       "shape": "rectangular portrait gallery-wrapped canvas",
-       "verdict": "match"
+       "score": 5,
+       "shape": "rectangular rug laid flat on floor",
+       "verdict": "partial"
       }
      ],
      "scene": {
       "artifacts": [],
       "cohesion": 8,
-      "comment": "Bed made with new bedding, rug and wall art in cohesive neutral palette; cardboard boxes cleanly removed with no structural changes to room.",
-      "overall": 8,
+      "comment": "Clean removal of boxes and cohesive neutral styling, but bed frame adds a headboard not in reference and rug texture/pattern is much chunkier than reference.",
+      "overall": 6,
       "photoreal": 8,
       "removals_ok": true,
       "renter_rule_ok": true
@@ -1322,56 +1468,123 @@
     "raw": "cand_3_raw.jpg",
     "comp": "cand_3.jpg",
     "drift": {
-     "static_frac": 0.59,
-     "dE_mean": 2.46,
-     "dE_p95": 4.84,
-     "changed_frac_dE10": 0.0125,
-     "ssim_static": 0.9463
+     "static_frac": 0.643,
+     "dE_mean": 1.79,
+     "dE_p95": 3.76,
+     "changed_frac_dE10": 0.0086,
+     "ssim_static": 0.9443
     },
     "align": {
      "ok": true,
-     "cc": 0.9960907464288553,
-     "max_corner_shift_px": 8.67,
+     "cc": 0.9951210637057756,
+     "max_corner_shift_px": 9.37,
      "flow": {
       "refined": true,
-      "coverage": 0.1317,
-      "static_dE_before": 2.51,
-      "static_dE_after": 2.458,
-      "mean_shift_px": 0.5,
-      "max_shift_px": 4.94
+      "coverage": 0.1391,
+      "static_dE_before": 1.863,
+      "static_dE_after": 1.785,
+      "mean_shift_px": 1.09,
+      "max_shift_px": 13.86
      }
     },
     "seg_how": [
+     "concept:bed frame",
      "concept:bed coverlet",
-     "concept:area rug",
-     "concept:canvas wall art"
+     "concept:area rug"
     ],
     "boxes": [
      [
-      914,
-      796,
-      1785,
-      1344
+      974,
+      663,
+      1672,
+      1289
      ],
      [
-      460,
-      926,
-      947,
-      1344
+      927,
+      771,
+      1697,
+      1183
      ],
      [
-      1375,
-      273,
-      1608,
-      640
+      445,
+      943,
+      885,
+      1279
      ]
     ]
    }
   ],
-  "chosen": 2,
-  "prompt": "Image 1 is a real phone photo of a room to edit. Image 2 is a placement guide: the same photo with numbered translucent boxes showing where each product goes; use it only for position and scale and never draw its boxes or numbers. Images 3 to 5 are the reference photos of products 1 to 3, in order.\n1. Replace the rumpled gray duvet and pillow with product 1: Ivory Diamond Matelasse Coverlet (bedding), real size 173 x 218 x 3 cm (width x depth x height). Dress the existing floor mattress against the right wall, head at back wall, duvet folded neatly. It belongs inside box 1 of the placement guide. Copy product 1 exactly from its reference photo: Ivory diamond matelasse coverlet and shams draped on bed, ruffled edges, geometric stitched diamond texture, soft wrinkled cotton. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n2. Add product 2: Geometric Wool Area Rug (rug), real size 182.9 x 121.9 x 0.8 cm (width x depth x height). Laid lengthwise in the center walkway between bed and wardrobe-desk, long edge parallel to bed. It belongs inside box 2 of the placement guide. Copy product 2 exactly from its reference photo: Rectangular low-pile rug in light beige wool with subtle embossed geometric medallion pattern and textured wool surface. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n3. Add product 3: Abstract Blue Beige Canvas Art (wall art), real size 61 x 3.8 x 71.1 cm (width x depth x height). Hung centered on right wall above the bed, about 40 cm above mattress, vertical orientation. It belongs inside box 3 of the placement guide. Copy product 3 exactly from its reference photo: Square stretched canvas with horizontal abstract washes fading from pale beige at top to dark navy blue at bottom with visible brush texture. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\nRemove: stack of cardboard moving boxes. Show the floor and wall that were behind them, continuing the surrounding texture, so it looks like they were never there.\nHard rules: keep the exact same camera position, framing, lens distortion and perspective. Keep the walls, wallpaper, floor, ceiling, ceiling light, windows, blinds or curtains, doors and every object that is not listed exactly as they are. Keep the existing light direction, color temperature and exposure; new products receive the same light and cast soft, physically plausible contact shadows. The result must look like an unedited phone photo of the same room, not a render. Do not add anything else: no extra decor, no text, no numbers, no colored boxes or outlines."
+  "chosen": 1,
+  "prompt": "Image 1 is a real phone photo of a room to edit. Image 2 is a placement guide: the same photo with numbered translucent boxes showing where each product goes; use it only for position and scale and never draw its boxes or numbers. Images 3 to 5 are the reference photos of products 1 to 3, in order.\n1. Replace the floor mattress with gray sheet with product 1: Pine Platform Bed Frame (bed), real size 136.9 x 190.6 x 35.6 cm (width x depth x height). Place centered against right wall where mattress now sits, long side to wall, head at back window wall. It belongs inside box 1 of the placement guide. Copy product 1 exactly from its reference photo: Low rectangular pine platform bed frame in medium brown with light wood slats and four straight legs. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n2. Replace the rumpled gray duvet with product 2: Ivory Diamond Matelasse Coverlet (bedding), real size 173 x 218 x 3 cm (width x depth x height). Dress mattress on new frame with duvet folded neatly, pillows at window end. It belongs inside box 2 of the placement guide. Copy product 2 exactly from its reference photo: Ivory diamond matelasse coverlet and shams draped on bed, ruffled edges, geometric stitched diamond texture, soft wrinkled cotton. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n3. Add product 3: Cream geometric criss-cross rug (rug), real size 182.9 x 121.9 x 1.3 cm (width x depth x height). Lay on wood floor in center walkway between bed and wardrobe, long edge parallel to bed, clear of desk chair. It belongs inside box 3 of the placement guide. Copy product 3 exactly from its reference photo: Rectangular low-pile area rug in cream with subtle raised criss-cross geometric weave and soft woven wool texture. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\nRemove: cardboard moving box bottom; cardboard moving box middle; cardboard moving box small. Show the floor and wall that were behind them, continuing the surrounding texture, so it looks like they were never there.\nHard rules: keep the exact same camera position, framing, lens distortion and perspective. Keep the walls, wallpaper, floor, ceiling, ceiling light, windows, blinds or curtains, doors and every object that is not listed exactly as they are. Keep the existing light direction, color temperature and exposure; new products receive the same light and cast soft, physically plausible contact shadows. The result must look like an unedited phone photo of the same room, not a render. Do not add anything else: no extra decor, no text, no numbers, no colored boxes or outlines."
  },
- "fixes": [],
+ "fixes": [
+  {
+   "slot": "s3",
+   "product": "B0735S6D1P",
+   "before": {
+    "color": "cream off-white",
+    "fix": "Replace with flat-weave cream rug with fine subtle diamond texture.",
+    "index": 3,
+    "issues": [
+     "pile looks thick shaggy high-pile vs flat low-pile in reference",
+     "diamond criss-cross pattern much bolder, thicker and larger scale than reference"
+    ],
+    "material_pattern": "chunky shaggy criss-cross diamond",
+    "placement_ok": true,
+    "scale_ok": true,
+    "score": 6,
+    "shape": "rectangular rug",
+    "verdict": "partial"
+   },
+   "after": {
+    "color": "cream off-white",
+    "fix": "No fix needed",
+    "index": 3,
+    "issues": [],
+    "material_pattern": "textured woven with diamond criss-cross geometric lattice",
+    "placement_ok": true,
+    "scale_ok": true,
+    "score": 9,
+    "shape": "rectangular",
+    "verdict": "match",
+    "fixed": true
+   },
+   "accepted": true,
+   "region": [
+    277,
+    762,
+    1145,
+    1344
+   ],
+   "rounds": 2,
+   "tries": [
+    {
+     "round": 1,
+     "verdict": "partial",
+     "score": 5
+    },
+    {
+     "round": 1,
+     "verdict": "partial",
+     "score": 6
+    },
+    {
+     "round": 2,
+     "verdict": "match",
+     "score": 9
+    },
+    {
+     "round": 2,
+     "verdict": "partial",
+     "score": 7
+    }
+   ],
+   "images": [
+    "fix_s3_before.jpg",
+    "fix_s3_after.jpg"
+   ]
+  }
+ ],
  "result": {
   "after": "after.jpg",
   "edit_mask": "edit_mask.png",
@@ -1381,82 +1594,83 @@
    "before": "before.png",
    "after": "after.png"
   },
-  "edit_outline": "M545 1262 L553 1289 L733 1326 L863 1343 L1629 1343 L1656 1333 L1725 1343 L1791 1244 L1791 1187 L1762 1131 L1694 1068 L1694 1058 L1672 1034 L1679 991 L1635 924 L1496 847 L1407 784 L1369 787 L1339 771 L1299 685 L1266 678 L1173 684 L1123 666 L1064 684 L1005 677 L965 688 L957 817 L952 828 L922 829 L916 836 L919 855 L938 861 L922 899 L933 968 L730 955 Z M1617 299 L1595 293 L1584 295 L1404 355 L1394 362 L1390 372 L1385 504 L1377 585 L1377 606 L1381 612 L1408 622 L1468 630 L1550 647 L1586 651 L1597 646 L1604 628 L1615 508 L1624 330 L1623 309 Z M364 826 L356 840 L357 861 L380 989 L395 1059 L399 1068 L402 1088 L427 1185 L430 1191 L437 1197 L449 1198 L464 1187 L511 1130 L529 1096 L566 1051 L568 1042 L558 968 L554 957 L547 952 L499 944 L492 941 L485 934 L476 939 L470 939 L465 935 L461 926 L436 918 L428 907 L427 879 L414 838 L407 832 Z",
+  "edit_outline": "M972 666 L966 687 L975 746 L962 781 L956 873 L963 892 L956 1060 L961 1148 L952 1157 L959 1212 L950 1260 L956 1267 L952 1288 L967 1301 L959 1317 L962 1343 L1704 1343 L1781 1225 L1791 1219 L1791 1193 L1727 1124 L1704 1085 L1676 1056 L1663 1025 L1680 993 L1633 920 L1569 880 L1488 844 L1465 819 L1417 809 L1406 786 L1373 791 L1320 757 L1310 735 L1306 699 L1294 679 L1273 670 L1250 680 L1184 678 L1177 667 L1148 661 L1094 672 L999 660 Z M702 919 L491 1196 L474 1224 L474 1234 L493 1252 L548 1265 L567 1266 L583 1272 L593 1270 L613 1274 L630 1282 L692 1293 L713 1292 L718 1297 L861 1316 L896 1315 L908 1294 L916 1253 L950 966 L949 937 L945 931 L937 928 L928 931 L850 930 L783 922 L720 922 Z M365 820 L356 840 L357 861 L395 1059 L427 1185 L437 1197 L449 1198 L464 1187 L514 1126 L519 1115 L521 1092 L556 1049 L557 1036 L551 1009 L547 1003 L539 1003 L521 1013 L512 1012 L505 1005 L506 998 L512 992 L520 988 L529 978 L542 979 L544 972 L539 964 L535 964 L493 1000 L481 1003 L473 991 L466 942 L461 926 L457 923 L438 920 L429 909 L428 899 L432 891 L432 883 L422 864 L413 832 L403 822 L394 818 L383 817 Z",
   "products": [
    {
     "slot": "s1",
-    "product": "B00IAHQEB4",
+    "product": "B0856FK4BW",
     "box": [
-     893,
-     794,
-     1771,
-     1344
+     970,
+     1024,
+     1672,
+     1279
     ],
-    "outline": "M973 818 L937 901 L945 917 L942 937 L952 939 L955 925 L965 930 L959 1128 L966 1206 L894 1327 L896 1337 L909 1343 L1571 1343 L1605 1338 L1650 1320 L1678 1322 L1714 1334 L1767 1259 L1770 1201 L1761 1157 L1750 1137 L1646 1046 L1401 861 L1383 838 L1345 809 L1318 800 L1131 797 L1116 806 L1110 796 L1058 794 L996 799 Z",
+    "outline": "M970 1272 L973 1278 L1001 1276 L1005 1213 L1010 1204 L1326 1212 L1569 1202 L1582 1205 L1586 1215 L1581 1262 L1590 1272 L1619 1267 L1628 1253 L1671 1141 L1650 1123 L1621 1138 L1423 1156 L1256 1154 L1020 1142 L994 1130 L988 1121 L979 1044 Z",
     "crop": "crop_s1.jpg",
     "verdict": {
-     "color": "ivory off-white",
-     "fix": "No fix needed, keep as is.",
+     "color": "medium-dark walnut brown",
+     "fix": "No fix needed.",
      "index": 1,
      "issues": [],
-     "material_pattern": "matelasse cotton with diamond stitch and dotted texture",
+     "material_pattern": "solid pine wood, no pattern",
      "placement_ok": true,
      "scale_ok": true,
      "score": 9,
-     "shape": "rectangular coverlet draped over single bed with matching pillow shams",
+     "shape": "low rectangular platform frame with square legs",
      "verdict": "match"
     },
     "fixed": false
    },
    {
     "slot": "s2",
-    "product": "B07B4SF2F3",
+    "product": "B00IAHQEB4",
     "box": [
-     559,
-     966,
-     932,
-     1329
+     971,
+     785,
+     1667,
+     1154
     ],
-    "outline": "M738 967 L637 1131 L560 1262 L559 1268 L567 1275 L581 1281 L663 1300 L819 1325 L883 1327 L890 1318 L929 1023 L931 984 L927 980 Z",
+    "outline": "M979 795 L971 827 L976 888 L976 999 L982 1015 L990 1115 L1014 1137 L1052 1143 L1231 1150 L1434 1153 L1626 1134 L1643 1123 L1658 1102 L1666 1075 L1665 1055 L1649 1028 L1590 976 L1399 844 L1335 795 L1304 789 L1182 789 L1175 797 L1061 785 L1005 785 Z",
     "crop": "crop_s2.jpg",
     "verdict": {
-     "color": "light beige ivory",
-     "fix": "No fix needed, keep as is.",
+     "color": "ivory off-white",
+     "fix": "No fix needed.",
      "index": 2,
      "issues": [],
-     "material_pattern": "wool with embossed geometric octagon-and-square line pattern",
+     "material_pattern": "diamond matelasse quilted texture",
      "placement_ok": true,
      "scale_ok": true,
      "score": 9,
-     "shape": "rectangular area rug laid flat on floor",
+     "shape": "rectangular coverlet with matching pillow shams",
      "verdict": "match"
     },
     "fixed": false
    },
    {
     "slot": "s3",
-    "product": "B073P1J9CR",
+    "product": "B0735S6D1P",
     "box": [
-     1389,
-     305,
-     1608,
-     634
+     485,
+     930,
+     939,
+     1302
     ],
-    "outline": "M1602 305 L1589 305 L1409 365 L1402 370 L1396 507 L1389 583 L1389 601 L1392 604 L1573 633 L1583 633 L1586 631 L1593 572 L1602 452 L1604 363 L1607 329 L1606 309 Z",
+    "outline": "M709 930 L586 1089 L497 1209 L485 1231 L501 1239 L636 1268 L793 1293 L888 1301 L895 1289 L922 1104 L935 993 L937 943 L858 940 L856 958 L847 961 L843 957 L843 940 L729 931 L726 946 L719 949 L713 941 L715 932 Z",
     "crop": "crop_s3.jpg",
     "verdict": {
-     "color": "pale beige to light grey to dark navy blue",
-     "fix": "No fix needed, keep as is.",
+     "color": "cream off-white",
+     "fix": "No fix needed",
      "index": 3,
      "issues": [],
-     "material_pattern": "abstract horizontal brushstroke on gallery-wrapped canvas",
+     "material_pattern": "textured woven with diamond criss-cross geometric lattice",
      "placement_ok": true,
      "scale_ok": true,
      "score": 9,
-     "shape": "rectangular portrait canvas with thick wrap edge",
-     "verdict": "match"
+     "shape": "rectangular",
+     "verdict": "match",
+     "fixed": true
     },
-    "fixed": false
+    "fixed": true
    }
   ],
   "removed": [
@@ -1464,58 +1678,131 @@
     "id": "o1",
     "name": "floor mattress with gray sheet",
     "box": [
-     1110,
-     768,
-     1758,
-     1277
+     1084,
+     764,
+     1754,
+     1292
     ],
-    "outline": "M1113 823 L1118 828 L1110 838 L1114 835 L1120 837 L1114 840 L1117 846 L1115 853 L1118 853 L1121 846 L1126 849 L1126 854 L1122 856 L1125 861 L1121 866 L1126 869 L1129 893 L1127 899 L1142 915 L1226 947 L1229 950 L1229 963 L1245 996 L1264 1015 L1272 1018 L1285 1030 L1303 1038 L1341 1038 L1371 1027 L1410 1033 L1427 1029 L1428 1023 L1440 1021 L1459 1025 L1463 1017 L1490 1000 L1521 1004 L1542 1002 L1552 1011 L1555 1006 L1560 1005 L1555 1002 L1558 997 L1564 1003 L1567 1001 L1562 996 L1579 973 L1581 945 L1577 924 L1571 911 L1552 892 L1521 875 L1503 869 L1468 864 L1446 851 L1391 829 L1359 795 L1335 781 L1297 776 L1267 768 L1247 772 L1241 782 L1222 783 L1216 778 L1197 785 L1191 774 L1187 774 L1185 778 L1176 775 L1169 777 L1157 792 L1142 795 L1145 801 L1121 808 L1124 813 L1122 819 Z M1584 1107 L1582 1107 L1580 1110 L1574 1111 L1572 1115 L1569 1115 L1568 1116 L1568 1118 L1573 1122 L1569 1124 L1567 1127 L1569 1129 L1572 1129 L1574 1131 L1572 1133 L1567 1135 L1568 1137 L1572 1138 L1574 1140 L1569 1146 L1571 1147 L1574 1151 L1580 1152 L1582 1155 L1585 1155 L1587 1152 L1590 1152 L1592 1154 L1592 1156 L1595 1157 L1597 1160 L1594 1161 L1592 1163 L1592 1166 L1590 1168 L1588 1168 L1586 1171 L1581 1171 L1578 1168 L1576 1168 L1576 1171 L1575 1172 L1571 1172 L1570 1173 L1570 1178 L1567 1181 L1567 1183 L1574 1185 L1576 1188 L1578 1188 L1581 1184 L1584 1184 L1587 1180 L1591 1179 L1591 1177 L1593 1175 L1599 1175 L1601 1178 L1603 1178 L1603 1176 L1600 1175 L1601 1172 L1603 1172 L1605 1175 L1608 1175 L1610 1174 L1613 1170 L1616 1170 L1616 1167 L1611 1164 L1613 1161 L1616 1160 L1616 1158 L1614 1157 L1611 1153 L1608 1153 L1604 1148 L1599 1147 L1598 1144 L1592 1142 L1592 1138 L1593 1137 L1597 1137 L1597 1135 L1594 1135 L1592 1138 L1588 1138 L1587 1137 L1587 1135 L1589 1133 L1591 1133 L1591 1131 L1594 1128 L1597 1129 L1599 1131 L1599 1133 L1602 1134 L1605 1132 L1605 1129 L1609 1127 L1609 1126 L1605 1123 L1605 1120 L1599 1119 L1597 1116 L1594 1116 L1591 1120 L1588 1120 L1587 1121 L1587 1123 L1590 1124 L1592 1126 L1592 1128 L1591 1129 L1588 1129 L1587 1132 L1583 1134 L1579 1131 L1582 1128 L1586 1128 L1585 1125 L1581 1125 L1580 1124 L1580 1120 L1582 1118 L1585 1118 L1585 1117 L1580 1113 L1580 1110 L1581 1109 L1584 1109 L1585 1108 Z",
-    "absorbed": true
+    "outline": "M1097 807 L1102 812 L1101 823 L1108 827 L1103 832 L1107 837 L1103 842 L1110 841 L1113 851 L1103 860 L1107 864 L1104 870 L1111 871 L1107 878 L1102 879 L1113 886 L1112 893 L1116 899 L1120 899 L1119 891 L1123 885 L1126 893 L1122 902 L1129 903 L1142 915 L1223 944 L1229 949 L1229 963 L1246 996 L1263 1014 L1285 1030 L1303 1038 L1340 1038 L1371 1027 L1410 1033 L1437 1021 L1455 1021 L1459 1024 L1462 1017 L1490 999 L1552 1002 L1566 992 L1578 975 L1580 943 L1577 925 L1568 908 L1550 891 L1505 870 L1467 864 L1445 851 L1391 829 L1365 800 L1335 781 L1298 775 L1279 766 L1259 765 L1250 770 L1241 768 L1230 775 L1214 773 L1204 767 L1197 770 L1191 764 L1166 766 L1167 772 L1155 780 L1150 780 L1146 773 L1135 772 L1138 775 L1136 781 L1129 776 L1124 791 L1128 795 L1135 794 L1139 801 L1110 801 Z"
    },
    {
     "id": "o2",
-    "name": "rumpled gray duvet and pillow",
+    "name": "rumpled gray duvet",
     "box": [
      1012,
      766,
      1580,
      1038
     ],
-    "outline": "M1012 861 L1016 878 L1039 891 L1089 905 L1128 908 L1185 931 L1217 940 L1228 950 L1239 980 L1263 1010 L1287 1029 L1308 1037 L1338 1036 L1368 1025 L1390 1030 L1411 1029 L1434 1019 L1461 1015 L1478 1005 L1485 995 L1517 999 L1552 996 L1565 990 L1578 972 L1577 934 L1571 913 L1545 888 L1509 872 L1467 864 L1394 829 L1363 799 L1341 784 L1275 766 L1249 769 L1237 777 L1220 778 L1192 787 L1173 787 L1170 791 L1141 798 L1102 800 L1074 818 L1068 832 L1061 838 L1018 854 Z"
+    "outline": "M1012 861 L1016 878 L1039 891 L1089 905 L1128 908 L1185 931 L1217 940 L1228 950 L1239 980 L1263 1010 L1287 1029 L1308 1037 L1338 1036 L1368 1025 L1390 1030 L1411 1029 L1434 1019 L1461 1015 L1478 1005 L1485 995 L1517 999 L1552 996 L1565 990 L1578 972 L1577 934 L1571 913 L1545 888 L1509 872 L1464 863 L1394 829 L1363 799 L1341 784 L1300 775 L1276 766 L1261 766 L1249 769 L1237 777 L1220 778 L1192 787 L1173 787 L1170 791 L1141 798 L1102 800 L1074 818 L1068 832 L1061 838 L1018 854 Z"
    },
    {
-    "id": "o8",
-    "name": "stack of cardboard moving boxes",
+    "id": "o10",
+    "name": "cardboard moving box bottom",
+    "box": [
+     411,
+     1020,
+     509,
+     1189
+    ],
+    "outline": "M485 1022 L474 1021 L473 1020 L468 1020 L463 1022 L459 1027 L450 1033 L445 1039 L442 1040 L432 1049 L429 1050 L420 1059 L416 1061 L411 1067 L411 1075 L412 1076 L413 1085 L417 1096 L419 1106 L422 1113 L422 1117 L424 1121 L424 1125 L425 1126 L425 1129 L428 1138 L428 1145 L429 1146 L429 1150 L432 1159 L432 1163 L435 1169 L435 1173 L438 1180 L438 1183 L439 1185 L443 1188 L446 1188 L453 1183 L471 1159 L478 1152 L485 1142 L491 1135 L495 1132 L497 1128 L507 1117 L508 1114 L508 1103 L504 1093 L503 1081 L502 1080 L502 1071 L501 1070 L501 1065 L500 1064 L500 1061 L498 1056 L498 1050 L497 1049 L496 1034 L494 1029 L490 1024 Z"
+   },
+   {
+    "id": "o11",
+    "name": "cardboard moving box middle",
     "box": [
      367,
      838,
-     558,
-     1189
+     419,
+     946
     ],
-    "outline": "M369 838 L367 840 L369 865 L383 942 L388 945 L385 949 L405 1052 L407 1060 L413 1063 L411 1067 L413 1085 L422 1113 L439 1185 L446 1188 L453 1183 L507 1117 L508 1103 L504 1093 L502 1071 L504 1071 L507 1094 L513 1100 L522 1086 L556 1047 L556 1029 L547 969 L544 963 L536 960 L463 951 L460 956 L463 995 L455 956 L455 943 L452 936 L444 932 L415 928 L418 926 L418 917 L407 847 L401 841 Z"
+    "outline": "M369 838 L367 840 L367 846 L368 847 L368 858 L369 859 L369 865 L370 866 L370 870 L371 871 L371 875 L372 876 L372 879 L373 880 L373 885 L374 886 L374 890 L375 891 L375 896 L376 897 L376 905 L377 906 L377 909 L378 910 L378 916 L379 917 L379 921 L380 922 L380 924 L381 925 L381 930 L382 931 L382 938 L383 939 L383 942 L385 944 L387 944 L388 945 L389 944 L390 944 L393 941 L394 941 L397 938 L398 938 L400 936 L401 936 L403 934 L410 931 L412 929 L413 929 L418 926 L418 917 L417 916 L417 910 L416 909 L416 905 L415 904 L415 900 L414 899 L414 894 L413 893 L413 885 L412 884 L412 881 L411 880 L411 875 L410 874 L410 869 L409 868 L409 863 L408 862 L408 855 L407 854 L407 847 L405 845 L405 844 L401 841 L395 841 L394 840 L389 840 L388 839 L376 839 L375 838 Z"
+   },
+   {
+    "id": "o12",
+    "name": "cardboard moving box small",
+    "box": [
+     385,
+     928,
+     467,
+     1064
+    ],
+    "outline": "M419 928 L418 929 L414 929 L409 933 L407 933 L403 935 L394 942 L393 942 L390 945 L389 945 L385 949 L385 951 L386 952 L386 957 L387 958 L387 961 L388 962 L388 968 L389 969 L389 974 L390 975 L391 986 L392 987 L392 991 L393 992 L393 996 L394 997 L395 1004 L397 1008 L397 1014 L398 1015 L398 1018 L399 1019 L399 1022 L400 1023 L400 1026 L401 1027 L401 1033 L402 1034 L403 1040 L404 1041 L405 1052 L406 1053 L407 1060 L409 1062 L412 1062 L413 1063 L424 1053 L425 1053 L429 1049 L434 1046 L439 1041 L443 1039 L451 1031 L452 1031 L457 1026 L458 1026 L465 1019 L465 1017 L466 1016 L466 1013 L465 1012 L465 1003 L464 1002 L464 999 L463 998 L463 995 L462 994 L462 991 L461 990 L461 982 L460 981 L460 978 L459 977 L459 968 L458 967 L457 960 L455 956 L455 943 L454 942 L454 939 L451 935 L447 934 L444 932 L436 932 L435 931 L432 931 L431 930 L426 930 L425 929 L420 929 Z"
    }
   ],
   "proof": {
-   "untouched_pct": 67.91,
-   "edited_pct": 32.09,
+   "untouched_pct": 70.7,
+   "edited_pct": 29.3,
    "layers_pct": {
-    "products": 25.71,
-    "cleared": 3.02,
-    "shadows": 3.37
+    "products": 22.4,
+    "cleared": 3.3,
+    "shadows": 3.61
    },
-   "model_drift_dE": 2.0,
-   "model_drift_changed_pct": 1.16,
-   "ssim_static": 0.9439,
-   "alignment_shift_px": 8.74
+   "model_drift_dE": 1.66,
+   "model_drift_changed_pct": 0.52,
+   "ssim_static": 0.9449,
+   "alignment_shift_px": 6.76
   },
   "scene": {
    "artifacts": [],
-   "cohesion": 9,
-   "comment": "Bedding replaced with neat coverlet, rug and abstract art added in cohesive neutrals; structure unchanged and box stack cleanly removed with continuous floor.",
-   "overall": 9,
-   "photoreal": 9,
+   "cohesion": 8,
+   "comment": "Tidied neutral styling is cohesive; lighting and shadows are plausible with no obvious compositing.",
+   "overall": 8,
+   "photoreal": 8,
    "removals_ok": true,
    "renter_rule_ok": true
-  }
+  },
+  "scene_first_render": {
+   "artifacts": [
+    "faint transparent ghosting on floor where boxes were removed near clothing rack"
+   ],
+   "cohesion": 8,
+   "comment": "Tidy small bedroom with cohesive neutral palette; frame and bedding look natural, but rug texture is bolder than reference and faint removal ghosting remains.",
+   "overall": 7,
+   "photoreal": 8,
+   "removals_ok": true,
+   "renter_rule_ok": true
+  },
+  "final_check_products": [
+   {
+    "color": "medium-dark brown wood",
+    "fix": "No fix needed, frame matches reference.",
+    "index": 1,
+    "issues": [],
+    "material_pattern": "solid matte pine wood",
+    "placement_ok": true,
+    "scale_ok": true,
+    "score": 9,
+    "shape": "low rectangular platform with square legs, no headboard",
+    "verdict": "match"
+   },
+   {
+    "color": "ivory / off-white",
+    "fix": "No fix needed, bedding matches reference.",
+    "index": 2,
+    "issues": [],
+    "material_pattern": "diamond matelasse quilt with textured dotted lattice",
+    "placement_ok": true,
+    "scale_ok": true,
+    "score": 9,
+    "shape": "coverlet with matching pillow shams on single bed",
+    "verdict": "match"
+   },
+   {
+    "color": "cream / off-white",
+    "fix": "Replace rug texture with fine subtle criss-cross matching reference.",
+    "index": 3,
+    "issues": [
+     "diamond lattice is much larger and bolder than reference fine subtle pattern",
+     "weave looks thicker and chunkier than reference low-pile texture"
+    ],
+    "material_pattern": "chunky woven large diamond lattice",
+    "placement_ok": true,
+    "scale_ok": true,
+    "score": 6,
+    "shape": "rectangular flat rug",
+    "verdict": "partial"
+   }
+  ]
  }
 }

@@ -1,0 +1,4 @@
+Product photos from Amazon Berkeley Objects (ABO) by Amazon.com, licensed CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/). Changes: one photo per product was chosen, its white
+margins were trimmed, and it was resized (img/ at most 1024 px, thumb/ 480 px square). These are the
+products the recorded demo runs show. Realroom is not affiliated with or endorsed by Amazon.

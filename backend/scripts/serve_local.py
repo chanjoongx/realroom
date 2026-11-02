@@ -1,10 +1,12 @@
 """Serve the API and the built web app locally.
 
-usage: python backend/scripts/serve_local.py --runs <dir with run folders and demos.json> \
-           --catalog <dir with catalog.jsonl, thumb/, img/> [--live] [--port 8787]
+usage: python backend/scripts/serve_local.py [--runs demo-runs] [--catalog catalog/index]
+           [--photos data/photos] [--live] [--per-day 10] [--port 8787]
 
-With --live, uploaded photos run through the full pipeline in a background thread (this calls the
-Meta APIs and costs money; the same daily caps as the hosted app apply).
+Without --live it replays the recorded runs in --runs and needs no key: the product photos those runs
+show are in demo-runs/_photos. With --live, uploaded photos run through the full pipeline in a
+background thread. That calls the Meta Model API (MODEL_API_KEY, costs money, at most --per-day runs a
+day) and needs every product photo in --photos (python catalog/get_photos.py).
 """
 from __future__ import annotations
 
@@ -39,17 +41,27 @@ def write_placeholder(d: pathlib.Path, run_id: str, jpeg: bytes, brief: str, mod
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--runs", required=True)
-    ap.add_argument("--catalog", required=True)
+    ap.add_argument("--runs", default=str(ROOT / "demo-runs"), help="run folders and demos.json")
+    ap.add_argument("--catalog", default=str(ROOT / "catalog" / "index"),
+                    help="catalog.jsonl and the Perception Encoder embeddings")
+    ap.add_argument("--photos", default=str(ROOT / "data" / "photos"),
+                    help="img/ and thumb/ for every product; live runs need them")
     ap.add_argument("--web", default=str(ROOT / "web" / "dist"))
     ap.add_argument("--live", action="store_true")
+    ap.add_argument("--per-day", type=int, default=10, help="live runs this server starts per day")
     ap.add_argument("--port", type=int, default=8787)
     args = ap.parse_args()
     runs = pathlib.Path(args.runs)
     cat_dir = pathlib.Path(args.catalog)
+    photos = pathlib.Path(args.photos)
+    if not (photos / "img").is_dir() and (cat_dir / "img").is_dir():
+        photos = cat_dir  # a catalog folder that holds its own photos
 
-    launcher = None
-    if args.live:
+    launcher, reason = None, "Live runs are off on this local server (start it with --live)."
+    if args.live and not (photos / "img").is_dir():
+        reason = f"Live runs need the product photos in {photos} (python catalog/get_photos.py)."
+        print(reason, flush=True)
+    elif args.live:
         from realroom.catalog import Catalog
         from realroom.pipeline import run_pipeline
 
@@ -62,7 +74,7 @@ def main() -> None:
             def work():
                 with lock:
                     if "cat" not in cat_box:
-                        cat_box["cat"] = Catalog(cat_dir)
+                        cat_box["cat"] = Catalog(cat_dir, photos)
                 room = imgutil.load_rgb(jpeg)
                 run_pipeline(room, cat_box["cat"], runs / run_id, run_id, brief, mode=mode,
                              n_slots=3 if mode == "refresh" else 4, n_candidates=2, max_fixes=1,
@@ -72,9 +84,11 @@ def main() -> None:
 
         launcher = launch
 
-    limits = Limits(live=args.live, reason="" if args.live else "Live runs are off on this local server.",
-                    state_file=runs / "_quota.json")
-    app = create_app(runs, cat_dir, pathlib.Path(args.web), limits, launcher, demos_file=runs / "demos.json")
+    limits = Limits(live=launcher is not None, reason="" if launcher else reason, per_day=args.per_day,
+                    per_client_per_day=args.per_day, state_file=runs / "_quota.json")
+    app = create_app(runs, cat_dir, pathlib.Path(args.web), limits, launcher, demos_file=runs / "demos.json",
+                     photo_dirs=[photos, runs / "_photos"])
+    print(f"Realroom on http://127.0.0.1:{args.port}  (runs {runs}, live {'on' if launcher else 'off'})", flush=True)
     uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
 
 
