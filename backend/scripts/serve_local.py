@@ -58,6 +58,7 @@ def main() -> None:
         photos = cat_dir  # a catalog folder that holds its own photos
 
     launcher, reason = None, "Live runs are off on this local server (start it with --live)."
+    active: set[str] = set()  # runs with a worker thread here; a stale "running" run.json without one is stopped
     if args.live:
         import os
 
@@ -80,15 +81,19 @@ def main() -> None:
 
         def launch(run_id: str, jpeg: bytes, brief: str, mode: str) -> None:
             write_placeholder(runs / run_id, run_id, jpeg, brief, mode)
+            active.add(run_id)
 
             def work():
-                with lock:
-                    if "cat" not in cat_box:
-                        cat_box["cat"] = Catalog(cat_dir, photos)
-                room = imgutil.load_rgb(jpeg)
-                run_pipeline(room, cat_box["cat"], runs / run_id, run_id, brief, mode=mode,
-                             n_slots=3 if mode == "refresh" else 4, n_candidates=2, max_fixes=1,
-                             room_meta={"title": "Your room", "ai_generated": False})
+                try:
+                    with lock:
+                        if "cat" not in cat_box:
+                            cat_box["cat"] = Catalog(cat_dir, photos)
+                    room = imgutil.load_rgb(jpeg)
+                    run_pipeline(room, cat_box["cat"], runs / run_id, run_id, brief, mode=mode,
+                                 n_slots=3 if mode == "refresh" else 4, n_candidates=2, max_fixes=1,
+                                 room_meta={"title": "Your room", "ai_generated": False})
+                finally:
+                    active.discard(run_id)
 
             threading.Thread(target=work, daemon=True).start()
 
@@ -97,7 +102,7 @@ def main() -> None:
     limits = Limits(live=launcher is not None, reason="" if launcher else reason, per_day=args.per_day,
                     per_client_per_day=args.per_day, state_file=runs / "_quota.json")
     app = create_app(runs, cat_dir, pathlib.Path(args.web), limits, launcher, demos_file=runs / "demos.json",
-                     photo_dirs=[photos, runs / "_photos"])
+                     photo_dirs=[photos, runs / "_photos"], is_active=lambda run_id: run_id in active)
     print(f"Realroom on http://127.0.0.1:{args.port}  (runs {runs}, live {'on' if launcher else 'off'})", flush=True)
     uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
 

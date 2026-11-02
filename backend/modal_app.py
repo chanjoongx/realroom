@@ -3,18 +3,21 @@
 One web container serves the site, the API and the catalog photos, and runs live jobs in
 background threads (so a run's files are visible to the page the moment they are written).
 Two volumes: `realroom-catalog` (product photos, catalog.jsonl, Perception Encoder embeddings) and
-`realroom-runs` (recorded demo runs, live runs). API keys come from the `realroom-keys` secret.
+`realroom-runs` (recorded demo runs, live runs). The Meta Model API key comes from the
+`realroom-keys` secret; the web container drops the catalog-tagging keys that share that secret.
 
-Live runs are capped at 40 a day, three per visitor and 60 dollars of model calls in all (each run
-reserves 0.40 when it starts and settles to its ledger total). They are deleted 18 hours after the
-upload: the web container checks every hour, and a small scheduled function wakes it every six
-hours, so an uploaded photo is gone within 24 hours even when nobody visits.
+Live runs are capped at 40 a UTC day, three per visitor and 60 dollars of model calls in all (each
+run reserves 0.40 when it starts and settles to its ledger total). They are deleted 18 hours after
+the upload: the web container checks every hour, and a small scheduled function wakes it every
+three hours, so an uploaded photo is gone within about 21 hours even when nobody visits.
 
 deploy:  modal deploy backend/modal_app.py          (from the repo root, after `npm run build` in web/)
 """
 from __future__ import annotations
 
+import os
 import pathlib
+import subprocess
 import threading
 import time
 
@@ -22,6 +25,24 @@ import modal
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PE_CORE = "PE-Core-B-16"  # Meta Perception Encoder (open_clip name); the look search runs its text tower
+
+
+def _version() -> str:
+    """The commit being deployed (git rev-parse --short HEAD), or "dev". Inside the container this
+    module is imported again, and the value then comes from the image env set at deploy time."""
+    if not modal.is_local():
+        return os.environ.get("REALROOM_VERSION", "dev")
+    try:
+        out = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True,
+                             text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return "dev"
+    return out.stdout.strip() if out.returncode == 0 and out.stdout.strip() else "dev"
+
+
+VERSION = _version()
+# Never ship a key file that happens to sit in a mounted folder.
+NO_SECRETS = ["**/.env", "**/.env.*", "**/*.env", "**/__pycache__"]
 
 app = modal.App("realroom")
 cat_vol = modal.Volume.from_name("realroom-catalog")
@@ -39,13 +60,15 @@ image = (
     .run_commands(  # bake the weights into the image, so a live run never downloads a model
         f"python -c \"import open_clip; open_clip.create_model_and_transforms('{PE_CORE}', pretrained='meta')\""
     )
-    .env({"HF_HUB_OFFLINE": "1"})
-    .add_local_dir(ROOT / "backend" / "realroom", "/root/realroom")
-    .add_local_dir(ROOT / "web" / "dist", "/web")
+    .env({"HF_HUB_OFFLINE": "1", "REALROOM_VERSION": VERSION})
+    .add_local_dir(ROOT / "backend" / "realroom", "/root/realroom", ignore=NO_SECRETS)
+    .add_local_dir(ROOT / "web" / "dist", "/web", ignore=NO_SECRETS)
 )
 
 MAX_PARALLEL_RUNS = 3
 RETAIN_HOURS = 18
+STALE_AT_START_S = 15 * 60  # at startup no worker here owns a run, so "running" this long means stopped
+UNUSED_KEYS = ("BASETEN_API_KEY", "FIREWORKS_API_KEY")  # catalog tagging only, never the web app
 
 
 @app.function(
@@ -55,6 +78,8 @@ RETAIN_HOURS = 18
     cpu=2.0,
     memory=4096,
     timeout=900,
+    # Keep this at 1. The usage counter's lock, the set of active runs, the decode slots and the
+    # worker threads all live in this one container; a second container would count on its own.
     max_containers=1,
     scaledown_window=600,
 )
@@ -62,19 +87,36 @@ RETAIN_HOURS = 18
 @modal.asgi_app(label="realroom")
 def web():
     import json
-    import os
 
     from fastapi import HTTPException
 
     from realroom import imgutil
     from realroom.catalog import Catalog
     from realroom.pipeline import run_pipeline
-    from realroom.server import Limits, create_app, purge_expired
+    from realroom.server import Limits, create_app, log, purge_expired, stop_run, sweep_interrupted
+
+    for name in UNUSED_KEYS:
+        os.environ.pop(name, None)
 
     runs = pathlib.Path("/runs")
     cat_box: dict = {}
     cat_lock = threading.Lock()
+    commit_lock = threading.Lock()
     active: set[str] = set()
+
+    def is_active(run_id: str) -> bool:
+        return run_id in active
+
+    def commit(why: str) -> None:
+        """Commit the runs volume in a background thread, so no request waits for it."""
+        def go() -> None:
+            with commit_lock:
+                try:
+                    runs_vol.commit()
+                except Exception as exc:  # noqa: BLE001
+                    log(f"runs volume commit after {why} failed: {type(exc).__name__}")
+
+        threading.Thread(target=go, daemon=True).start()
 
     def catalog() -> Catalog:
         with cat_lock:
@@ -96,21 +138,34 @@ def web():
             "brief": brief, "mode": mode}), encoding="utf-8")
         active.add(run_id)
 
+        def stop(sentence: str, stopped_at: str) -> None:
+            try:
+                p = d / "run.json"
+                stop_run(p, json.loads(p.read_text(encoding="utf-8")), sentence, stopped_at)
+            except Exception as exc:  # noqa: BLE001
+                log(f"could not mark a failed live run as stopped: {type(exc).__name__}")
+
         def work():
             try:
-                run_pipeline(room, catalog(), d, run_id, brief, mode=mode,
+                try:
+                    cat = catalog()
+                except Exception as exc:  # noqa: BLE001
+                    log(f"catalog failed to load: {type(exc).__name__}")
+                    stop("The product catalog could not be loaded. Please try again later.", "catalog")
+                    return
+                run_pipeline(room, cat, d, run_id, brief, mode=mode,
                              n_slots=3 if mode == "refresh" else 4, n_candidates=2, max_fixes=1,
                              room_meta={"title": "Your room", "ai_generated": False})
+            except Exception as exc:  # noqa: BLE001  (run_pipeline records its own errors; this is a backstop)
+                log(f"live run worker failed: {type(exc).__name__}")
+                stop("The run stopped because of a server error. Please try again.", "server")
             finally:
                 active.discard(run_id)
                 try:
                     limits.settle(json.loads((d / "run.json").read_text(encoding="utf-8")).get("cost_usd"))
-                except Exception:  # noqa: BLE001
-                    pass
-                try:
-                    runs_vol.commit()
-                except Exception:  # noqa: BLE001
-                    pass
+                except Exception as exc:  # noqa: BLE001
+                    log(f"settling a live run's cost failed: {type(exc).__name__}")
+                commit("a live run")
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -119,11 +174,21 @@ def web():
             try:
                 listed = json.loads((runs / "demos.json").read_text(encoding="utf-8")) \
                     if (runs / "demos.json").exists() else []
-                if purge_expired(runs, RETAIN_HOURS, {d["id"] for d in listed}, set(active)):
-                    runs_vol.commit()
-            except Exception:  # noqa: BLE001
-                pass
+                gone = purge_expired(runs, RETAIN_HOURS, {d["id"] for d in listed}, set(active))
+                if gone:
+                    log(f"deleted {len(gone)} expired live runs")
+                    commit("the hourly purge")
+            except Exception as exc:  # noqa: BLE001
+                log(f"hourly purge failed: {type(exc).__name__}")
             time.sleep(3600)
+
+    try:
+        stopped = sweep_interrupted(runs, STALE_AT_START_S, is_active)
+        if stopped:
+            log(f"marked {len(stopped)} interrupted live runs as stopped")
+            commit("the startup sweep")
+    except Exception as exc:  # noqa: BLE001
+        log(f"startup sweep failed: {type(exc).__name__}")
 
     threading.Thread(target=tidy, daemon=True).start()
 
@@ -132,15 +197,16 @@ def web():
                     per_day=int(os.environ.get("REALROOM_RUNS_PER_DAY", "40")),
                     per_client_per_day=int(os.environ.get("REALROOM_RUNS_PER_CLIENT", "3")),
                     budget_usd=float(os.environ.get("REALROOM_BUDGET_USD", "60")),
-                    state_file=runs / "_quota.json")
+                    state_file=runs / "_quota.json", on_change=lambda: commit("a usage counter change"))
+    log(f"web container up, version {VERSION}")
     return create_app(runs, pathlib.Path("/cat"), pathlib.Path("/web"), limits, launch,
-                      demos_file=runs / "demos.json")
+                      demos_file=runs / "demos.json", is_active=is_active)
 
 
 @app.function(image=modal.Image.debian_slim(python_version="3.12").pip_install("requests==2.34.2"),
-              schedule=modal.Period(hours=6), timeout=180)
+              schedule=modal.Period(hours=3), timeout=180)
 def wake() -> None:
-    """Start the web container every six hours so expired live runs are deleted even with no visitors."""
+    """Start the web container every three hours so expired live runs are deleted even with no visitors."""
     import os
 
     import requests

@@ -1,11 +1,16 @@
 # secrets
 .env
 *.env
+.env.*
+!.env.example
 
 # local data: the ABO download, the built catalog, recorded and live runs
 data/
 runs/
 _work/
+# live runs and the usage counter that serve_local.py writes into demo-runs/ (the recorded demos stay tracked)
+demo-runs/u[0-9]*/
+demo-runs/_quota.json*
 
 # build output and dependencies
 web/node_modules/
