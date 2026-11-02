@@ -47,6 +47,17 @@
   color: var(--text-2);
 }
 
+/* a model whose earlier work a step uses without calling it */
+.model-chip.offline {
+  border-style: dashed;
+}
+
+.model-chip.offline .dot {
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid currentColor;
+}
+
 .model-chip.compact {
   height: 18px;
   padding: 0 6px;
@@ -185,6 +196,11 @@
   border-color: rgba(94, 230, 181, 0.4);
 }
 
+.chip.stopped {
+  color: var(--remove);
+  border-color: rgba(255, 122, 102, 0.4);
+}
+
 .chip.live .dot {
   animation: blink 1.2s ease-in-out infinite;
 }
@@ -225,9 +241,42 @@
   padding: 40px;
 }
 
-.studio-error h2 {
+.studio-error :is(h1, h2) {
   font-size: 34px;
   margin: 0;
+}
+
+.studio-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* a live run that lost its connection, or stopped sending events */
+.conn-note {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+
+.conn-note svg {
+  flex: none;
+}
+
+.conn-note.is-stalled svg {
+  color: var(--replace);
+}
+
+.conn-note .btn {
+  margin-left: auto;
+  flex: none;
 }
 
 /* ------------------------------------------------------------------ rail */
@@ -302,6 +351,12 @@
   background: var(--new-dim);
   border-color: rgba(94, 230, 181, 0.45);
   color: var(--new);
+}
+
+.is-stopped .rail-icon {
+  background: var(--remove-dim);
+  border-color: rgba(255, 122, 102, 0.45);
+  color: var(--remove);
 }
 
 .is-working .rail-icon {
@@ -647,6 +702,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  cursor: pointer;
   animation: pop 0.45s var(--ease) both;
   z-index: 3;
 }
@@ -724,6 +780,10 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-2);
+}
+
+.canvas-cap.cap-stopped {
+  color: var(--remove);
 }
 
 .cand-grid {
@@ -900,7 +960,8 @@
   position: absolute;
   inset: 0;
   cursor: ew-resize;
-  touch-action: none;
+  /* a vertical swipe still scrolls the page; a sideways drag moves the wipe */
+  touch-action: pan-y;
   user-select: none;
 }
 
@@ -1013,6 +1074,46 @@
 
 .ph {
   margin-bottom: 18px;
+}
+
+/* a stopped run: the reason stays above whichever step is open */
+.stop-banner {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 122, 102, 0.35);
+  border-radius: 12px;
+  background: var(--remove-dim);
+}
+
+.stop-banner .label {
+  color: var(--remove);
+}
+
+.stop-banner .ph-title {
+  font-size: 24px;
+  margin: 8px 0 6px;
+}
+
+.stop-banner .ph-sub {
+  margin: 0;
+}
+
+.stop-detail {
+  margin-top: 10px;
+}
+
+.stop-detail summary {
+  cursor: pointer;
+}
+
+.stop-detail pre {
+  margin: 8px 0 0;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  color: var(--text-2);
 }
 
 .ph-top {
@@ -1539,6 +1640,20 @@
   box-shadow: inset 2px 0 0 var(--new);
 }
 
+.cand-table-wrap {
+  overflow-x: auto;
+}
+
+/* the verdict in words under each score, so the table does not rely on color */
+.dotv-word {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
 .dotv {
   display: inline-grid;
   place-items: center;
@@ -1899,6 +2014,22 @@
   animation: shimmer 1.6s linear infinite;
 }
 
+/* nothing is coming: no shimmer */
+.hero-ph.is-static {
+  animation: none;
+}
+
+.rooms-msg {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rooms-msg p {
+  margin: 0;
+}
+
 .rooms,
 .how,
 .try,
@@ -2164,6 +2295,13 @@
   font-size: 13px;
 }
 
+.try-retry {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .stores .sec-head {
   margin-bottom: 0;
 }
@@ -2310,6 +2448,12 @@
   .tb-ai-row {
     display: inline-flex;
     order: 1;
+    /* one line as before; the longer live label wraps instead of running off a narrow screen */
+    max-width: 100%;
+    height: auto;
+    min-height: 22px;
+    line-height: 20px;
+    white-space: normal;
   }
   .tb-right {
     order: 2;
@@ -2317,9 +2461,20 @@
   }
 }
 
+/* phones keep the replay label; the speed button goes and the skip button shows only its icon,
+   so the label and the controls still share one row on a 375 px screen */
 @media (max-width: 520px) {
-  .tb-controls .chip,
-  .tb-speed {
+  .tb-speed,
+  .tb-skip-text {
     display: none;
+  }
+  .topbar {
+    column-gap: 8px;
+  }
+  .tb-controls .chip {
+    margin-right: 2px;
+  }
+  .tb-controls .btn.sm {
+    padding: 0 8px;
   }
 }

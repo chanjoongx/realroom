@@ -1,25 +1,53 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, ImageUp, LoaderCircle } from "lucide-react";
-import { getConfig, getDemos, runFile, startRun } from "../api";
+import { getConfig, getDemos, netMessage, runFile, startRun } from "../api";
 import { Compare } from "../components/Compare";
 import { Logo } from "../components/Logo";
 import { ModelChips } from "../components/ModelChip";
 import { Photo } from "../components/Photo";
 import { navigate } from "../lib/router";
 import { pct, secs, usd } from "../lib/format";
+import { reducedMotion } from "../lib/stages";
 import type { AppConfig, Demo } from "../types";
 
 const GITHUB = "https://github.com/chanjoongx/realroom";
+/** the size of the catalog in the repo, shown until the server's config answers */
+const CATALOG_SIZE = 4375;
+
+type Load<T> = { state: "loading" } | { state: "ok"; data: T } | { state: "error" };
+
+/** Fetches once on mount; the returned function fetches again. */
+function useLoad<T>(fetcher: (signal: AbortSignal) => Promise<T>): [Load<T>, () => void] {
+  const [st, setSt] = useState<Load<T>>({ state: "loading" });
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetcher(ctrl.signal).then(
+      (data) => {
+        if (!ctrl.signal.aborted) setSt({ state: "ok", data });
+      },
+      () => {
+        if (!ctrl.signal.aborted) setSt({ state: "error" });
+      },
+    );
+    return () => ctrl.abort();
+  }, [fetcher, attempt]);
+  const retry = useCallback(() => {
+    setSt({ state: "loading" });
+    setAttempt((a) => a + 1);
+  }, []);
+  return [st, retry];
+}
 
 export function Home() {
-  const [demos, setDemos] = useState<Demo[] | null>(null);
-  const [cfg, setCfg] = useState<AppConfig | null>(null);
+  const [demos, retryDemos] = useLoad<Demo[]>(getDemos);
+  const [cfg, retryCfg] = useLoad<AppConfig>(getConfig);
   useEffect(() => {
-    getDemos().then(setDemos).catch(() => setDemos([]));
-    getConfig().then(setCfg).catch(() => setCfg(null));
+    document.title = "Realroom";
   }, []);
-  const hero = demos?.[0];
-  const catalogN = cfg?.catalog_size ?? 4612;
+  const rooms = demos.state === "ok" ? demos.data : [];
+  const hero = rooms[0];
+  const catalogN = (cfg.state === "ok" ? cfg.data.catalog_size : undefined) ?? CATALOG_SIZE;
 
   return (
     <div className="home">
@@ -35,133 +63,156 @@ export function Home() {
         </nav>
       </header>
 
-      <section className="hero">
-        <div className="hero-text">
-          <span className="label">Room makeovers with real catalog products</span>
-          <h1 className="hero-h serif">
-            Try real furniture in a photo of your room. <em>Keep every other pixel.</em>
-          </h1>
-          <p className="hero-sub">
-            Realroom measures the room in your photo, picks catalog products that fit, and draws them in. Then it checks
-            each product against its catalog photo and copies everything else back from your original.
-          </p>
-          <div className="hero-cta">
-            <a className="btn primary" href="#rooms">
-              Open a demo room <ArrowRight size={15} />
-            </a>
-            <a className="btn" href="#try">
-              <ImageUp size={15} /> Use your own photo
-            </a>
-          </div>
-          <div className="hero-stats mono num">
-            <span>
-              <b>{catalogN.toLocaleString("en-US")}</b> real products with real dimensions
-            </span>
-            <span>
-              <b>4</b> Meta models
-            </span>
-            {hero && (
+      <main>
+        <section className="hero">
+          <div className="hero-text">
+            <span className="label">Room makeovers with real catalog products</span>
+            <h1 className="hero-h serif">
+              Try real furniture in a photo of your room. <em>Keep every other pixel.</em>
+            </h1>
+            <p className="hero-sub">
+              Realroom measures the room in your photo, picks catalog products that fit, and draws them in. Then it checks
+              each product against its catalog photo and copies everything else back from your original.
+            </p>
+            <div className="hero-cta">
+              <a className="btn primary" href="#rooms">
+                Open a demo room <ArrowRight size={15} />
+              </a>
+              <a className="btn" href="#try">
+                <ImageUp size={15} /> Use your own photo
+              </a>
+            </div>
+            <div className="hero-stats mono num">
               <span>
-                <b>{pct(hero.untouched_pct)}</b> of the demo photo untouched
+                <b>{catalogN.toLocaleString("en-US")}</b> real products with real dimensions
               </span>
+              <span>
+                <b>5</b> Meta models
+              </span>
+              {hero && (
+                <span>
+                  <b>{pct(hero.untouched_pct)}</b> of the demo photo untouched
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="hero-visual">
+            {hero ? (
+              <>
+                <Photo w={16} h={12}>
+                  <Compare
+                    before={runFile(hero.id, hero.before)}
+                    after={runFile(hero.id, hero.after)}
+                    alts={[`${hero.title}, an AI-generated demo room, before`, `${hero.title} after Realroom added real products`]}
+                    priority
+                  />
+                </Photo>
+                <span className="hero-cap mono faint">{hero.title} · AI-generated demo room · drag to compare</span>
+              </>
+            ) : (
+              <div className={`hero-ph${demos.state === "loading" ? "" : " is-static"}`} />
             )}
           </div>
-        </div>
-        <div className="hero-visual">
-          {hero ? (
-            <>
-              <Photo w={16} h={12}>
-                <Compare before={runFile(hero.id, hero.before)} after={runFile(hero.id, hero.after)} />
-              </Photo>
-              <span className="hero-cap mono faint">{hero.title} · AI-generated demo room · drag to compare</span>
-            </>
-          ) : (
-            <div className="hero-ph" />
-          )}
-        </div>
-      </section>
+        </section>
 
-      <section className="rooms" id="rooms">
-        <div className="sec-head">
-          <span className="label">Demo rooms</span>
-          <h2 className="serif">Watch the agent work, step by step.</h2>
-          <p className="muted">Each one is a recorded run: every model call, timing and cost is real. The replay shortens the waits.</p>
-        </div>
-        <div className="room-grid">
-          {(demos ?? []).map((d) => (
-            <button key={d.id} className="room-card" onClick={() => navigate(`/r/${d.id}`)}>
-              <span className="room-img">
-                <img src={runFile(d.id, d.before)} alt="" className="ri-before" />
-                <img src={runFile(d.id, d.after)} alt="" className="ri-after" />
-                <span className="room-kicker mono">{d.kicker}</span>
-              </span>
-              <span className="room-body">
-                <span className="room-title">{d.title}</span>
-                <span className="room-brief faint">“{d.brief}”</span>
-                <span className="room-stats mono num">
-                  <span>{d.products} products</span>
-                  <span>{pct(d.untouched_pct)} untouched</span>
-                  <span>{secs(d.elapsed_s)}</span>
-                  <span>{usd(d.cost_usd)}</span>
+        <section className="rooms" id="rooms">
+          <div className="sec-head">
+            <span className="label">Demo rooms</span>
+            <h2 className="serif">Watch the agent work, step by step.</h2>
+            <p className="muted">
+              Each one is a recorded run: every model call, timing and cost is real. The replay shortens the waits. The
+              rooms are AI-generated with Muse Image 1.0.
+            </p>
+          </div>
+          <div className="room-grid">
+            {rooms.map((d) => (
+              <button key={d.id} className="room-card" onClick={() => navigate(`/r/${d.id}`)}>
+                <span className="room-img">
+                  <img src={runFile(d.id, d.before)} alt="" className="ri-before" loading="lazy" decoding="async" />
+                  <img src={runFile(d.id, d.after)} alt="" className="ri-after" loading="lazy" decoding="async" />
+                  <span className="room-kicker mono">{d.kicker}</span>
                 </span>
-              </span>
-            </button>
-          ))}
-          {demos === null && [0, 1, 2].map((i) => <div key={i} className="room-card skeleton-card" />)}
-        </div>
-      </section>
+                <span className="room-body">
+                  <span className="room-title">{d.title}</span>
+                  <span className="room-brief faint">“{d.brief}”</span>
+                  <span className="room-stats mono num">
+                    <span>{d.products} products</span>
+                    <span>{pct(d.untouched_pct)} untouched</span>
+                    <span>{secs(d.elapsed_s)}</span>
+                    <span>{usd(d.cost_usd)}</span>
+                  </span>
+                </span>
+              </button>
+            ))}
+            {demos.state === "loading" && [0, 1, 2].map((i) => <div key={i} className="room-card skeleton-card" />)}
+          </div>
+          {demos.state === "error" && (
+            <div className="rooms-msg">
+              <p className="muted">The demo rooms could not be loaded.</p>
+              <button className="btn sm" onClick={retryDemos}>
+                Try again
+              </button>
+            </div>
+          )}
+          {demos.state === "ok" && !rooms.length && (
+            <div className="rooms-msg">
+              <p className="muted">This server has no demo rooms yet.</p>
+            </div>
+          )}
+        </section>
 
-      <section className="how" id="how">
-        <div className="sec-head">
-          <span className="label">How it works</span>
-          <h2 className="serif">Five Meta models, one agent loop.</h2>
-        </div>
-        <ol className="how-list">
-          <Step n="01" title="Scan" model="muse-spark-1.3 + sam-3.1">
-            Muse Spark 1.3 lists every object and the fixed structure, and estimates the room's size from doors, beds and
-            ceilings. SAM 3.1 turns each loose box into an exact outline.
-          </Step>
-          <Step n="02" title="Plan and search" model="muse-spark-1.3 + muse-spark-open + pe-core-b16-224">
-            Spark decides what to add or replace and how big each piece should be. The catalog search keeps only products
-            that fit. All {catalogN.toLocaleString("en-US")} products were described by Muse Spark Open, the open-weight
-            model, running on Baseten and Fireworks, and Meta's Perception Encoder compares the plan with their photos.
-          </Step>
-          <Step n="03" title="Pick" model="muse-spark-1.3">
-            Spark sees the room and a numbered sheet of candidates for every slot in a single request, so it picks a set
-            that works together.
-          </Step>
-          <Step n="04" title="Render" model="muse-image-1.0">
-            Muse Image 1.0 draws two or three candidates from the photo, a placement guide and the real product photos.
-          </Step>
-          <Step n="05" title="Verify and fix" model="sam-3.1 + muse-spark-1.3">
-            Each candidate is aligned to the original. SAM 3.1 finds every new product again and Spark compares it with its
-            catalog photo. A product that is only partly right is redrawn on its own, two tries a round, and Spark's notes
-            steer the next round until it matches.
-          </Step>
-          <Step n="06" title="Keep the room" model="">
-            Only the new products, their shadows and the cleared spots come from the render. Everything else is copied
-            from your photo, and your browser can check the count.
-          </Step>
-        </ol>
-      </section>
+        <section className="how" id="how">
+          <div className="sec-head">
+            <span className="label">How it works</span>
+            <h2 className="serif">Five Meta models, one agent loop.</h2>
+          </div>
+          <ol className="how-list">
+            <Step n="01" title="Scan" model="muse-spark-1.3 + sam-3.1">
+              Muse Spark 1.3 lists every object and the fixed structure, and estimates the room's size from doors, beds and
+              ceilings. SAM 3.1 turns each loose box into an exact outline.
+            </Step>
+            <Step n="02" title="Plan and search" model="muse-spark-1.3 + pe-core-b16-224" offline="muse-spark-open">
+              Spark decides what to add or replace and how big each piece should be. The catalog search keeps only products
+              that fit. All {catalogN.toLocaleString("en-US")} products were described by Muse Spark Open, the open-weight
+              model, running on Baseten and Fireworks, and Meta's Perception Encoder compares the plan with their photos.
+            </Step>
+            <Step n="03" title="Pick" model="muse-spark-1.3">
+              Spark sees the room and a numbered sheet of candidates for every slot in a single request, so it picks a set
+              that works together.
+            </Step>
+            <Step n="04" title="Render" model="muse-image-1.0">
+              Muse Image 1.0 draws two or three candidates from the photo, a placement guide and the real product photos.
+            </Step>
+            <Step n="05" title="Verify and fix" model="sam-3.1 + muse-spark-1.3">
+              Each candidate is aligned to the original. SAM 3.1 finds every new product again and Spark compares it with
+              its catalog photo. A product that is only partly right is redrawn on its own, two tries a round, and Spark's
+              notes steer the next round until it matches.
+            </Step>
+            <Step n="06" title="Keep the room" model="">
+              Only the new products, their shadows and the cleared spots come from the render. Everything else is copied
+              from your photo, and your browser can check the count.
+            </Step>
+          </ol>
+        </section>
 
-      <Upload cfg={cfg} />
+        <Upload cfg={cfg} retry={retryCfg} />
 
-      <section className="stores">
-        <div className="sec-head">
-          <span className="label">For stores</span>
-          <h2 className="serif">Bring your own catalog.</h2>
-          <p className="muted">
-            Realroom needs one photo and the dimensions of each product. The demo runs on Amazon Berkeley Objects, a public
-            set of real Amazon listings. A furniture store could plug in its own feed and let shoppers see the exact item,
-            at its real size, in their own room.
-          </p>
-        </div>
-      </section>
+        <section className="stores">
+          <div className="sec-head">
+            <span className="label">For stores</span>
+            <h2 className="serif">Bring your own catalog.</h2>
+            <p className="muted">
+              Realroom needs one photo and the dimensions of each product. The demo runs on Amazon Berkeley Objects, a
+              public set of real Amazon listings. A furniture store could plug in its own feed and let shoppers see the
+              exact item, at its real size, in their own room.
+            </p>
+          </div>
+        </section>
+      </main>
 
       <footer className="home-foot">
         <div>
-          <Logo onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+          <Logo onClick={() => window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" })} />
           <p className="faint">Built for the Meta Global AI Developer Hackathon, 2026.</p>
           <p className="faint">Built with Muse Spark Open.</p>
         </div>
@@ -184,13 +235,26 @@ export function Home() {
   );
 }
 
-function Step({ n, title, model, children }: { n: string; title: string; model: string; children: React.ReactNode }) {
+function Step({
+  n,
+  title,
+  model,
+  offline,
+  children,
+}: {
+  n: string;
+  title: string;
+  model: string;
+  /** models whose earlier work the step uses without calling them */
+  offline?: string;
+  children: ReactNode;
+}) {
   return (
     <li className="how-step">
       <span className="how-n mono">{n}</span>
       <div>
         <h3>{title}</h3>
-        {model && <ModelChips model={model} />}
+        {(model || offline) && <ModelChips model={model} offline={offline} />}
         <p className="muted">{children}</p>
       </div>
     </li>
@@ -207,21 +271,34 @@ async function prepare(file: File): Promise<{ blob: Blob; url: string; w: number
   const c = document.createElement("canvas");
   c.width = w;
   c.height = h;
-  const ctx = c.getContext("2d");
-  if (!ctx) throw new Error("no canvas");
-  ctx.drawImage(bmp, 0, 0, w, h);
+  try {
+    const ctx = c.getContext("2d");
+    if (!ctx) throw new Error("no canvas");
+    ctx.drawImage(bmp, 0, 0, w, h);
+  } finally {
+    bmp.close();
+  }
   const blob: Blob = await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode failed"))), "image/jpeg", 0.92));
   return { blob, url: URL.createObjectURL(blob), w, h };
 }
 
-function Upload({ cfg }: { cfg: AppConfig | null }) {
+function Upload({ cfg, retry }: { cfg: Load<AppConfig>; retry: () => void }) {
   const [photo, setPhoto] = useState<{ blob: Blob; url: string; w: number; h: number } | null>(null);
   const [brief, setBrief] = useState("");
   const [mode, setMode] = useState<"refresh" | "furnish">("refresh");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  const live = cfg?.live ?? false;
+  const conf = cfg.state === "ok" ? cfg.data : null;
+  const live = conf?.live ?? false;
+  const left = conf?.runs_left_today;
+  const noneLeft = live && left === 0;
+
+  // release the preview when the photo is replaced or the page closes
+  useEffect(() => {
+    if (!photo) return;
+    return () => URL.revokeObjectURL(photo.url);
+  }, [photo]);
 
   async function onFile(f?: File) {
     if (!f) return;
@@ -245,7 +322,7 @@ function Upload({ cfg }: { cfg: AppConfig | null }) {
       const { id } = await startRun(photo.blob, brief.trim() || "Make it feel finished and comfortable.", mode);
       navigate(`/r/${id}`);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
+      setErr(netMessage(e));
       setBusy(false);
     }
   }
@@ -260,10 +337,16 @@ function Upload({ cfg }: { cfg: AppConfig | null }) {
           model API for this run and deleted from Realroom within 24 hours.
         </p>
       </div>
-      <div className={`try-box${live ? "" : " is-off"}`}>
+      <div className="try-box">
         <div
           className={`drop${photo ? " has" : ""}`}
           onClick={() => input.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              input.current?.click();
+            }
+          }}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
@@ -271,6 +354,7 @@ function Upload({ cfg }: { cfg: AppConfig | null }) {
           }}
           role="button"
           tabIndex={0}
+          aria-label={photo ? "Change the room photo" : undefined}
         >
           {photo ? (
             <img src={photo.url} alt="Your room" />
@@ -303,13 +387,33 @@ function Upload({ cfg }: { cfg: AppConfig | null }) {
             value={brief}
             onChange={(e) => setBrief(e.target.value)}
           />
-          <button className="btn primary" disabled={!photo || busy || !live} onClick={go}>
+          <button className="btn primary" disabled={!photo || busy || !live || noneLeft} onClick={go}>
             {busy ? <LoaderCircle size={15} className="spin" /> : <ArrowRight size={15} />}
             {busy ? "Starting" : "Start the run"}
           </button>
-          {!live && <p className="faint try-off">{cfg?.reason ?? "Live runs are off on this server. The demo rooms show complete recorded runs."}</p>}
-          {live && cfg?.runs_left_today !== undefined && <p className="faint mono">{cfg.runs_left_today} live runs left today</p>}
-          {err && <p className="err">{err}</p>}
+          {cfg.state === "loading" && <p className="faint try-off">Checking the live server…</p>}
+          {cfg.state === "error" && (
+            <div className="try-retry">
+              <p className="faint try-off">Could not reach the live server.</p>
+              <button className="btn sm" onClick={retry}>
+                Try again
+              </button>
+            </div>
+          )}
+          {conf && !live && (
+            <p className="faint try-off">{conf.reason ?? "Live runs are off on this server. The demo rooms show complete recorded runs."}</p>
+          )}
+          {noneLeft && <p className="faint try-off">No live runs are left today. The demo rooms show complete recorded runs.</p>}
+          {live && !noneLeft && left !== undefined && (
+            <p className="faint mono">
+              {left} live run{left === 1 ? "" : "s"} left today, shared by all visitors
+            </p>
+          )}
+          {err && (
+            <p className="err" role="alert">
+              {err}
+            </p>
+          )}
         </div>
       </div>
     </section>

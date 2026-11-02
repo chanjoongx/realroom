@@ -119,7 +119,8 @@ export interface Product {
   source: string;
 }
 
-export type VerdictKind = "match" | "partial" | "mismatch" | "missing";
+/** "unverified": the check could not run for this product; it reads "Not verified" and never counts as a match */
+export type VerdictKind = "match" | "partial" | "mismatch" | "missing" | "unverified";
 
 export interface Verdict {
   index?: number;
@@ -210,7 +211,10 @@ export interface Result {
   scene: SceneVerdict;
   /** set when a fix was accepted and Spark judged the finished room again: the verdict on the first render */
   scene_first_render?: SceneVerdict;
+  /** Spark's judgment of each product in the finished image, `index` 1-based in `products` order: the verdict of record */
   final_check_products?: Verdict[];
+  /** how the result was made; newer runs only, shape owned by the backend */
+  provenance?: Record<string, unknown>;
 }
 
 export interface Run {
@@ -229,7 +233,10 @@ export interface Run {
   render?: { candidates: Candidate[]; chosen: number; prompt: string };
   fixes?: FixRecord[];
   result?: Result;
+  /** on status "error": a plain sentence (older runs may hold raw exception text) */
   error?: string;
+  /** on status "error": the stage it stopped at, or "interrupted" (newer runs only) */
+  stopped_at?: string;
 }
 
 export interface Demo {

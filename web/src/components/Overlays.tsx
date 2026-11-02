@@ -1,10 +1,9 @@
 import type { CSSProperties } from "react";
 import { thumbUrl } from "../api";
 import { kindLabel } from "../lib/format";
+import { verdictLabel } from "../lib/verdicts";
 import type { Box, Product, ResultProduct, Scan, SceneObject, Slot, Verdict } from "../types";
 import { pctBox } from "./Photo";
-
-const CLASS_LABEL = { keep: "keep", replace: "replace", remove: "remove" } as const;
 
 function short(s: string, n = 26): string {
   return s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
@@ -197,13 +196,14 @@ export function verdictTone(v?: Verdict): string {
   }
 }
 
+/** Numbered marks on the photo. They only echo the product list in the inspector, so they are
+ *  hidden from assistive tech and stay out of the tab order (they can sit clipped behind the wipe). */
 export function ProductMarks({
   items,
   w,
   h,
   focus,
   onFocus,
-  onPick,
   showOutline = true,
   showChips = false,
 }: {
@@ -212,7 +212,6 @@ export function ProductMarks({
   h: number;
   focus?: string | null;
   onFocus?: (id: string | null) => void;
-  onPick?: (id: string) => void;
   showOutline?: boolean;
   showChips?: boolean;
 }) {
@@ -240,29 +239,25 @@ export function ProductMarks({
         const cx = ((x1 + x2) / 2 / w) * 100;
         const cy = (y1 / h) * 100;
         return (
-          <button
-            type="button"
+          <span
             key={it.slot}
+            aria-hidden="true"
             className={`hotspot tone-${verdictTone(it.verdict)}${focus === it.slot ? " is-focus" : ""}${
               cx > 55 ? " flip" : ""
             }`}
             style={{ left: `${cx}%`, top: `${Math.max(3, cy)}%`, animationDelay: `${300 + i * 140}ms` }}
             onMouseEnter={() => onFocus?.(it.slot)}
             onMouseLeave={() => onFocus?.(null)}
-            onClick={() => onPick?.(it.slot)}
-            aria-label={`Product ${i + 1}`}
           >
             <span className="hs-num mono">{i + 1}</span>
             {showChips && it.verdict?.verdict && (
               <span className="hs-chip mono">
-                {it.verdict.verdict} {it.verdict.score ?? ""}
+                {verdictLabel(it.verdict.verdict)} {it.verdict.score ?? ""}
               </span>
             )}
-          </button>
+          </span>
         );
       })}
     </>
   );
 }
-
-export { CLASS_LABEL };

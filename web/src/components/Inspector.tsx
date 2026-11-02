@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { ArrowRight, Check, CornerDownRight, TriangleAlert } from "lucide-react";
+import { ArrowRight, Check, CircleHelp, CornerDownRight, TriangleAlert } from "lucide-react";
 import { imageUrl, runFile, thumbUrl } from "../api";
-import { kindLabel, pct, secs, sizeCm, sizeIn, titleCase, usd } from "../lib/format";
+import { kindLabel, pct, secs, sizeCm, sizeIn, titleCase, undash, usd } from "../lib/format";
+import { isMatch, recordProducts, verdictLabel } from "../lib/verdicts";
 import type { FixRecord, Product, Run, RunEvent, SceneObject, Slot, StageId, Verdict } from "../types";
 import { BoxCrop } from "./BoxCrop";
 import { ModelChips } from "./ModelChip";
@@ -13,6 +14,8 @@ export interface PanelProps {
   events: RunEvent[];
   focus: string | null;
   setFocus: (id: string | null) => void;
+  /** the run stopped during this step */
+  stopped?: boolean;
 }
 
 const STEP_NAME: Record<StageId, string> = {
@@ -76,11 +79,18 @@ function Fact({ k, v, note }: { k: string; v: ReactNode; note?: ReactNode }) {
 
 /* ------------------------------------------------------------------ scan */
 
-export function ScanPanel({ run, events, focus, setFocus }: PanelProps) {
+export function ScanPanel({ run, events, focus, setFocus, stopped }: PanelProps) {
   const s = run.scan;
   // a replay already has the scan, so wait for the event that finished it
   if (!s || !events.some((e) => e.stage === "scan" && e.status === "done"))
-    return <Working stage="scan" events={events} text="Muse Spark 1.3 is reading the photo. SAM 3.1 will trace every object it finds." />;
+    return (
+      <Working
+        stage="scan"
+        events={events}
+        stopped={stopped}
+        text="Muse Spark 1.3 is reading the photo. SAM 3.1 will trace every object it finds."
+      />
+    );
   const d = s.dimensions_cm;
   const groups: { cls: SceneObject["class"]; label: string }[] = [
     { cls: "replace", label: "Replace" },
@@ -294,11 +304,12 @@ export function ProductCard({
 }
 
 export function VerdictChip({ v }: { v: Verdict }) {
+  const unverified = v.verdict === "unverified";
   return (
     <span className={`verdict tone-${verdictTone(v)}`}>
-      {v.verdict === "match" ? <Check size={12} /> : <TriangleAlert size={12} />}
-      <span className="mono">{v.verdict}</span>
-      {v.score !== undefined && <span className="mono num">{v.score}/10</span>}
+      {v.verdict === "match" ? <Check size={12} /> : unverified ? <CircleHelp size={12} /> : <TriangleAlert size={12} />}
+      <span className="mono">{verdictLabel(v.verdict)}</span>
+      {v.score !== undefined && !unverified && <span className="mono num">{v.score}/10</span>}
       {v.fixed && <span className="mono">redrawn</span>}
     </span>
   );
@@ -373,7 +384,7 @@ export function RenderPanel({ run, events }: PanelProps) {
       {r && (
         <details className="prompt-box">
           <summary className="label">Prompt sent to Muse Image 1.0</summary>
-          <pre>{r.prompt}</pre>
+          <pre>{undash(r.prompt)}</pre>
         </details>
       )}
     </>
@@ -382,11 +393,19 @@ export function RenderPanel({ run, events }: PanelProps) {
 
 /* ------------------------------------------------------------------ verify */
 
-export function VerifyPanel({ run, events, focus, setFocus }: PanelProps) {
+export function VerifyPanel({ run, events, focus, setFocus, stopped }: PanelProps) {
   const r = run.render;
   const slots = run.plan?.slots ?? [];
   const prods = run.products ?? {};
-  if (!r) return <Working stage="verify" events={events} text="Aligning each candidate to the original photo and inspecting every product." />;
+  if (!r)
+    return (
+      <Working
+        stage="verify"
+        events={events}
+        stopped={stopped}
+        text="Aligning each candidate to the original photo and inspecting every product."
+      />
+    );
   const chosen = r.candidates.find((c) => c.index === r.chosen);
   return (
     <>
@@ -397,6 +416,7 @@ export function VerifyPanel({ run, events, focus, setFocus }: PanelProps) {
         sub="Each candidate is aligned to the original photo, every new product is found again with SAM 3.1, and Spark compares each one with its catalog photo."
       />
       <Section title="Candidates">
+        <div className="cand-table-wrap scroll-thin">
         <table className="cand-table">
           <thead>
             <tr>
@@ -416,11 +436,11 @@ export function VerifyPanel({ run, events, focus, setFocus }: PanelProps) {
                 <td className="mono">{c.index}</td>
                 {slots.map((s, i) => {
                   const v = c.judge.products?.find((p) => p.index === i + 1);
+                  // the verdict is written under the score, so it does not rest on the color alone
                   return (
                     <td key={s.id}>
-                      <span className={`dotv tone-${verdictTone(v)}`} title={v?.verdict}>
-                        {v?.score ?? "?"}
-                      </span>
+                      <span className={`dotv tone-${verdictTone(v)}`}>{v?.score ?? "?"}</span>
+                      <span className="dotv-word">{verdictLabel(v?.verdict) || "no verdict"}</span>
                     </td>
                   );
                 })}
@@ -430,6 +450,7 @@ export function VerifyPanel({ run, events, focus, setFocus }: PanelProps) {
             ))}
           </tbody>
         </table>
+        </div>
       </Section>
       {chosen && (
         <Section title={`Candidate ${chosen.index}, product by product`}>
@@ -518,7 +539,7 @@ function FixTries({ f }: { f: FixRecord }) {
                 className={`try-pill tone-${verdictTone({ verdict: t.verdict } as Verdict)}${
                   f.accepted && t.score === best ? " chosen" : ""
                 }`}
-                title={`${t.verdict ?? "?"} ${t.score ?? "?"}/10`}
+                title={`${verdictLabel(t.verdict) || "?"} ${t.score ?? "?"}/10`}
               >
                 <span className="mono num">{t.score ?? "?"}</span>
               </span>
@@ -541,7 +562,17 @@ function fixTitle(fixes: FixRecord[]): string {
   return parts.length ? parts.join(", ") : "Nothing to redraw";
 }
 
-export function FixPanel({ run, events }: PanelProps) {
+export function FixPanel({ run, events, stopped }: PanelProps) {
+  // a live run writes its fixes when the step ends: until then the step is still working
+  if (!run.fixes && run.status !== "done")
+    return (
+      <Working
+        stage="fix"
+        events={events}
+        stopped={stopped}
+        text="Muse Image 1.0 is redrawing the products that came out only partly right. SAM 3.1 finds each try again and Spark judges it."
+      />
+    );
   const fixes = run.fixes ?? [];
   const prods = run.products ?? {};
   return (
@@ -611,19 +642,21 @@ export function ResultPanel({ run, events, focus, setFocus }: PanelProps) {
   if (!res) return null;
   const pr = res.proof;
   const lp = pr.layers_pct;
-  const matches = res.products.filter((p) => p.verdict?.verdict === "match").length;
+  // each product is shown and counted with its verdict of record (see lib/verdicts.ts)
+  const recs = recordProducts(res);
+  const matches = recs.filter((p) => isMatch(p.verdict)).length;
   const objs = Object.fromEntries((run.scan?.objects ?? []).map((o) => [o.id, o]));
   return (
     <>
       <Head
         stage="result"
         events={events}
-        title={`${matches} of ${res.products.length} products verified`}
+        title={`${matches} of ${recs.length} products verified`}
         sub={run.plan?.title}
       />
       <Section title="In this photo">
         <div className="pcards">
-          {res.products.map((rp, i) => {
+          {recs.map((rp, i) => {
             const p = prods[rp.product];
             const sl = slots.find((s) => s.id === rp.slot);
             if (!p) return null;
@@ -635,15 +668,18 @@ export function ResultPanel({ run, events, focus, setFocus }: PanelProps) {
                 focus={focus === rp.slot}
                 onHover={(on) => setFocus(on ? rp.slot : null)}
                 note={
-                  sl?.action === "replace" && objs[sl.replaces] ? (
-                    <div className="pcard-note faint">
-                      <span className="mono">{i + 1}</span> replaces the {objs[sl.replaces].name}
-                    </div>
-                  ) : (
-                    <div className="pcard-note faint">
-                      <span className="mono">{i + 1}</span> added
-                    </div>
-                  )
+                  <>
+                    {rp.note && <div className="pcard-note faint">{rp.note}</div>}
+                    {sl?.action === "replace" && objs[sl.replaces] ? (
+                      <div className="pcard-note faint">
+                        <span className="mono">{i + 1}</span> replaces the {objs[sl.replaces].name}
+                      </div>
+                    ) : (
+                      <div className="pcard-note faint">
+                        <span className="mono">{i + 1}</span> added
+                      </div>
+                    )}
+                  </>
                 }
               />
             );
@@ -704,7 +740,25 @@ export function ResultPanel({ run, events, focus, setFocus }: PanelProps) {
 
 /* ------------------------------------------------------------------ misc */
 
-export function Working({ stage, events, text }: { stage: StageId; events: RunEvent[]; text: string }) {
+/** A step still under way, or (`stopped`) the step a stopped run never finished. */
+export function Working({
+  stage,
+  events,
+  text,
+  stopped = false,
+}: {
+  stage: StageId;
+  events: RunEvent[];
+  text: string;
+  stopped?: boolean;
+}) {
+  if (stopped)
+    return (
+      <>
+        <Head stage={stage} events={events} title="Stopped" />
+        <p className="ins-text muted">This step did not finish.</p>
+      </>
+    );
   return (
     <>
       <Head stage={stage} events={events} title="Working" />

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Activity, Columns2, Layers } from "lucide-react";
 import { runFile } from "../api";
+import { STAGE_NAME } from "../lib/stages";
+import { recordProducts } from "../lib/verdicts";
 import type { Run, RunEvent, StageId } from "../types";
 import { Compare } from "./Compare";
 import { ProductMarks, ScanOverlay, SlotBoxes } from "./Overlays";
@@ -13,6 +15,7 @@ export function CanvasView({
   events,
   stage,
   working,
+  stoppedAt,
   focus,
   setFocus,
 }: {
@@ -20,20 +23,41 @@ export function CanvasView({
   events: RunEvent[];
   stage: StageId | null;
   working: StageId | null;
+  /** set when the run stopped: the step it stopped at */
+  stoppedAt: StageId | null;
   focus: string | null;
   setFocus: (id: string | null) => void;
 }) {
   const { w, h } = run.room;
   const before = runFile(run.id, run.room.before);
+  const room = run.room.title || "Your room";
+  const beforeAlt = `${room}, the original photo${run.room.ai_generated ? " (an AI-generated demo room)" : ""}`;
   const [mode, setMode] = useState<ResultMode>("compare");
   const [cand, setCand] = useState<number | null>(null);
   useEffect(() => setCand(null), [stage]);
+  const chosen = run.render ? (run.render.candidates.find((c) => c.index === run.render!.chosen) ?? run.render.candidates[0]) : undefined;
+
+  // a stopped run shows a still photo where its last step would have been working
+  if (stoppedAt && (!stage || stage === stoppedAt)) {
+    const late = stoppedAt === "verify" || stoppedAt === "fix" || stoppedAt === "result";
+    const still = late && chosen ? chosen : null;
+    return (
+      <Photo
+        src={still ? runFile(run.id, still.comp) : before}
+        w={w}
+        h={h}
+        alt={still ? `Candidate ${still.index}, aligned to the original photo` : beforeAlt}
+      >
+        <span className="canvas-cap mono cap-stopped">stopped at {STAGE_NAME[stoppedAt].toLowerCase()}</span>
+      </Photo>
+    );
+  }
 
   // a replay has the whole scan from the start, so it follows the events: the beam while Spark
   // reads the room, Spark's boxes when it is done, and SAM's outlines once SAM has traced them
   if (!stage || (stage === "scan" && (!run.scan || working === "scan"))) {
     return (
-      <Photo src={before} w={w} h={h} className="is-scanning">
+      <Photo src={before} w={w} h={h} alt={beforeAlt} className="is-scanning">
         <div className="scan-beam" />
         <Brackets />
       </Photo>
@@ -43,7 +67,7 @@ export function CanvasView({
   if (stage === "scan" && run.scan) {
     return (
       <>
-        <Photo src={before} w={w} h={h}>
+        <Photo src={before} w={w} h={h} alt={beforeAlt}>
           <ScanOverlay scan={run.scan} w={w} h={h} focus={focus} onFocus={setFocus} traced={traced(events)} />
           <Brackets />
         </Photo>
@@ -55,7 +79,7 @@ export function CanvasView({
   if ((stage === "plan" || stage === "search" || stage === "pick") && run.scan) {
     const slots = run.plan?.slots ?? run.scan.plan.slots;
     return (
-      <Photo src={before} w={w} h={h} className="is-dimmed">
+      <Photo src={before} w={w} h={h} alt={beforeAlt} className="is-dimmed">
         <ScanOverlay scan={run.scan} w={w} h={h} showFixed={false} showLabels={false} faint />
         <SlotBoxes slots={slots} w={w} h={h} products={run.products} focus={focus} onFocus={setFocus} showThumbs={stage === "pick"} />
       </Photo>
@@ -65,14 +89,22 @@ export function CanvasView({
   if (stage === "render") {
     const r = run.render;
     if (!r || working === "render") {
+      // live runs get the candidates only once they are verified: say so instead of looking stuck
+      const drawn = working !== "render" && events.some((e) => e.stage === "render" && e.status === "done");
       return (
-        <Photo src={runFile(run.id, "guide.jpg")} w={w} h={h} className="is-rendering">
+        <Photo
+          src={runFile(run.id, "guide.jpg")}
+          w={w}
+          h={h}
+          alt="Placement guide sent to Muse Image 1.0: the room photo with a numbered box where each product goes"
+          className="is-rendering"
+        >
           <div className="render-veil" />
-          <span className="canvas-cap mono">placement guide sent to Muse Image 1.0</span>
+          <span className="canvas-cap mono">{drawn ? "candidates drawn, now verifying each one" : "placement guide sent to Muse Image 1.0"}</span>
         </Photo>
       );
     }
-    return <CandidateGrid run={run} which="raw" />;
+    return <CandidateGrid run={run} />;
   }
 
   if (stage === "verify" && run.render) {
@@ -88,14 +120,20 @@ export function CanvasView({
     });
     return (
       <>
-        <Photo src={runFile(run.id, c.comp)} w={w} h={h}>
+        <Photo src={runFile(run.id, c.comp)} w={w} h={h} alt={`Candidate ${c.index}, aligned to the original photo`}>
           {show === r.chosen && run.result && (
             <ProductMarks items={marks} w={w} h={h} focus={focus} onFocus={setFocus} showChips />
           )}
         </Photo>
         <div className="canvas-tabs">
           {r.candidates.map((x) => (
-            <button key={x.index} className={`tab${x.index === show ? " on" : ""}`} onClick={() => setCand(x.index)}>
+            <button
+              key={x.index}
+              className={`tab${x.index === show ? " on" : ""}`}
+              onClick={() => setCand(x.index)}
+              aria-pressed={x.index === show}
+              aria-label={`Candidate ${x.index}, score ${x.score.toFixed(2)}${x.index === r.chosen ? ", kept" : ""}`}
+            >
               <span className="mono">#{x.index}</span>
               <span className="mono num faint">{x.score.toFixed(2)}</span>
               {x.index === r.chosen && <span className="tab-kept">kept</span>}
@@ -108,7 +146,16 @@ export function CanvasView({
 
   if (stage === "fix") {
     const f = run.fixes?.[0];
-    if (!f) return <Photo src={runFile(run.id, run.render ? run.render.candidates[0].comp : run.room.before)} w={w} h={h} />;
+    // a live run writes its fixes at the end of the step: until then show the candidate it kept
+    if (!f)
+      return (
+        <Photo
+          src={runFile(run.id, chosen ? chosen.comp : run.room.before)}
+          w={w}
+          h={h}
+          alt={chosen ? `Candidate ${chosen.index}, the one kept, while weak products are redrawn` : beforeAlt}
+        />
+      );
     // a single wide crop (a rug, a sofa against a long wall) reads better stacked than side by side
     const [fx1, fy1, fx2, fy2] = f.region;
     const stacked = run.fixes!.length === 1 && (fx2 - fx1) / Math.max(1, fy2 - fy1) > 1.4;
@@ -139,6 +186,12 @@ export function CanvasView({
   if (stage === "result" && run.result) {
     const res = run.result;
     const after = runFile(run.id, res.after);
+    const edited = run.room.ai_generated ? "Edited photo" : "Edited photo, products drawn by Muse Image 1.0 (AI-edited)";
+    const tabs: { id: ResultMode; label: string; icon: typeof Columns2 }[] = [
+      { id: "compare", label: "Before / after", icon: Columns2 },
+      { id: "proof", label: "What changed", icon: Layers },
+      { id: "drift", label: "Model drift", icon: Activity },
+    ];
     return (
       <>
         {mode === "compare" && (
@@ -146,18 +199,19 @@ export function CanvasView({
             <Compare
               before={before}
               after={after}
-              afterLayer={<ProductMarks items={res.products} w={w} h={h} focus={focus} onFocus={setFocus} showOutline={!!focus} />}
+              alts={[beforeAlt, `${room}, ${edited.charAt(0).toLowerCase()}${edited.slice(1)}`]}
+              afterLayer={<ProductMarks items={recordProducts(res)} w={w} h={h} focus={focus} onFocus={setFocus} showOutline={!!focus} />}
             />
           </Photo>
         )}
         {mode === "proof" && (
-          <Photo src={after} w={w} h={h}>
+          <Photo src={after} w={w} h={h} alt={`${room}, the result with the changed areas colored`}>
             {res.layers && <img className="photo-img layer-img" src={runFile(run.id, res.layers)} alt="" />}
             <LayerLegend run={run} />
           </Photo>
         )}
         {mode === "drift" && (
-          <Photo src={runFile(run.id, res.drift)} w={w} h={h}>
+          <Photo src={runFile(run.id, res.drift)} w={w} h={h} alt="Model drift map: what Muse Image changed on its own, brighter where it changed more">
             <div className="drift-legend">
               <span className="mono">What Muse Image changed on its own, before Realroom restored it</span>
               <span className="drift-scale" />
@@ -169,31 +223,27 @@ export function CanvasView({
           </Photo>
         )}
         <div className="canvas-tabs">
-          <button className={`tab${mode === "compare" ? " on" : ""}`} onClick={() => setMode("compare")}>
-            <Columns2 size={14} /> Before / after
-          </button>
-          <button className={`tab${mode === "proof" ? " on" : ""}`} onClick={() => setMode("proof")}>
-            <Layers size={14} /> What changed
-          </button>
-          <button className={`tab${mode === "drift" ? " on" : ""}`} onClick={() => setMode("drift")}>
-            <Activity size={14} /> Model drift
-          </button>
+          {tabs.map((t) => (
+            <button key={t.id} className={`tab${mode === t.id ? " on" : ""}`} onClick={() => setMode(t.id)} aria-pressed={mode === t.id}>
+              <t.icon size={14} /> {t.label}
+            </button>
+          ))}
         </div>
       </>
     );
   }
 
-  return <Photo src={before} w={w} h={h} />;
+  return <Photo src={before} w={w} h={h} alt={beforeAlt} />;
 }
 
-function CandidateGrid({ run, which }: { run: Run; which: "raw" | "comp" }) {
+function CandidateGrid({ run }: { run: Run }) {
   const r = run.render!;
   return (
     <div className={`cand-grid n${Math.min(r.candidates.length, 4)}`}>
       {r.candidates.map((c, i) => (
         <figure key={c.index} className="cand" style={{ animationDelay: `${i * 160}ms` }}>
-          <Photo src={runFile(run.id, which === "raw" ? c.raw : c.comp)} w={run.room.w} h={run.room.h}>
-            <figcaption className="canvas-cap mono">candidate {c.index} · {which === "raw" ? "raw output" : "aligned"}</figcaption>
+          <Photo src={runFile(run.id, c.raw)} w={run.room.w} h={run.room.h} alt={`Candidate ${c.index}, raw output from Muse Image 1.0`}>
+            <figcaption className="canvas-cap mono">candidate {c.index} · raw output</figcaption>
           </Photo>
         </figure>
       ))}

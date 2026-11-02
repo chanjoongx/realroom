@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Run, RunEvent, StageId } from "../types";
 
-export const STAGES: StageId[] = ["scan", "plan", "search", "pick", "render", "verify", "fix", "result"];
-
 export interface Replay {
   mode: "replay" | "live";
   visible: RunEvent[];
@@ -136,7 +134,11 @@ export function useReplay(run: Run | null, autoplay = true, followLive = false):
   };
 }
 
+/** The step a live run is working on after `s` sent "done". Verify goes straight to the result
+ *  (a fix sends its own start event); a fix keeps working until the result arrives, because the
+ *  final judgment of the finished room is a fix-stage call. */
 function nextStage(s: StageId): StageId | null {
+  if (s === "fix") return "fix";
   const order: StageId[] = ["scan", "plan", "search", "pick", "render", "verify", "result"];
   const i = order.indexOf(s);
   return i >= 0 && i < order.length - 1 ? order[i + 1] : null;

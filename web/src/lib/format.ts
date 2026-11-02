@@ -29,16 +29,17 @@ export function sizeIn(s: SizeCm, kind?: string): string {
 
 export function usd(v: number | undefined): string {
   if (v === undefined || v === null) return "";
+  if (v === 0) return "$0.00";
   if (v < 0.01) return `$${v.toFixed(3)}`;
   return `$${v.toFixed(2)}`;
 }
 
 export function secs(v: number | undefined): string {
   if (v === undefined || v === null) return "";
-  if (v < 60) return `${v < 10 ? v.toFixed(1) : Math.round(v)} s`;
-  const m = Math.floor(v / 60);
-  const s = Math.round(v % 60);
-  return `${m}m ${String(s).padStart(2, "0")}s`;
+  if (v < 59.5) return `${v < 10 ? v.toFixed(1) : Math.round(v)} s`;
+  // round once, so 119.6 s reads 2m 00s and never 1m 60s
+  const t = Math.round(v);
+  return `${Math.floor(t / 60)}m ${String(t % 60).padStart(2, "0")}s`;
 }
 
 export function pct(v: number | undefined, digits = 1): string {
@@ -68,4 +69,16 @@ export function modelsOf(model?: string): string[] {
 
 export function titleCase(s: string): string {
   return s.length ? s[0].toUpperCase() + s.slice(1) : s;
+}
+
+// Model text may carry dashes and the interface shows none: the same three rules as tidy() in
+// backend/realroom/pipeline.py, applied only on screen so run.json keeps the exact prompt that was sent.
+const DASHES = String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015);
+const DASH_RANGE = new RegExp(String.raw`(\d)(?:\s*[${DASHES}]\s*| - )(\d)`, "g");
+// no lookbehind: Safari before 16.4 cannot parse one, and this runs when the module loads
+const DASH_SPACED = new RegExp(String.raw`(\S) [-${DASHES}${String.fromCharCode(0x2212)}]{1,2} (?=\S)`, "g");
+const DASH_ANY = new RegExp(String.raw`\s*[${DASHES}]\s*`, "g");
+
+export function undash(s: string): string {
+  return s.replace(DASH_RANGE, "$1 to $2").replace(DASH_SPACED, "$1, ").replace(DASH_ANY, ", ");
 }

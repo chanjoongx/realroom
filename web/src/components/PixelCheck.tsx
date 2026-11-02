@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 
 type State =
@@ -27,21 +27,37 @@ function pixels(b: ImageBitmap): Uint8ClampedArray {
  *  lossless original and result and compares them pixel by pixel. */
 export function PixelCheck({ beforeUrl, afterUrl, claimed }: { beforeUrl: string; afterUrl: string; claimed: number }) {
   const [st, setSt] = useState<State>({ status: "idle" });
+  const button = useRef<HTMLButtonElement>(null);
+  const result = useRef<HTMLDivElement>(null);
+  const hadFocus = useRef(false);
+
+  // the button is replaced by the result: carry keyboard focus over so it is not lost to the page
+  useEffect(() => {
+    if (st.status === "done" && hadFocus.current) result.current?.focus({ preventScroll: true });
+  }, [st.status]);
 
   async function run() {
+    if (st.status === "loading") return;
+    hadFocus.current = document.activeElement === button.current;
     setSt({ status: "loading" });
     const t0 = performance.now();
     try {
       const [a, b] = await Promise.all([bitmap(beforeUrl), bitmap(afterUrl)]);
-      if (a.width !== b.width || a.height !== b.height) throw new Error("the two images have different sizes");
-      const pa = pixels(a);
-      const pb = pixels(b);
-      const total = a.width * a.height;
-      let same = 0;
-      for (let i = 0, j = 0; i < total; i++, j += 4) {
-        if (pa[j] === pb[j] && pa[j + 1] === pb[j + 1] && pa[j + 2] === pb[j + 2]) same++;
+      try {
+        if (a.width !== b.width || a.height !== b.height) throw new Error("the two images have different sizes");
+        const pa = pixels(a);
+        const pb = pixels(b);
+        const total = a.width * a.height;
+        let same = 0;
+        for (let i = 0, j = 0; i < total; i++, j += 4) {
+          if (pa[j] === pb[j] && pa[j + 1] === pb[j + 1] && pa[j + 2] === pb[j + 2]) same++;
+        }
+        hadFocus.current = hadFocus.current && document.activeElement === button.current;
+        setSt({ status: "done", same, total, ms: performance.now() - t0 });
+      } finally {
+        a.close();
+        b.close();
       }
-      setSt({ status: "done", same, total, ms: performance.now() - t0 });
     } catch (e) {
       setSt({ status: "error", message: e instanceof Error ? e.message : String(e) });
     }
@@ -51,7 +67,7 @@ export function PixelCheck({ beforeUrl, afterUrl, claimed }: { beforeUrl: string
     const p = (100 * st.same) / st.total;
     const agrees = Math.abs(p - claimed) < 0.02;
     return (
-      <div className={`pixel-check done${agrees ? " agrees" : ""}`}>
+      <div ref={result} tabIndex={-1} className={`pixel-check done${agrees ? " agrees" : ""}`}>
         <ShieldCheck size={16} />
         <div>
           <div>
@@ -67,13 +83,18 @@ export function PixelCheck({ beforeUrl, afterUrl, claimed }: { beforeUrl: string
       </div>
     );
   }
+  const loading = st.status === "loading";
   return (
     <div className="pixel-check">
-      <button className="btn sm" onClick={run} disabled={st.status === "loading"}>
+      <button ref={button} className="btn sm" onClick={run} aria-disabled={loading || undefined}>
         <ShieldCheck size={14} />
-        {st.status === "loading" ? "Comparing pixels…" : "Check it in your browser"}
+        {loading ? "Comparing pixels…" : "Check it in your browser"}
       </button>
-      {st.status === "error" && <span className="faint">{st.message}</span>}
+      {st.status === "error" && (
+        <span className="faint" role="alert">
+          {st.message}
+        </span>
+      )}
     </div>
   );
 }
