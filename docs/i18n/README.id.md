@@ -33,16 +33,14 @@
 <p align="center">
   <a href="../../README.md">English</a>
   &nbsp;·&nbsp; <a href="README.ko.md">한국어</a>
-  &nbsp;·&nbsp; <a href="README.zh-CN.md">简体中文</a>
   &nbsp;·&nbsp; <a href="README.ja.md">日本語</a>
   &nbsp;·&nbsp; <a href="README.es.md">Español</a>
   &nbsp;·&nbsp; <a href="README.pt-BR.md">Português</a>
   &nbsp;·&nbsp; <a href="README.fr.md">Français</a>
   &nbsp;·&nbsp; <a href="README.de.md">Deutsch</a>
-  &nbsp;·&nbsp; <a href="README.ru.md">Русский</a>
   &nbsp;·&nbsp; <a href="README.hi.md">हिन्दी</a>
   &nbsp;·&nbsp; <a href="README.ar.md">العربية</a>
-  &nbsp;·&nbsp; <b>Bahasa Indonesia</b>
+  &nbsp;·&nbsp; <b>Indonesia</b>
 </p>
 
 <p align="center"><sub>Ini adalah terjemahan dari <a href="../../README.md">README berbahasa Inggris</a>. Jika keduanya berbeda, yang benar adalah versi bahasa Inggris.</sub></p>

@@ -33,16 +33,14 @@
 <p align="center">
   <a href="../../README.md">English</a>
   &nbsp;·&nbsp; <a href="README.ko.md">한국어</a>
-  &nbsp;·&nbsp; <a href="README.zh-CN.md">简体中文</a>
   &nbsp;·&nbsp; <b>日本語</b>
   &nbsp;·&nbsp; <a href="README.es.md">Español</a>
   &nbsp;·&nbsp; <a href="README.pt-BR.md">Português</a>
   &nbsp;·&nbsp; <a href="README.fr.md">Français</a>
   &nbsp;·&nbsp; <a href="README.de.md">Deutsch</a>
-  &nbsp;·&nbsp; <a href="README.ru.md">Русский</a>
   &nbsp;·&nbsp; <a href="README.hi.md">हिन्दी</a>
   &nbsp;·&nbsp; <a href="README.ar.md">العربية</a>
-  &nbsp;·&nbsp; <a href="README.id.md">Bahasa Indonesia</a>
+  &nbsp;·&nbsp; <a href="README.id.md">Indonesia</a>
 </p>
 
 <p align="center"><sub>これは<a href="../../README.md">英語版の README</a> を翻訳したものです。内容が異なる場合は英語版を正とします。</sub></p>

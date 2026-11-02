@@ -33,16 +33,14 @@
 <p align="center">
   <a href="../../README.md">English</a>
   &nbsp;·&nbsp; <a href="README.ko.md">한국어</a>
-  &nbsp;·&nbsp; <a href="README.zh-CN.md">简体中文</a>
   &nbsp;·&nbsp; <a href="README.ja.md">日本語</a>
   &nbsp;·&nbsp; <a href="README.es.md">Español</a>
   &nbsp;·&nbsp; <b>Português</b>
   &nbsp;·&nbsp; <a href="README.fr.md">Français</a>
   &nbsp;·&nbsp; <a href="README.de.md">Deutsch</a>
-  &nbsp;·&nbsp; <a href="README.ru.md">Русский</a>
   &nbsp;·&nbsp; <a href="README.hi.md">हिन्दी</a>
   &nbsp;·&nbsp; <a href="README.ar.md">العربية</a>
-  &nbsp;·&nbsp; <a href="README.id.md">Bahasa Indonesia</a>
+  &nbsp;·&nbsp; <a href="README.id.md">Indonesia</a>
 </p>
 
 <p align="center"><sub>Esta é uma tradução do <a href="../../README.md">README em inglês</a>. Se houver diferença entre os dois, a versão em inglês é a correta.</sub></p>

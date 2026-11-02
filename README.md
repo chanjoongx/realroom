@@ -33,16 +33,14 @@
 <p align="center">
   <b>English</b>
   &nbsp;·&nbsp; <a href="docs/i18n/README.ko.md">한국어</a>
-  &nbsp;·&nbsp; <a href="docs/i18n/README.zh-CN.md">简体中文</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.ja.md">日本語</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.es.md">Español</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.pt-BR.md">Português</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.fr.md">Français</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.de.md">Deutsch</a>
-  &nbsp;·&nbsp; <a href="docs/i18n/README.ru.md">Русский</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.hi.md">हिन्दी</a>
   &nbsp;·&nbsp; <a href="docs/i18n/README.ar.md">العربية</a>
-  &nbsp;·&nbsp; <a href="docs/i18n/README.id.md">Bahasa Indonesia</a>
+  &nbsp;·&nbsp; <a href="docs/i18n/README.id.md">Indonesia</a>
 </p>
 
 > [!NOTE]
