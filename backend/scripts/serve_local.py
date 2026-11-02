@@ -58,10 +58,20 @@ def main() -> None:
         photos = cat_dir  # a catalog folder that holds its own photos
 
     launcher, reason = None, "Live runs are off on this local server (start it with --live)."
-    if args.live and not (photos / "img").is_dir():
-        reason = f"Live runs need the product photos in {photos} (python catalog/get_photos.py)."
-        print(reason, flush=True)
-    elif args.live:
+    if args.live:
+        import os
+
+        from realroom import meta  # noqa: F401  (importing it reads MODEL_API_KEY from .env)
+
+        if not os.environ.get("MODEL_API_KEY"):
+            reason = "Live runs need MODEL_API_KEY in a .env file in the repository root (see .env.example)."
+        elif not (photos / "img").is_dir():
+            reason = f"Live runs need the product photos in {photos} (python catalog/get_photos.py)."
+        else:
+            reason = ""
+        if reason:
+            print(reason, flush=True)
+    if args.live and not reason:
         from realroom.catalog import Catalog
         from realroom.pipeline import run_pipeline
 

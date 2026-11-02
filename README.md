@@ -151,7 +151,7 @@ Open http://127.0.0.1:8787. The demo rooms replay the runs in [`demo-runs/`](dem
 
 ### Live runs with your own Meta Model API key
 
-1. Copy `.env.example` to `.env` and fill in `MODEL_API_KEY`. git ignores `.env`, and the server also finds one in any folder above the repository.
+1. Copy `.env.example` to `.env` in the repository root and fill in `MODEL_API_KEY`. git ignores `.env`.
 2. Download the photos of all 4,375 products into `data/photos`. They are one file of about 730 MB on this repository's GitHub release.
    ```bash
    .venv/bin/python catalog/get_photos.py
