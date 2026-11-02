@@ -127,14 +127,14 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 
 ## What you can check
 
-- `before.png` and `after.png` are lossless. In the app, **Check it yourself** downloads both and compares them pixel by pixel in your browser, then shows the share that is identical.
+- `before.png` and `after.png` are lossless. In the app, the **Check it in your browser** button downloads both, compares them pixel by pixel and shows the share that is identical.
 - `layers.png` colors every changed pixel as product, cleared or shadow. `masks.npz` holds every object and product mask.
 - `ledger.jsonl` lists every model call with its time and estimated cost. The Perception Encoder search is in it too, at no cost, because it runs in the app's own server.
 - `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.7 to 3.7 on the demo runs). Those pixels are the reason for the composite step.
 
 ## Run it
 
-You need Python 3.12 and Node 20 or later. Install once:
+You need Python 3.12, plus Node 20 or later for the web build. Install once:
 
 ```bash
 python -m venv .venv
@@ -180,7 +180,7 @@ To run the agent on one photo without the web app:
 
 Use `--mode furnish` for an empty room. While `serve_local.py` is running, the finished run replays at http://127.0.0.1:8787/r/my-room.
 
-### Rebuild the catalog or host it
+### Rebuild the catalog or host the app
 
 To rebuild the catalog, download the ABO listings and image metadata into `data/abo/`, then run the steps in [The catalog](#the-catalog). The Modal steps need a Modal account and, for tagging, `BASETEN_API_KEY` and `FIREWORKS_API_KEY` in a Modal secret named `realroom-keys`.
 
