@@ -11,6 +11,7 @@ from __future__ import annotations
 import concurrent.futures as cf
 import re
 import time
+from typing import Callable
 
 import cv2
 import numpy as np
@@ -129,13 +130,123 @@ Return only the JSON."""
 
 DECISION_CLASS = {"keep": "keep", "replace": "replace", "remove": "remove"}
 
+MAX_OBJECTS = 40  # a cluttered room reads as 10 to 20; more means the answer went wrong, and each is SAM work
+MAX_FIXED = 40
+MAX_SLOTS = 8  # the render sends the room, the guide and one photo per product, and takes 10 images at most
+
+
+def _box(v) -> list | None:
+    """Four numbers on the 0-1000 grid, or None."""
+    if not isinstance(v, (list, tuple)) or len(v) != 4:
+        return None
+    out = [meta.as_number(x) for x in v]
+    return None if any(x is None for x in out) else out
+
+
+def _fill_text(d: dict, keys: tuple, default: str = "") -> None:
+    for k in keys:
+        if not isinstance(d.get(k), str):
+            d[k] = meta.as_text(d.get(k)) or default
+
+
+def _fill_number(d: dict, keys: tuple) -> None:
+    for k in keys:
+        if isinstance(d.get(k), bool) or not isinstance(d.get(k), (int, float)) or meta.as_number(d.get(k)) is None:
+            d[k] = meta.as_number(d.get(k)) or 0
+
+
+def normalize_reading(data: dict, n_slots: int) -> dict:
+    """Spark's room reading, safe to use: every field the pipeline reads is there with the right type,
+    numeric strings become numbers, an object, fixed element or slot without a usable box (or a slot
+    of a kind the catalog does not have) is dropped, at most MAX_OBJECTS objects and n_slots slots
+    (never more than MAX_SLOTS) are kept. A people_visible or is_room_interior value that cannot be
+    read becomes None, and pipeline.photo_check refuses a photo unless both are real booleans, so an
+    unclear or missing answer never lets a photo through. A well-formed reading comes back equal."""
+    d = dict(data)
+    pc = dict(d["photo_check"]) if isinstance(d.get("photo_check"), dict) else {}
+    for k in ("people_visible", "is_room_interior"):
+        if not isinstance(pc.get(k), bool):
+            pc[k] = meta.as_bool(pc.get(k))
+    if "problem" in pc and not isinstance(pc["problem"], str):
+        pc["problem"] = meta.as_text(pc["problem"])
+    d["photo_check"] = pc
+    _fill_text(d, ("room_type", "summary"))
+    dims = dict(d["dimensions_cm"]) if isinstance(d.get("dimensions_cm"), dict) else {}
+    _fill_number(dims, ("width", "depth", "ceiling"))
+    if dims.get("confidence") not in ("low", "medium", "high"):
+        dims["confidence"] = "low"
+    _fill_text(dims, ("basis",))
+    d["dimensions_cm"] = dims
+    light = dict(d["light"]) if isinstance(d.get("light"), dict) else {}
+    _fill_text(light, ("direction", "color_temperature", "quality"))
+    d["light"] = light
+
+    fixed = []
+    for f in d.get("fixed_elements") if isinstance(d.get("fixed_elements"), list) else []:
+        box = _box(f.get("box")) if isinstance(f, dict) else None
+        if box is None:
+            continue
+        f = dict(f, box=box) if box != f["box"] or not isinstance(f["box"], list) else dict(f)
+        _fill_text(f, ("name",), "fixed element")
+        fixed.append(f)
+    d["fixed_elements"] = fixed[:MAX_FIXED]
+
+    objects, ids = [], set()
+    for o in d.get("objects") if isinstance(d.get("objects"), list) else []:
+        box = _box(o.get("box")) if isinstance(o, dict) else None
+        if box is None:
+            continue
+        o = dict(o, box=box) if box != o["box"] or not isinstance(o["box"], list) else dict(o)
+        oid = meta.as_text(o.get("id")).strip() or f"o{len(objects) + 1}"
+        if oid in ids:
+            continue
+        if o.get("id") != oid:
+            o["id"] = oid
+        ids.add(oid)
+        _fill_text(o, ("category", "sam_phrase", "reason"))
+        _fill_text(o, ("name",), o["sam_phrase"] or o["category"] or "object")
+        if o.get("decision") not in DECISION_CLASS:
+            o["decision"] = "keep"
+        objects.append(o)
+        if len(objects) >= MAX_OBJECTS:
+            break
+    d["objects"] = objects
+
+    plan = dict(d["plan"]) if isinstance(d.get("plan"), dict) else {}
+    _fill_text(plan, ("title", "style", "idea"))
+    if not isinstance(plan.get("palette"), list) or not all(isinstance(c, str) for c in plan["palette"]):
+        plan["palette"] = [meta.as_text(c) for c in plan.get("palette") or [] if meta.as_text(c)] \
+            if isinstance(plan.get("palette"), list) else []
+    slots = []
+    for s in plan.get("slots") if isinstance(plan.get("slots"), list) else []:
+        box = _box(s.get("target_box")) if isinstance(s, dict) else None
+        kind = s.get("kind") if box is not None else None
+        if box is not None and kind not in KINDS:  # "Floor lamp" is the floor_lamp kind
+            kind = re.sub(r"[\s-]+", "_", meta.as_text(kind).strip().lower())
+        if box is None or kind not in KINDS:
+            continue
+        s = dict(s, target_box=box) if box != s["target_box"] or not isinstance(s["target_box"], list) else dict(s)
+        if s.get("kind") != kind:
+            s["kind"] = kind
+        size = dict(s["size_cm"]) if isinstance(s.get("size_cm"), dict) else {}
+        _fill_number(size, ("w", "d", "h"))
+        if size != s.get("size_cm"):
+            s["size_cm"] = size
+        _fill_text(s, ("slot", "replaces", "look", "color_family", "placement", "why"))
+        if s.get("action") not in ("add", "replace"):
+            s["action"] = "replace" if s["replaces"] else "add"
+        slots.append(s)
+    plan["slots"] = slots[:max(1, min(int(n_slots or 1), MAX_SLOTS))]
+    d["plan"] = plan
+    return d
+
 
 def read_room(ledger: meta.Ledger, room: np.ndarray, brief: str, mode: str = "refresh", n_slots: int = 3,
               tag: str = "scan") -> dict:
     send = imgutil.jpeg_bytes(room, quality=92, max_side=1600)
     prompt = PROMPT.format(mode=MODES[mode].format(n=n_slots), brief=brief.replace('"', "'"))
     t0 = time.time()
-    data = meta.spark_json(ledger, f"{tag}:read", [prompt, send], SCHEMA, "room_reading")
+    data = normalize_reading(meta.spark_json(ledger, f"{tag}:read", [prompt, send], SCHEMA, "room_reading"), n_slots)
     data["_sec"] = round(time.time() - t0, 1)
     return data
 
@@ -220,11 +331,13 @@ def refine_with_sam(ledger: meta.Ledger, room: np.ndarray, objects: list[dict], 
     img_d = float(np.hypot(w, h))
     concepts = sorted(set(phrase.values()))
     t0 = time.time()
+    failed: list[str] = []  # list.append is atomic, so the worker threads can share it
 
     def run_concept(c: str) -> tuple[str, dict]:
         try:
             return c, meta.sam_masks(ledger, f"{tag}:sam:{c}", room_b, c, w, h)
-        except meta.ApiError:
+        except meta.ApiError as exc:
+            failed.append(str(exc))
             return c, {}
 
     with cf.ThreadPoolExecutor(max_workers=6) as pool:
@@ -303,7 +416,11 @@ def refine_with_sam(ledger: meta.Ledger, room: np.ndarray, objects: list[dict], 
 
     def run_boxes(batch: list[str]) -> dict:
         prompt = meta.box_prompt({str(n + 1): boxes[i] for n, i in enumerate(batch)}, w, h)
-        got = meta.sam_masks(ledger, f"{tag}:sam:box:{batch[0]}", room_b, prompt, w, h)
+        try:
+            got = meta.sam_masks(ledger, f"{tag}:sam:box:{batch[0]}", room_b, prompt, w, h)
+        except meta.ApiError as exc:  # these objects keep Spark's box and no outline
+            failed.append(str(exc))
+            got = {}
         return {i: got.get(str(n + 1)) for n, i in enumerate(batch)}
 
     with cf.ThreadPoolExecutor(max_workers=4) as pool:
@@ -311,6 +428,9 @@ def refine_with_sam(ledger: meta.Ledger, room: np.ndarray, objects: list[dict], 
             for oid, m in res.items():
                 if m:
                     found[oid] = (m, "box")
+    if failed and len(failed) == len(concepts) + len(batches):
+        # SAM 3.1 answered nothing: stop here rather than pay for a render that cannot be checked
+        raise meta.ApiError(0, f"SAM 3.1 did not answer ({failed[0]})")
     out = {}
     for oid in boxes:
         m, how = found.get(oid, (None, "none"))
@@ -329,10 +449,13 @@ def refine_with_sam(ledger: meta.Ledger, room: np.ndarray, objects: list[dict], 
 
 
 def scan(ledger: meta.Ledger, room: np.ndarray, brief: str, mode: str = "refresh", n_slots: int = 3,
-         tag: str = "scan") -> dict:
-    """Full scan: Spark reading and plan, then SAM outlines for every movable object."""
+         tag: str = "scan", check: Callable[[dict], None] | None = None) -> dict:
+    """Full scan: Spark reading and plan, then SAM outlines for every movable object. `check` sees the
+    reading before any SAM 3.1 request and may raise to stop (the pipeline's photo check)."""
     h, w = room.shape[:2]
     reading = read_room(ledger, room, brief, mode, n_slots, tag)
+    if check is not None:
+        check(reading)
     objs = reading["objects"]
     sam = refine_with_sam(ledger, room, objs, tag) if objs else {"objects": {}, "sec": 0, "requests": 0}
     replaced = {s["replaces"] for s in reading["plan"]["slots"] if s.get("action") == "replace" and s.get("replaces")}

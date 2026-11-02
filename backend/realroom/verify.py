@@ -2,8 +2,15 @@
 
 A render only ships when a shopper would recognise each new piece as the product they would buy.
 The judge sees the original photo, the composite, and for each product its catalog photo next to a
-crop of the composite where it should appear. Products that come out 'partial' get one focused
-redraw (render.redraw_product) and a second look.
+crop of the composite where it should appear. Products judged partial or mismatch (lowest score
+first, up to max_fixes of them) are redrawn (render.redraw_product) in up to fix_rounds rounds of
+fix_tries tries; judge_one scores every try, and a try replaces the current version only when it
+scores higher. When a redraw or a clearing pass was kept, judge_scene looks at the finished room
+once more (the pipeline's final check).
+
+Answers are read through normalize_judgement and normalize_product, so a score that came back as a
+string or outside 0 to 10, an index that names no product, or a verdict outside the four words
+cannot reach the ranking or the page.
 """
 from __future__ import annotations
 
@@ -60,6 +67,90 @@ ONE_SCHEMA = {"type": "object", "properties": {"product": PRODUCT}, "required": 
 VERDICT_WEIGHT = {"match": 1.0, "partial": 0.55, "mismatch": 0.15, "missing": 0.0}
 
 
+def _score(v):
+    """A 0 to 10 score from a number or numeric string; None when there is none. In range it is unchanged."""
+    n = meta.as_number(v)
+    return None if n is None else min(10, max(0, n))
+
+
+def _texts(v) -> list[str]:
+    if isinstance(v, str):
+        return [v]
+    if not isinstance(v, list):
+        return []
+    return [meta.as_text(x) for x in v if isinstance(x, (str, int, float))]
+
+
+def _clean_fields(d: dict, numbers: tuple, flags: tuple, texts: tuple, lists: tuple) -> dict:
+    """A copy of d where the named fields have the right type; fields that cannot be read are dropped."""
+    out = dict(d)
+    for k in numbers:
+        if k in out:
+            s = _score(out[k])
+            if s is None:
+                del out[k]
+            elif s != out[k] or isinstance(out[k], str):
+                out[k] = s
+    for k in flags:
+        if k in out and not isinstance(out[k], bool):
+            b = meta.as_bool(out[k])
+            if b is None:
+                del out[k]
+            else:
+                out[k] = b
+    for k in texts:
+        if k in out and not isinstance(out[k], str):
+            out[k] = meta.as_text(out[k])
+    for k in lists:
+        if k in out:
+            v = _texts(out[k])
+            if v != out[k]:
+                out[k] = v
+    return out
+
+
+def normalize_product(p) -> dict | None:
+    """One product verdict with one of the four verdict words and a 0 to 10 score, or None when it lacks
+    either (it is then treated as not judged). A well-formed verdict comes back equal."""
+    if not isinstance(p, dict):
+        return None
+    verdict = p.get("verdict")
+    if isinstance(verdict, str) and verdict not in VERDICT_WEIGHT:
+        verdict = verdict.strip().lower()
+    if verdict not in VERDICT_WEIGHT or _score(p.get("score")) is None:
+        return None
+    q = _clean_fields(p, ("score",), ("scale_ok", "placement_ok", "fixed"),
+                      ("shape", "color", "material_pattern", "fix"), ("issues",))
+    if q.get("verdict") != verdict:
+        q["verdict"] = verdict
+    return q
+
+
+def normalize_judgement(j: dict, n_products: int) -> dict:
+    """A judge_scene answer with only usable product verdicts: index 1 to n_products, each index once
+    (the first wins), verdict and score as in normalize_product. Scene scores are clamped to 0 to 10."""
+    out = dict(j)
+    products, seen = [], set()
+    for p in j.get("products") if isinstance(j.get("products"), list) else []:
+        q = normalize_product(p)
+        if q is None:
+            continue
+        idx = meta.as_int(q.get("index"))
+        if idx is None or not 1 <= idx <= n_products or idx in seen:
+            continue
+        if q.get("index") is not idx:
+            q["index"] = idx
+        seen.add(idx)
+        products.append(q)
+    out["products"] = products
+    if isinstance(j.get("scene"), dict):
+        out["scene"] = _clean_fields(j["scene"], ("photoreal", "cohesion", "overall"),
+                                     ("renter_rule_ok", "removals_ok"), ("comment",), ("artifacts",))
+    elif "scene" in j:
+        out["scene"] = {}
+    return out
+
+
 def _dims(p) -> str:
     s = p.size_cm
     return f"{s['w']:g} x {s['d']:g} x {s['h']:g} cm"
@@ -77,9 +168,10 @@ def judge_scene(ledger: meta.Ledger, room, comp, products: list, cards: list, cr
     if removals:
         parts.append("Requested removals: " + ", ".join(removals) + ".")
     try:
-        return meta.spark_json(ledger, f"{tag}:judge", parts, SCHEMA, "render_judgement")
+        out = meta.spark_json(ledger, f"{tag}:judge", parts, SCHEMA, "render_judgement")
     except meta.ApiError as exc:
         return {"error": str(exc)[:300]}
+    return normalize_judgement(out, len(products))
 
 
 def judge_one(ledger: meta.Ledger, product, card, crop, tag: str) -> dict:
@@ -87,9 +179,10 @@ def judge_one(ledger: meta.Ledger, product, card, crop, tag: str) -> dict:
              imgutil.jpeg_bytes(card, 90, 768), "Crop of the edited room photo:", imgutil.jpeg_bytes(crop, 90, 768)]
     try:
         out = meta.spark_json(ledger, f"{tag}:judge1", parts, ONE_SCHEMA, "product_judgement")
-        return out["product"]
-    except (meta.ApiError, KeyError) as exc:
+    except meta.ApiError as exc:
         return {"error": str(exc)[:300]}
+    p = normalize_product(out.get("product"))
+    return p if p is not None else {"error": "the product check gave no usable verdict"}
 
 
 def candidate_score(j: dict, n_products: int) -> float:

@@ -1,27 +1,39 @@
 """Thin clients for the Meta Model API pieces Realroom uses.
 
 - Muse Spark 1.3: room reading, planning, judging (chat completions + JSON schema output)
-- SAM 3.1: box-prompted masks (Responses API stream + official meta_sam_parser)
-- Muse Image 1.0: generation, single-shot edits (images endpoints), interleaved composition
-  with per-image captions and multi-turn refinement (Responses API)
+- SAM 3.1: concept and box-prompted masks (Responses API stream + official meta_sam_parser)
+- Muse Image 1.0: generation and single-shot edits (images endpoints)
 
 Every paid call is appended to a JSONL ledger with latency and an estimated cost, so the
 probe report can show real numbers. The API key is read from ../../.env and never printed.
+
+Every way a call can fail (an HTTP status, a dropped connection, a timeout, an SDK or stream
+parser error, an answer that is not JSON, bytes that are not an image) surfaces as ApiError with
+a short message, so callers handle one exception type. Retries use jittered exponential backoff
+and honor Retry-After, as the API's rate-limit notes ask. A call that timed out may already have
+been billed, so it is retried at most once.
 """
 from __future__ import annotations
 
 import asyncio
 import base64
+import binascii
+import email.utils
+import io
 import json
+import math
 import os
 import pathlib
+import random
+import re
 import threading
 import time
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import cv2
 import numpy as np
 import requests
+from PIL import Image
 
 BASE_URL = "https://api.meta.ai/v1"
 PROJECT = pathlib.Path(__file__).resolve().parents[2]
@@ -49,6 +61,20 @@ USD_SPARK_OUT = 4.25 / 1e6
 USD_IMAGE = 0.01
 USD_SAM_IMAGE = 2.50 / 1000
 
+# Network limits. A read timeout is the longest wait for the answer to start (or, for the SAM
+# stream, between two chunks); the connect timeout covers reaching the host.
+CONNECT_S = 10
+READ_S = {"spark": 180, "sam": 120, "image": 300}
+ATTEMPTS = 4  # the first try plus three retries for 429, 5xx and connections that were never made
+# A call that timed out or lost its connection after the request went out may still be billed (images
+# are billed as they are made), so it is retried once at most.
+TIMEOUT_RETRIES = 1
+RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
+BACKOFF_S, BACKOFF_CAP_S = 1.0, 16.0  # waits of 0.5 to 1 s, then 1 to 2 s, 2 to 4 s, with jitter
+RETRY_AFTER_MAX_S = 60.0  # a longer Retry-After ends the call instead of holding a run slot
+MAX_EDIT_INPUTS = 10  # /images/edits takes 1 to 10 input images
+BODY_CHARS = 200  # the most of a response body an ApiError message carries
+
 
 def _load_env() -> None:
     if os.environ.get("MODEL_API_KEY") or ENV_PATH is None or not ENV_PATH.exists():
@@ -75,11 +101,20 @@ def _headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {_key()}", "Content-Type": "application/json"}
 
 
+def _short(text: Any, n: int = BODY_CHARS) -> str:
+    s = re.sub(r"\s+", " ", str(text or "")).strip()
+    return s if len(s) <= n else s[: n - 3] + "..."
+
+
 class ApiError(RuntimeError):
-    def __init__(self, status: int, body: str):
-        super().__init__(f"HTTP {status}: {body[:600]}")
-        self.status = status
-        self.body = body
+    """A Meta Model API call that gave no usable answer. `status` is the HTTP status, or 0 when
+    there was none (network, timeout, SDK, stream parser, bad bytes). The message stays short."""
+
+    def __init__(self, status: int, body: str = ""):
+        self.status = int(status or 0)
+        self.body = _short(body)
+        head = f"HTTP {self.status}" if self.status else "no usable answer"
+        super().__init__(f"{head}: {self.body}" if self.body else head)
 
 
 class Ledger:
@@ -98,7 +133,15 @@ class Ledger:
     def rows(self) -> list[dict]:
         if not self.path.exists():
             return []
-        return [json.loads(l) for l in self.path.read_text(encoding="utf-8").splitlines() if l.strip()]
+        out = []
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                out.append(json.loads(line))
+            except ValueError:  # a line cut short by a crash
+                continue
+        return out
 
     def total_usd(self) -> float:
         return round(sum(r.get("usd", 0.0) for r in self.rows()), 4)
@@ -122,21 +165,224 @@ def data_url(data: bytes) -> str:
     return f"data:{sniff_mime(data)};base64,{base64.b64encode(data).decode('ascii')}"
 
 
-def _post(path: str, body: dict, timeout: int = 900) -> tuple[dict, float]:
+# ---------------------------------------------------------------- retries
+
+def _sleep(seconds: float) -> None:
+    time.sleep(seconds)
+
+
+def _retry_after(headers: Any) -> float | None:
+    """Seconds the server asked for: Retry-After as seconds or an HTTP date, or retry-after-ms."""
+    if not headers:
+        return None
+    ms = headers.get("retry-after-ms")
+    if ms is not None:
+        try:
+            return max(0.0, float(ms) / 1000)
+        except (TypeError, ValueError):
+            pass
+    value = headers.get("retry-after")
+    if value is None:
+        return None
+    try:
+        return max(0.0, float(value))
+    except (TypeError, ValueError):
+        pass
+    try:
+        when = email.utils.parsedate_to_datetime(str(value))
+    except (TypeError, ValueError, IndexError):
+        return None
+    if when is None or when.tzinfo is None:
+        return None
+    return max(0.0, when.timestamp() - time.time())
+
+
+def _delay(attempt: int, retry_after: float | None = None) -> float:
+    """Exponential backoff, half fixed and half random, and never shorter than Retry-After."""
+    d = min(BACKOFF_CAP_S, BACKOFF_S * 2 ** attempt)
+    wait = d / 2 + random.uniform(0, d / 2)
+    if retry_after is not None:
+        wait = max(wait, retry_after + random.uniform(0, 0.25))
+    return wait
+
+
+def _read_timed_out(exc: Exception) -> bool:
+    """A read timeout, including one that requests reports as a ConnectionError while the body streams."""
+    if isinstance(exc, requests.exceptions.ReadTimeout):
+        return True
+    import urllib3
+
+    return any(isinstance(a, urllib3.exceptions.ReadTimeoutError) for a in getattr(exc, "args", ()))
+
+
+def _never_sent(exc: Exception) -> bool:
+    """True when no connection was made (connect timeout, refused, name lookup failed): nothing reached
+    the API, so nothing can have been billed and the call may be retried freely."""
+    if isinstance(exc, requests.exceptions.ConnectTimeout):
+        return True
+    import urllib3
+
+    for a in getattr(exc, "args", ()):
+        reason = getattr(a, "reason", a)
+        if isinstance(reason, (urllib3.exceptions.NewConnectionError, urllib3.exceptions.ConnectTimeoutError)):
+            return True
+    return False
+
+
+def _post(path: str, body: dict, read_s: float) -> tuple[dict, float]:
+    """POST a JSON body with the retry rules above. Returns (answer, seconds) or raises ApiError."""
     t0 = time.time()
-    for attempt in range(4):
-        resp = requests.post(BASE_URL + path, headers=_headers(), json=body, timeout=timeout)
-        if resp.status_code in (429, 500, 502, 503, 504) and attempt < 3:
-            time.sleep(4 * (attempt + 1))
+    timeouts = 0
+    resp = None
+    for attempt in range(ATTEMPTS):
+        last = attempt == ATTEMPTS - 1
+        try:
+            resp = requests.post(BASE_URL + path, headers=_headers(), json=body, timeout=(CONNECT_S, read_s))
+        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError) as exc:
+            # a connection that was never made is retried like a 503; a read timeout or a connection
+            # dropped after the request went out may already be billed, so it is retried once at most
+            if _never_sent(exc):
+                if last:
+                    raise ApiError(0, f"connection failed ({type(exc).__name__})") from None
+            else:
+                timeouts += 1
+                if last or timeouts > TIMEOUT_RETRIES:
+                    if _read_timed_out(exc):
+                        raise ApiError(0, f"no answer within {read_s:g} s") from None
+                    raise ApiError(0, f"connection dropped ({type(exc).__name__})") from None
+            _sleep(_delay(attempt))
+            continue
+        except requests.exceptions.RequestException as exc:
+            raise ApiError(0, f"request failed ({type(exc).__name__})") from None
+        if resp.status_code in RETRY_STATUS and not last:
+            wait = _retry_after(resp.headers)
+            if wait is not None and wait > RETRY_AFTER_MAX_S:
+                raise ApiError(resp.status_code, f"asked to retry after {wait:.0f} s")
+            _sleep(_delay(attempt, wait))
             continue
         break
-    elapsed = time.time() - t0
+    if resp is None:
+        raise ApiError(0, "no answer")
     if resp.status_code != 200:
         raise ApiError(resp.status_code, resp.text)
-    return resp.json(), elapsed
+    try:
+        data = resp.json()
+    except ValueError:
+        raise ApiError(resp.status_code, "the answer was not JSON") from None
+    if not isinstance(data, dict):
+        raise ApiError(resp.status_code, "the answer was not a JSON object")
+    return data, time.time() - t0
 
 
 # ---------------------------------------------------------------- Muse Spark
+
+# Readers for fields of a model answer. The schemas ask for these types, but structured output is not
+# guaranteed to be strict, so a number can come back as "12" and a boolean as "false". Values of the
+# right type pass through unchanged, which keeps a well-formed answer exactly as it was.
+
+def as_number(v: Any) -> int | float | None:
+    """A finite number, or a numeric string such as "12", "12.5" or "12 cm"; None otherwise."""
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, (int, float)):
+        return v if math.isfinite(v) else None
+    if isinstance(v, str):
+        m = re.fullmatch(r"\s*([+-]?\d+(?:\.\d+)?)\s*(?:cm)?\s*", v)
+        if not m:
+            return None
+        s = m.group(1)
+        return float(s) if "." in s else int(s)
+    return None
+
+
+def as_int(v: Any) -> int | None:
+    """A whole number given as an int, a float such as 3.0, or a string such as "3" or "#3"."""
+    if isinstance(v, str):
+        v = v.strip().lstrip("#")
+    n = as_number(v)
+    if isinstance(n, float):
+        return int(n) if n.is_integer() else None
+    return n
+
+
+def as_bool(v: Any) -> bool | None:
+    """True or False, also from "true", "yes", "false", "no", 1 or 0; None when it is neither."""
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, (int, float)) and v in (0, 1):
+        return bool(v)
+    if isinstance(v, str):
+        s = v.strip().lower()
+        if s in ("true", "yes"):
+            return True
+        if s in ("false", "no"):
+            return False
+    return None
+
+
+def as_text(v: Any) -> str:
+    """A string; a number or boolean becomes its text, anything else an empty string."""
+    if isinstance(v, str):
+        return v
+    if isinstance(v, (int, float, bool)):
+        return str(v)
+    return ""
+
+
+def normalize_picks(data: dict) -> dict:
+    """The product_picks answer (parsed in pick.py): pick numbers that came back as strings or floats
+    become ints, alternates that are not numbers are dropped, entries that are not objects are
+    dropped. A well-formed answer comes back equal to what went in."""
+    out = dict(data)
+    picks = data.get("picks")
+    fixed = []
+    for p in picks if isinstance(picks, list) else []:
+        if not isinstance(p, dict):
+            continue
+        q = dict(p)
+        n = as_int(p.get("pick"))
+        if n is not None and n is not p.get("pick"):
+            q["pick"] = n
+        alts = p.get("alternates")
+        if isinstance(alts, list):
+            clean = [m for m in (as_int(a) for a in alts) if m is not None]
+            if clean != alts:
+                q["alternates"] = clean
+        elif "alternates" in p:
+            q["alternates"] = []
+        if "slot" in q and not isinstance(q["slot"], str):
+            q["slot"] = as_text(q["slot"])
+        if "reason" in q and not isinstance(q["reason"], str):
+            q["reason"] = as_text(q["reason"])
+        fixed.append(q)
+    out["picks"] = fixed
+    if "set_comment" in out and not isinstance(out["set_comment"], str):
+        out["set_comment"] = as_text(out["set_comment"])
+    return out
+
+
+# answers whose parser lives in a module this layer cannot change get their light fixes here
+OUTPUT_FIXES: dict[str, Callable[[dict], dict]] = {"product_picks": normalize_picks}
+
+
+def _parse_choice(data: dict) -> tuple[dict | None, str]:
+    choices = data.get("choices")
+    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+        return None, "returned no choices"
+    choice = choices[0]
+    if choice.get("finish_reason") == "length":
+        return None, "answer was cut off"
+    text = (choice.get("message") or {}).get("content")
+    if not isinstance(text, str):
+        return None, "answer had no text"
+    try:
+        out = json.loads(text)
+    except ValueError:
+        return None, "answer was not valid JSON"
+    if not isinstance(out, dict):
+        return None, "answer was not a JSON object"
+    return out, ""
+
 
 def spark_json(
     ledger: Ledger,
@@ -148,7 +394,11 @@ def spark_json(
     model: str = SPARK,
     extra: dict | None = None,
 ) -> dict:
-    """One structured-output call. `parts` mixes text (str) and images (bytes) in order."""
+    """One structured-output call. `parts` mixes text (str) and images (bytes) in order. An answer
+    that was cut off or is not a JSON object is asked for once more with the same request, then the
+    call raises ApiError. Each attempt is logged, since each one is billed. The request sets no
+    temperature, so the second answer is sampled anew and can come back shorter; none of the 412
+    recorded Spark calls (11-02) was cut off, so a larger token limit is not sent."""
     content = []
     for part in parts:
         if isinstance(part, (bytes, bytearray)):
@@ -166,25 +416,57 @@ def spark_json(
     }
     if extra:
         body.update(extra)
-    data, elapsed = _post("/chat/completions", body)
-    usage = data.get("usage") or {}
-    tin, tout = usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
-    ledger.add(kind="spark", tag=tag, model=model, sec=round(elapsed, 2), in_tok=tin, out_tok=tout,
-               usd=round(tin * USD_SPARK_IN + tout * USD_SPARK_OUT, 5))
-    text = data["choices"][0]["message"]["content"]
-    return json.loads(text)
+    problem = "gave no answer"
+    for attempt in range(2):
+        data, elapsed = _post("/chat/completions", body, READ_S["spark"])
+        usage = data.get("usage") or {}
+        tin, tout = usage.get("prompt_tokens", 0) or 0, usage.get("completion_tokens", 0) or 0
+        row: dict[str, Any] = dict(kind="spark", tag=tag, model=model, sec=round(elapsed, 2), in_tok=tin,
+                                   out_tok=tout, usd=round(tin * USD_SPARK_IN + tout * USD_SPARK_OUT, 5))
+        if attempt:
+            row["retry"] = attempt
+        ledger.add(**row)
+        out, problem = _parse_choice(data)
+        if out is not None:
+            fix = OUTPUT_FIXES.get(schema_name)
+            return fix(out) if fix else out
+    raise ApiError(0, f"Muse Spark {problem}")
 
 
 # ---------------------------------------------------------------- Muse Image
 
-def _decode_images(items: list[dict]) -> list[bytes]:
-    out = []
+def _decode_images(items: list) -> tuple[list[bytes], int]:
+    """The returned images that really are images (the header is checked before PIL sees the bytes, then
+    they must decode in full), and how many items were unusable."""
+    out, bad = [], 0
     for item in items:
-        if item.get("b64_json"):
-            out.append(base64.b64decode(item["b64_json"]))
-        elif item.get("url"):
-            out.append(requests.get(item["url"], timeout=120).content)
-    return out
+        raw = None
+        try:
+            if isinstance(item, dict) and item.get("b64_json"):
+                raw = base64.b64decode(item["b64_json"])
+            elif isinstance(item, dict) and item.get("url"):
+                r = requests.get(item["url"], timeout=(CONNECT_S, 120))
+                raw = r.content if r.status_code == 200 else None
+        except (binascii.Error, ValueError, TypeError, requests.exceptions.RequestException):
+            raw = None
+        if raw and not _decodes(raw):
+            raw = None
+        if raw:
+            out.append(raw)
+        else:
+            bad += 1
+    return out, bad
+
+
+def _decodes(raw: bytes) -> bool:
+    """The bytes start like a PNG, JPEG, WebP or GIF (checked first) and then decode in full."""
+    try:
+        sniff_mime(raw)
+        with Image.open(io.BytesIO(raw)) as im:
+            im.load()
+        return True
+    except Exception:  # noqa: BLE001  (PIL raises several types for broken or truncated data)
+        return False
 
 
 def image_generate(
@@ -201,11 +483,17 @@ def image_generate(
             "output_format": output_format, "reasoning_strength": reasoning}
     if tools is not None:
         body["tool_enablement"] = tools
-    data, elapsed = _post("/images/generations", body)
-    images = _decode_images(data.get("data", []))
-    ledger.add(kind="image_gen", tag=tag, sec=round(elapsed, 2), n=len(images), size=size,
-               reasoning=reasoning, usd=round(USD_IMAGE * len(images), 4), usage=data.get("usage"),
-               revised=[d.get("revised_prompt") for d in data.get("data", [])])
+    data, elapsed = _post("/images/generations", body, READ_S["image"])
+    items = data.get("data") or []
+    images, bad = _decode_images(items)
+    row: dict[str, Any] = dict(kind="image_gen", tag=tag, sec=round(elapsed, 2), n=len(images), size=size,
+                               reasoning=reasoning, usd=round(USD_IMAGE * len(items), 4), usage=data.get("usage"),
+                               revised=[d.get("revised_prompt") for d in items if isinstance(d, dict)])
+    if bad:
+        row["unusable"] = bad
+    ledger.add(**row)
+    if items and not images:
+        raise ApiError(0, "the image model returned bytes that are not an image")
     return images
 
 
@@ -221,56 +509,25 @@ def image_edit(
     tools: dict | None = None,
 ) -> list[bytes]:
     """Single-shot edit/compose on /v1/images/edits (JSON body, 1 to 10 inputs, n candidates)."""
+    if not 1 <= len(images) <= MAX_EDIT_INPUTS:
+        raise ApiError(0, f"{len(images)} input images, the edit endpoint takes 1 to {MAX_EDIT_INPUTS}")
     body = {"model": IMAGE, "prompt": prompt, "images": [{"image_url": data_url(b)} for b in images],
             "n": n, "output_format": output_format, "reasoning_strength": reasoning}
     if size:
         body["size"] = size
     if tools is not None:
         body["tool_enablement"] = tools
-    data, elapsed = _post("/images/edits", body)
-    out = _decode_images(data.get("data", []))
-    ledger.add(kind="image_edit", tag=tag, sec=round(elapsed, 2), n=len(out), inputs=len(images),
-               reasoning=reasoning, usd=round(USD_IMAGE * len(out), 4), usage=data.get("usage"))
+    data, elapsed = _post("/images/edits", body, READ_S["image"])
+    items = data.get("data") or []
+    out, bad = _decode_images(items)
+    row: dict[str, Any] = dict(kind="image_edit", tag=tag, sec=round(elapsed, 2), n=len(out), inputs=len(images),
+                               reasoning=reasoning, usd=round(USD_IMAGE * len(items), 4), usage=data.get("usage"))
+    if bad:
+        row["unusable"] = bad
+    ledger.add(**row)
+    if items and not out:
+        raise ApiError(0, "the image model returned bytes that are not an image")
     return out
-
-
-def image_compose(
-    ledger: Ledger,
-    tag: str,
-    parts: Iterable[str | bytes],
-    size: str | None = None,
-    reasoning: str = "high",
-    output_format: str = "png",
-    tools: dict | None = None,
-    previous_response_id: str | None = None,
-) -> dict:
-    """Responses API turn with interleaved captions and images. Returns images, id, summary."""
-    content = []
-    for part in parts:
-        if isinstance(part, (bytes, bytearray)):
-            content.append({"type": "input_image", "image_url": data_url(bytes(part))})
-        else:
-            content.append({"type": "input_text", "text": part})
-    tool: dict[str, Any] = {"type": "image_generation", "reasoning_strength": reasoning,
-                            "output_format": output_format}
-    if size:
-        tool["size"] = size
-    if tools:
-        tool.update(tools)
-    body: dict[str, Any] = {"model": IMAGE, "input": [{"role": "user", "content": content}], "tools": [tool]}
-    if previous_response_id:
-        body["previous_response_id"] = previous_response_id
-    data, elapsed = _post("/responses", body)
-    images, summary = [], []
-    for item in data.get("output", []):
-        if item.get("type") == "image_generation_call" and item.get("result"):
-            images.append(base64.b64decode(item["result"]))
-        elif item.get("type") == "reasoning":
-            summary += [s.get("text", "") for s in item.get("summary", []) if isinstance(s, dict)]
-    ledger.add(kind="image_compose", tag=tag, sec=round(elapsed, 2), n=len(images),
-               reasoning=reasoning, chained=bool(previous_response_id),
-               usd=round(USD_IMAGE * len(images), 4), usage=data.get("usage"), summary=summary)
-    return {"images": images, "id": data.get("id"), "summary": summary}
 
 
 # ---------------------------------------------------------------- SAM 3.1
@@ -285,52 +542,108 @@ def box_prompt(boxes: dict[str, tuple[int, int, int, int]], width: int, height: 
     return "<0f>" + ",".join(parts)
 
 
-async def _sam_async(image: bytes, text: str):
-    from openai import AsyncOpenAI
+async def _sam_async(image: bytes, text: str, key: str):
+    import httpx
     from meta_sam_parser import image_segmentation_format, parse_responses_stream
+    from openai import AsyncOpenAI
 
-    client = AsyncOpenAI(base_url=BASE_URL, api_key=_key(), timeout=600)
-    stream = await client.responses.create(
-        model=SAM,
-        input=[{"type": "message", "role": "user", "content": [
-            {"type": "input_text", "text": text},
-            {"type": "input_image", "image_url": data_url(image)},
-        ]}],
-        stream=True,
-        metadata={"include_confidence": "true", "mask_encoding": "one_bit"},
-    )
-    parsed = parse_responses_stream(stream, image_segmentation_format())
-    result = await parsed.final_result()
-    await client.close()
-    return result
+    timeout = httpx.Timeout(READ_S["sam"], connect=CONNECT_S)
+    # retries happen in _sam_result with the shared rules; the context manager closes the client on
+    # every path, errors included
+    async with AsyncOpenAI(base_url=BASE_URL, api_key=key, timeout=timeout, max_retries=0) as client:
+        stream = await client.responses.create(
+            model=SAM,
+            input=[{"type": "message", "role": "user", "content": [
+                {"type": "input_text", "text": text},
+                {"type": "input_image", "image_url": data_url(image)},
+            ]}],
+            stream=True,
+            metadata={"include_confidence": "true", "mask_encoding": "one_bit"},
+        )
+        parsed = parse_responses_stream(stream, image_segmentation_format())
+        return await parsed.final_result()
+
+
+def _status_text(exc: Exception) -> str:
+    return _short(getattr(exc, "message", None) or str(exc))
+
+
+def _sam_result(image: bytes, text: str):
+    """One SAM 3.1 request with the shared retry rules. Every failure becomes ApiError."""
+    import openai
+
+    key = _key()  # a missing key is a setup problem, not an API failure
+    timeouts = 0
+    for attempt in range(ATTEMPTS):
+        last = attempt == ATTEMPTS - 1
+        try:
+            return asyncio.run(_sam_async(image, text, key))
+        except ApiError:
+            raise
+        except openai.APITimeoutError:
+            timeouts += 1
+            if last or timeouts > TIMEOUT_RETRIES:
+                raise ApiError(0, f"SAM 3.1 gave no answer within {READ_S['sam']:g} s") from None
+            _sleep(_delay(attempt))
+        except openai.APIConnectionError as exc:
+            if last:
+                raise ApiError(0, f"could not reach SAM 3.1 ({type(exc).__name__})") from None
+            _sleep(_delay(attempt))
+        except openai.APIStatusError as exc:
+            status = int(getattr(exc, "status_code", 0) or 0)
+            if status in RETRY_STATUS and not last:
+                wait = _retry_after(getattr(getattr(exc, "response", None), "headers", None))
+                if wait is not None and wait > RETRY_AFTER_MAX_S:
+                    raise ApiError(status, f"asked to retry after {wait:.0f} s") from None
+                _sleep(_delay(attempt, wait))
+                continue
+            raise ApiError(status, _status_text(exc)) from None
+        except Exception as exc:  # noqa: BLE001  (SDK and stream parser errors with no HTTP status)
+            raise ApiError(0, f"SAM 3.1 answer could not be read ({type(exc).__name__})") from None
+    raise ApiError(0, "SAM 3.1 gave no answer")
+
+
+def _mask_record(rec: Any, width: int, height: int, decode: Callable) -> dict | None:
+    raster = np.frombuffer(decode(rec.mask), dtype=np.uint8)
+    raster = raster.reshape(rec.mask.height, rec.mask.width)
+    b = rec.bounds
+    left, top = int(np.floor(b.left)), int(np.floor(b.top))
+    right, bottom = int(np.ceil(b.right)), int(np.ceil(b.bottom))
+    left, top = max(0, left), max(0, top)
+    right, bottom = min(width, right), min(height, bottom)
+    if right <= left or bottom <= top:
+        return None
+    local = cv2.resize(raster, (right - left, bottom - top), interpolation=cv2.INTER_NEAREST)
+    full = np.zeros((height, width), dtype=bool)
+    full[top:bottom, left:right] = local > 0
+    return {"mask": full, "conf": rec.confidence, "box": (left, top, right, bottom), "area": int(full.sum())}
 
 
 def sam_masks(ledger: Ledger, tag: str, image: bytes, text: str, width: int, height: int) -> dict[str, dict]:
-    """Run SAM 3.1 (concept phrase or box prompt) and return full-frame boolean masks by object id."""
+    """Run SAM 3.1 (concept phrase or box prompt) and return full-frame boolean masks by object id.
+    A failed request raises ApiError; a mask record that cannot be decoded is skipped and counted."""
     from meta_sam_parser import decode_mask_to_raster
 
     t0 = time.time()
-    result = asyncio.run(_sam_async(image, text))
+    result = _sam_result(image, text)
     elapsed = time.time() - t0
     masks: dict[str, dict] = {}
-    for rec in result.records:
+    unreadable = 0
+    for rec in getattr(result, "records", None) or []:
         if getattr(rec, "kind", None) != "mask":
             continue
-        raster = np.frombuffer(decode_mask_to_raster(rec.mask), dtype=np.uint8)
-        raster = raster.reshape(rec.mask.height, rec.mask.width)
-        b = rec.bounds
-        left, top = int(np.floor(b.left)), int(np.floor(b.top))
-        right, bottom = int(np.ceil(b.right)), int(np.ceil(b.bottom))
-        left, top = max(0, left), max(0, top)
-        right, bottom = min(width, right), min(height, bottom)
-        if right <= left or bottom <= top:
+        try:
+            m = _mask_record(rec, width, height, decode_mask_to_raster)
+        except Exception:  # noqa: BLE001  (one unreadable record must not lose the others)
+            unreadable += 1
             continue
-        local = cv2.resize(raster, (right - left, bottom - top), interpolation=cv2.INTER_NEAREST)
-        full = np.zeros((height, width), dtype=bool)
-        full[top:bottom, left:right] = local > 0
-        masks[str(rec.object_id)] = {"mask": full, "conf": rec.confidence,
-                                     "box": (left, top, right, bottom), "area": int(full.sum())}
-    ledger.add(kind="sam", tag=tag, sec=round(elapsed, 2), n_masks=len(masks), usd=USD_SAM_IMAGE,
-               outcome=getattr(result.outcome, "status", str(result.outcome)),
-               diagnostics=[str(d) for d in result.diagnostics][:5])
+        if m is not None:
+            masks[str(rec.object_id)] = m
+    outcome = getattr(result, "outcome", None)
+    row: dict[str, Any] = dict(kind="sam", tag=tag, sec=round(elapsed, 2), n_masks=len(masks), usd=USD_SAM_IMAGE,
+                               outcome=getattr(outcome, "status", str(outcome)),
+                               diagnostics=[str(d) for d in (getattr(result, "diagnostics", None) or [])][:5])
+    if unreadable:
+        row["unreadable"] = unreadable
+    ledger.add(**row)
     return masks

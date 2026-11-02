@@ -254,7 +254,6 @@ class Catalog:
 
 def contact_sheet(cat: Catalog, pids: list[str], cols: int = 6, tile: int = 256, label: bool = True) -> np.ndarray:
     """Numbered grid of product thumbnails (1-based numbers) for an agent to look at in one image."""
-    import cv2
     from PIL import Image, ImageDraw
 
     from .imgutil import FONT_BOLD, _font
@@ -276,5 +275,4 @@ def contact_sheet(cat: Catalog, pids: list[str], cols: int = 6, tile: int = 256,
             tw, th = draw.textbbox((0, 0), t, font=font)[2:]
             draw.rounded_rectangle([x + 6, y + 6, x + 6 + tw + 16, y + 6 + th + 12], radius=8, fill=(20, 20, 20))
             draw.text((x + 14, y + 8), t, fill=(255, 255, 255), font=font)
-    _ = cv2  # keep the import contract consistent with imgutil users
     return np.asarray(sheet)

@@ -1,15 +1,16 @@
-"""Image helpers shared by the probe: decode, resize, encode, guides and overlays."""
+"""Image helpers: decode, resize, encode, the placement guide, provenance metadata and blurring."""
 from __future__ import annotations
 
 import io
+import os
 import pathlib
+import zlib
 
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 FONT_BOLD = "C:/Windows/Fonts/arialbd.ttf"
-FONT_KO = "C:/Windows/Fonts/malgun.ttf"
 
 GUIDE_COLORS = [(255, 0, 170), (0, 200, 255), (255, 210, 0), (120, 255, 0), (255, 120, 0), (170, 90, 255)]
 
@@ -119,34 +120,6 @@ def draw_guide(arr: np.ndarray, items: list[dict]) -> np.ndarray:
     return np.asarray(Image.alpha_composite(base, layer).convert("RGB")).copy()
 
 
-def draw_overlay(arr: np.ndarray, items: list[dict], font_px: int | None = None) -> np.ndarray:
-    """Analysis overlay: outlined boxes with short Korean or English labels."""
-    base = Image.fromarray(arr).convert("RGBA")
-    layer = Image.new("RGBA", base.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
-    stroke = max(2, base.width // 500)
-    font = _font(FONT_KO, font_px or max(14, base.width // 70))
-    for item in items:
-        color = tuple(item.get("color", (255, 255, 255)))
-        x1, y1, x2, y2 = item["box_px"]
-        dash = item.get("dashed", False)
-        if dash:
-            for x in range(x1, x2, 18):
-                draw.line([x, y1, min(x + 9, x2), y1], fill=color + (255,), width=stroke)
-                draw.line([x, y2, min(x + 9, x2), y2], fill=color + (255,), width=stroke)
-            for y in range(y1, y2, 18):
-                draw.line([x1, y, x1, min(y + 9, y2)], fill=color + (255,), width=stroke)
-                draw.line([x2, y, x2, min(y + 9, y2)], fill=color + (255,), width=stroke)
-        else:
-            draw.rectangle([x1, y1, x2, y2], outline=color + (255,), width=stroke)
-        label = item.get("label")
-        if label:
-            tb = draw.textbbox((x1 + 4, y1 + 2), label, font=font)
-            draw.rectangle([tb[0] - 3, tb[1] - 2, tb[2] + 3, tb[3] + 2], fill=(0, 0, 0, 170))
-            draw.text((x1 + 4, y1 + 2), label, fill=color + (255,), font=font)
-    return np.asarray(Image.alpha_composite(base, layer).convert("RGB")).copy()
-
-
 def product_card(arr: np.ndarray, side: int = 1024) -> np.ndarray:
     """Center a product photo on a white square so every reference has the same framing."""
     h, w = arr.shape[:2]
@@ -164,3 +137,113 @@ def crop_box(arr: np.ndarray, box: tuple[int, int, int, int], margin: float = 0.
     x1, y1, x2, y2 = box
     mx, my = int((x2 - x1) * margin), int((y2 - y1) * margin)
     return arr[max(0, y1 - my):min(h, y2 + my), max(0, x1 - mx):min(w, x2 + mx)].copy()
+
+
+def _replace_bytes(path: pathlib.Path, data: bytes) -> None:
+    """Write next to the file, then swap it in, so a reader never sees half a file."""
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, path)
+
+
+# ---------------------------------------------------------------- blurring a photo that must not be kept
+
+FORMATS = {".jpg": "JPEG", ".jpeg": "JPEG", ".png": "PNG", ".webp": "WEBP"}
+
+
+def blur_file(path: str | pathlib.Path, max_side: int = 48) -> None:
+    """Replace an image with a tiny, heavily blurred copy under the same name and format, so the photo
+    can no longer be seen while every link to the file still works. A file that does not decode is
+    replaced with plain grey."""
+    path = pathlib.Path(path)
+    try:
+        small = resize_max(load_rgb(path), max_side)
+        small = cv2.GaussianBlur(small, (0, 0), max(2.0, max(small.shape[:2]) / 12))
+    except Exception:  # noqa: BLE001  (an unreadable file must still be overwritten)
+        small = np.full((6, 8, 3), 128, dtype=np.uint8)
+    buf = io.BytesIO()
+    Image.fromarray(small).save(buf, format=FORMATS.get(path.suffix.lower(), "PNG"))
+    _replace_bytes(path, buf.getvalue())
+
+
+# ---------------------------------------------------------------- provenance (IPTC digital source type in XMP)
+
+# IPTC's term for a picture that combines a real photo with output of a trained model, and the XMP
+# names it needs. These are identifiers written into the file (never fetched), kept as bytes.
+DIGITAL_SOURCE_TYPE = b"http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia"
+_XMP_JPEG_HEADER = b"http://ns.adobe.com/xap/1.0/\x00"
+_XMP_PNG_KEYWORD = b"XML:com.adobe.xmp"
+_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def xmp_packet(source_type: bytes = DIGITAL_SOURCE_TYPE) -> bytes:
+    """A minimal XMP packet (UTF-8) that records how the picture was made."""
+    return (
+        b'<?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n'
+        b'<x:xmpmeta xmlns:x="adobe:ns:meta/">\n'
+        b' <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n'
+        b'  <rdf:Description rdf:about="" xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/">\n'
+        b'   <Iptc4xmpExt:DigitalSourceType>' + source_type + b'</Iptc4xmpExt:DigitalSourceType>\n'
+        b'  </rdf:Description>\n'
+        b' </rdf:RDF>\n'
+        b'</x:xmpmeta>\n'
+        b'<?xpacket end="w"?>'
+    )
+
+
+def _jpeg_with_xmp(data: bytes, packet: bytes) -> bytes:
+    body = _XMP_JPEG_HEADER + packet
+    if len(body) + 2 > 0xFFFF:
+        raise ValueError("XMP packet too large for one JPEG segment")
+    app1 = b"\xff\xe1" + (len(body) + 2).to_bytes(2, "big") + body
+    pos = 2
+    if data[2:4] == b"\xff\xe0":  # JFIF stays the first segment, as readers expect
+        pos = 4 + int.from_bytes(data[4:6], "big")
+    return data[:pos] + app1 + data[pos:]
+
+
+def _png_with_xmp(data: bytes, packet: bytes) -> bytes:
+    if data[12:16] != b"IHDR":
+        raise ValueError("PNG without IHDR first")
+    end = 8 + 12 + int.from_bytes(data[8:12], "big")  # signature, then IHDR's length, type, data and CRC
+    # iTXt: keyword, NUL, compression flag 0, method 0, empty language tag, NUL, empty translation, NUL, text
+    payload = _XMP_PNG_KEYWORD + b"\x00" + b"\x00\x00" + b"\x00" + b"\x00" + packet
+    chunk = len(payload).to_bytes(4, "big") + b"iTXt" + payload + \
+        zlib.crc32(b"iTXt" + payload).to_bytes(4, "big")
+    return data[:end] + chunk + data[end:]
+
+
+def has_xmp(data: bytes) -> bool:
+    if data[:3] == b"\xff\xd8\xff":
+        return _XMP_JPEG_HEADER in data[:65536]
+    if data[:8] == _PNG_SIGNATURE:
+        return b"iTXt" + _XMP_PNG_KEYWORD in data
+    return False
+
+
+def _pixels(data: bytes) -> tuple:
+    with Image.open(io.BytesIO(data)) as im:
+        return im.mode, im.size, np.asarray(im).copy()
+
+
+def add_xmp(path: str | pathlib.Path, packet: bytes | None = None) -> bool:
+    """Write an XMP packet into a JPEG or PNG without re-encoding it: the bytes go into a metadata
+    segment (JPEG APP1) or chunk (PNG iTXt) and the image data is not touched. The file is replaced
+    only when the new bytes decode to exactly the same pixels. Returns whether the file now has XMP."""
+    path = pathlib.Path(path)
+    data = path.read_bytes()
+    if has_xmp(data):
+        return True
+    packet = packet or xmp_packet()
+    if data[:3] == b"\xff\xd8\xff":
+        new = _jpeg_with_xmp(data, packet)
+    elif data[:8] == _PNG_SIGNATURE:
+        new = _png_with_xmp(data, packet)
+    else:
+        return False
+    m0, s0, p0 = _pixels(data)
+    m1, s1, p1 = _pixels(new)
+    if m0 != m1 or s0 != s1 or not np.array_equal(p0, p1):
+        return False
+    _replace_bytes(path, new)
+    return True

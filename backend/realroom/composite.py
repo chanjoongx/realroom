@@ -114,43 +114,6 @@ def preservation(orig: np.ndarray, out: np.ndarray, static: np.ndarray) -> dict:
     }, de
 
 
-def edit_mask(
-    h: int,
-    w: int,
-    new_masks: list[np.ndarray],
-    old_masks: list[np.ndarray],
-    target_boxes: list[tuple[int, int, int, int]],
-    de: np.ndarray,
-    shadow_dE: float = 9.0,
-) -> np.ndarray:
-    """Union of new-object and removed-object masks, plus nearby changed pixels (contact
-    shadows, reflections), limited to the neighbourhood of the planned targets."""
-    d = diag(h, w)
-    m = np.zeros((h, w), dtype=bool)
-    for mm in new_masks + old_masks:
-        m |= mm
-    k1 = max(3, int(0.010 * d)) | 1
-    m = cv2.dilate(m.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k1, k1))) > 0
-    near = boxes_mask(h, w, target_boxes, grow=0.05)
-    if m.any():
-        ys, xs = np.where(m)
-        near |= boxes_mask(h, w, [(xs.min(), ys.min(), xs.max(), ys.max())], grow=0.03)
-    changed = cv2.GaussianBlur(de, (0, 0), 2.0) > shadow_dE
-    changed &= near
-    k2 = max(3, int(0.015 * d)) | 1
-    grown = cv2.dilate(m.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k2 * 3, k2 * 3))) > 0
-    m |= changed & grown
-    m = cv2.morphologyEx(m.astype(np.uint8), cv2.MORPH_CLOSE,
-                         cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k2, k2))) > 0
-    n, labels, stats, _ = cv2.connectedComponentsWithStats(m.astype(np.uint8), 8)
-    keep = np.zeros_like(m)
-    min_area = 0.0004 * h * w
-    for i in range(1, n):
-        if stats[i, cv2.CC_STAT_AREA] >= min_area:
-            keep |= labels == i
-    return keep
-
-
 def _disk(r: float) -> np.ndarray:
     k = max(3, int(r)) | 1
     return cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k))
@@ -204,7 +167,6 @@ def edit_mask_v2(
     out: np.ndarray,
     new_masks: list[np.ndarray],
     old_masks: list[np.ndarray],
-    shadows: str = "shade",
     old_zone: np.ndarray | None = None,
     keep: np.ndarray | None = None,
 ) -> tuple[np.ndarray, dict]:
@@ -238,11 +200,8 @@ def edit_mask_v2(
             hulls |= hull_mask(mm)
     parts["enclosed"] = (hulls & ~new) & (de > 6)
     shadow_like = (dl < -3) & (dc < 8)
-    if shadows == "paste":
-        parts["fringe"] = _dilate(new, 0.012 * d) & (de > 9)
-        parts["shadow"] = _dilate(new, 0.05 * d) & (dl < -4) & (dc < 8) & (de > 5)
-    else:  # shadows come from shade_layer(): only the product's own anti-aliased edge is pasted here
-        parts["fringe"] = _dilate(new, 0.006 * d) & (de > 9) & ~shadow_like
+    # shadows come from shade_layer(): only the product's own anti-aliased edge is pasted here
+    parts["fringe"] = _dilate(new, 0.006 * d) & (de > 9) & ~shadow_like
     if old.any():
         # the old object's footprint, plus any sliver of it SAM missed: pixels near it that the
         # generator replaced with wall or floor (otherwise a dark remnant of an old sofa survives)
@@ -437,12 +396,3 @@ def heatmap(de: np.ndarray, vmax: float = 30.0) -> np.ndarray:
     v = np.clip(de / vmax, 0, 1)
     colored = cv2.applyColorMap((v * 255).astype(np.uint8), cv2.COLORMAP_INFERNO)
     return cv2.cvtColor(colored, cv2.COLOR_BGR2RGB)
-
-
-def mask_overlay(base: np.ndarray, mask: np.ndarray, color=(0, 220, 255)) -> np.ndarray:
-    out = base.astype(np.float32).copy()
-    c = np.array(color, dtype=np.float32)
-    out[mask] = out[mask] * 0.55 + c * 0.45
-    edge = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_GRADIENT, np.ones((3, 3), np.uint8)) > 0
-    out[edge] = c
-    return out.astype(np.uint8)

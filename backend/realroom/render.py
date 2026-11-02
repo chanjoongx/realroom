@@ -14,7 +14,6 @@ from __future__ import annotations
 import concurrent.futures as cf
 import time
 
-import cv2
 import numpy as np
 
 from . import composite as C
@@ -81,6 +80,39 @@ def edit_prompt(scan: dict, slots: list[dict], products: list, n_extra_images: i
             "numbered translucent boxes showing where each product goes; use it only for position and scale and never "
             f"draw its boxes or numbers. Images 3 to {k + 2} are the reference photos of products 1 to {k}, in order.")
     return "\n".join([head] + lines + ([rem] if rem else []) + [RULES])
+
+
+def redraw_prompt(product, issues: list[str], fix: str) -> str:
+    issue_text = "; ".join(issues[:3]) if issues else "small differences from the reference"
+    return (
+        f"Image 1 is a crop from a real room photo. Image 2 is the reference photo of the product: {product.title}, "
+        f"{product.description} Redraw only the {product.kind.replace('_', ' ')} in image 1 so it is exactly this "
+        f"product: same shape, proportions, color, material, texture, pattern and details. Fix these differences: "
+        f"{issue_text}. {fix} Keep its position, size and perspective. Keep everything else in image 1 exactly as it "
+        f"is, with the same light, shadows and photo grain. No text, no outlines.")
+
+
+def clear_prompt(names: list[str]) -> str:
+    return (
+        f"Image 1 is a crop from a real room photo. Remove these completely: {'; '.join(names)}. Where they were, "
+        f"show the empty floor, skirting board and wall that were hidden behind them, continuing the same "
+        f"floorboards, wall color, light and photo grain. Keep every other object exactly where and as it is. Do "
+        f"not add anything new. No text, no outlines.")
+
+
+# Statuses that mean the request itself was refused (a size the endpoint will not take for this crop);
+# only then is the same edit asked for again without a size. A timeout or an outage is not retried
+# that way: it would pay twice for the same failure.
+SIZE_REFUSED = (400, 422)
+
+
+def _edit_sized(ledger: meta.Ledger, tag: str, prompt: str, inputs: list[bytes], n: int, size: str) -> list[bytes]:
+    try:
+        return meta.image_edit(ledger, tag, prompt, inputs, n=n, size=size, reasoning="high", tools=NO_TOOLS)
+    except meta.ApiError as exc:
+        if exc.status not in SIZE_REFUSED:
+            raise
+        return meta.image_edit(ledger, tag, prompt, inputs, n=n, reasoning="high", tools=NO_TOOLS)
 
 
 def generate(ledger: meta.Ledger, room: np.ndarray, guide: np.ndarray, cards: list[np.ndarray], prompt: str,
@@ -313,19 +345,9 @@ def redraw_product(ledger: meta.Ledger, comp: np.ndarray, room: np.ndarray, prod
     rx1, ry1, rx2, ry2 = _square_region(box, h, w)
     crop = comp[ry1:ry2, rx1:rx2].copy()
     ch, cw = crop.shape[:2]
-    issue_text = "; ".join(issues[:3]) if issues else "small differences from the reference"
-    prompt = (
-        f"Image 1 is a crop from a real room photo. Image 2 is the reference photo of the product: {product.title}, "
-        f"{product.description} Redraw only the {product.kind.replace('_', ' ')} in image 1 so it is exactly this "
-        f"product: same shape, proportions, color, material, texture, pattern and details. Fix these differences: "
-        f"{issue_text}. {fix} Keep its position, size and perspective. Keep everything else in image 1 exactly as it "
-        f"is, with the same light, shadows and photo grain. No text, no outlines.")
+    prompt = redraw_prompt(product, issues, fix)
     inputs = [imgutil.png_bytes(crop), imgutil.jpeg_bytes(card, quality=92)]
-    try:
-        outs = meta.image_edit(ledger, f"{tag}:redraw", prompt, inputs, n=n, size=size_param(cw, ch, long_side=1536),
-                               reasoning="high", tools=NO_TOOLS)
-    except meta.ApiError:
-        outs = meta.image_edit(ledger, f"{tag}:redraw", prompt, inputs, n=n, reasoning="high", tools=NO_TOOLS)
+    outs = _edit_sized(ledger, f"{tag}:redraw", prompt, inputs, n, size_param(cw, ch, long_side=1536))
     lb = (box[0] - rx1, box[1] - ry1, box[2] - rx1, box[3] - ry1)
     static = ~C.boxes_mask(ch, cw, [lb], grow=0.06)
     forbid_c = forbid[ry1:ry2, rx1:rx2] if forbid is not None else None
@@ -389,10 +411,8 @@ def leftover(ledger: meta.Ledger, img: np.ndarray, objs: list[dict], zones: dict
     phrase = {o["id"]: (o.get("sam_phrase") or o["name"]).strip().lower()[:40] for o in objs}
 
     def run(c: str) -> tuple[str, dict]:
-        try:
-            return c, meta.sam_masks(ledger, f"{tag}:{c}", b, c, w, h)
-        except meta.ApiError:
-            return c, {}
+        # a failed check raises: read as "nothing left" it would claim clutter was cleared
+        return c, meta.sam_masks(ledger, f"{tag}:{c}", b, c, w, h)
 
     with cf.ThreadPoolExecutor(max_workers=4) as pool:
         inst = dict(pool.map(run, sorted(set(phrase.values()))))
@@ -424,18 +444,8 @@ def clear_objects(ledger: meta.Ledger, comp: np.ndarray, objs: list[dict], hits:
     crop = comp[ry1:ry2, rx1:rx2].copy()
     ch, cw = crop.shape[:2]
     dc = C.diag(ch, cw)
-    names = "; ".join(o["name"] for o in objs)
-    prompt = (
-        f"Image 1 is a crop from a real room photo. Remove these completely: {names}. Where they were, show the "
-        f"empty floor, skirting board and wall that were hidden behind them, continuing the same floorboards, wall "
-        f"color, light and photo grain. Keep every other object exactly where and as it is. Do not add anything "
-        f"new. No text, no outlines.")
-    try:
-        outs = meta.image_edit(ledger, f"{tag}:clear", prompt, [imgutil.png_bytes(crop)], n=n,
-                               size=size_param(cw, ch, long_side=1536), reasoning="high", tools=NO_TOOLS)
-    except meta.ApiError:
-        outs = meta.image_edit(ledger, f"{tag}:clear", prompt, [imgutil.png_bytes(crop)], n=n, reasoning="high",
-                               tools=NO_TOOLS)
+    prompt = clear_prompt([o["name"] for o in objs])
+    outs = _edit_sized(ledger, f"{tag}:clear", prompt, [imgutil.png_bytes(crop)], n, size_param(cw, ch, long_side=1536))
     if not outs:
         return None
     foot = union[ry1:ry2, rx1:rx2]
