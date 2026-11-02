@@ -43,6 +43,7 @@ Event = Callable[[dict], None]
 
 DEADLINE_S = 12 * 60  # optional fix and clear work stops past this (the recorded runs took 216 to 288 s)
 SPEND_STOP_USD = 0.60  # and past this estimated spend (the recorded runs cost $0.24 to $0.37)
+MAX_CLEAR = 6  # clutter objects one clearing pass checks and clears, the largest first (the recorded runs had 1 or 2)
 
 API_SENTENCE = ("The Meta Model API did not answer, so the run stopped and nothing more will be charged. "
                 "Please try again in a few minutes.")
@@ -578,6 +579,9 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
     # clutter the plan removes but the render kept (moving boxes under a clothes rack): SAM checks the
     # composite, Muse Image clears what is left, SAM checks again
     clutter = [o for o in sc["objects"] if o["class"] == "remove" and o.get("_mask") is not None]
+    if len(clutter) > MAX_CLEAR:  # each one is SAM work on every try; keep the largest, in scan order
+        big = set(sorted(range(len(clutter)), key=lambda i: -int(clutter[i]["_mask"].sum()))[:MAX_CLEAR])
+        clutter = [o for i, o in enumerate(clutter) if i in big]
     cleared_mask = np.zeros((h, w), dtype=bool)
     if clutter and max_fixes > 0 and not limits.passed():
         n0 = len(L.rows())

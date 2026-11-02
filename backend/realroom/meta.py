@@ -40,12 +40,13 @@ PROJECT = pathlib.Path(__file__).resolve().parents[2]
 
 
 def _find_env() -> pathlib.Path | None:
-    """REALROOM_ENV, else the nearest .env above this package (keys never live in the repo)."""
+    """REALROOM_ENV, else .env in the repository root, else .env in the folder that holds the clone.
+    No other folder is searched, so an unrelated .env higher up is never read."""
     if os.environ.get("REALROOM_ENV"):
         return pathlib.Path(os.environ["REALROOM_ENV"])
-    for parent in pathlib.Path(__file__).resolve().parents[1:5]:
-        if (parent / ".env").exists():
-            return parent / ".env"
+    for folder in (PROJECT, PROJECT.parent):
+        if (folder / ".env").exists():
+            return folder / ".env"
     return None
 
 
@@ -75,16 +76,30 @@ RETRY_AFTER_MAX_S = 60.0  # a longer Retry-After ends the call instead of holdin
 MAX_EDIT_INPUTS = 10  # /images/edits takes 1 to 10 input images
 BODY_CHARS = 200  # the most of a response body an ApiError message carries
 
+# Limits on what a model answer can make this server do. The recorded runs stay far inside them (11-02:
+# Spark answers of at most 6,843 tokens, reasoning included, and text fields of at most 243 characters;
+# SAM answers of at most 11 instances), so they only bind when a brief or a photo pushes a model off course.
+SPARK_MAX_TOKENS = 16_384  # max_completion_tokens: visible output plus reasoning, so each answer has a price cap
+SPARK_TEXT_MAX = 600       # characters kept of any text field in a Spark answer
+SAM_MAX_INSTANCES = 16     # instances kept of one SAM answer, the most confident first
+IMAGE_MAX_BYTES = 40 * 1024 * 1024  # an image the model API hands back as a URL is read up to this size
+
 
 def _load_env() -> None:
+    """Take MODEL_API_KEY from the .env file and nothing else: other lines (a proxy setting, another
+    service's key) never reach this process's environment."""
     if os.environ.get("MODEL_API_KEY") or ENV_PATH is None or not ENV_PATH.exists():
         return
     for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
         line = line.strip()
+        if line.startswith("export "):
+            line = line[len("export "):].strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+        if key.strip() == "MODEL_API_KEY":
+            os.environ["MODEL_API_KEY"] = value.strip().strip('"').strip("'")
+            return
 
 
 _load_env()
@@ -384,6 +399,17 @@ def _parse_choice(data: dict) -> tuple[dict | None, str]:
     return out, ""
 
 
+def _cap_text(x: Any) -> Any:
+    """The answer with every string cut to SPARK_TEXT_MAX characters, at any depth."""
+    if isinstance(x, str):
+        return x[:SPARK_TEXT_MAX]
+    if isinstance(x, dict):
+        return {k: _cap_text(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [_cap_text(v) for v in x]
+    return x
+
+
 def spark_json(
     ledger: Ledger,
     tag: str,
@@ -397,8 +423,9 @@ def spark_json(
     """One structured-output call. `parts` mixes text (str) and images (bytes) in order. An answer
     that was cut off or is not a JSON object is asked for once more with the same request, then the
     call raises ApiError. Each attempt is logged, since each one is billed. The request sets no
-    temperature, so the second answer is sampled anew and can come back shorter; none of the 412
-    recorded Spark calls (11-02) was cut off, so a larger token limit is not sent."""
+    temperature, so the second answer is sampled anew and can come back shorter. max_completion_tokens
+    (SPARK_MAX_TOKENS) caps what one answer can cost; none of the 412 recorded Spark calls (11-02) came
+    near it. Every text field of the answer is cut to SPARK_TEXT_MAX characters."""
     content = []
     for part in parts:
         if isinstance(part, (bytes, bytearray)):
@@ -413,6 +440,7 @@ def spark_json(
         "model": model,
         "messages": messages,
         "response_format": {"type": "json_schema", "json_schema": {"name": schema_name, "schema": schema}},
+        "max_completion_tokens": SPARK_MAX_TOKENS,
     }
     if extra:
         body.update(extra)
@@ -428,6 +456,7 @@ def spark_json(
         ledger.add(**row)
         out, problem = _parse_choice(data)
         if out is not None:
+            out = _cap_text(out)
             fix = OUTPUT_FIXES.get(schema_name)
             return fix(out) if fix else out
     raise ApiError(0, f"Muse Spark {problem}")
@@ -444,9 +473,8 @@ def _decode_images(items: list) -> tuple[list[bytes], int]:
         try:
             if isinstance(item, dict) and item.get("b64_json"):
                 raw = base64.b64decode(item["b64_json"])
-            elif isinstance(item, dict) and item.get("url"):
-                r = requests.get(item["url"], timeout=(CONNECT_S, 120))
-                raw = r.content if r.status_code == 200 else None
+            elif isinstance(item, dict) and isinstance(item.get("url"), str):
+                raw = _fetch_image(item["url"])
         except (binascii.Error, ValueError, TypeError, requests.exceptions.RequestException):
             raw = None
         if raw and not _decodes(raw):
@@ -456,6 +484,21 @@ def _decode_images(items: list) -> tuple[list[bytes], int]:
         else:
             bad += 1
     return out, bad
+
+
+def _fetch_image(url: str) -> bytes | None:
+    """An image the API returned as a link: https only, read in chunks up to IMAGE_MAX_BYTES."""
+    if not url.lower().startswith("https://"):
+        return None
+    with requests.get(url, timeout=(CONNECT_S, 120), stream=True) as r:
+        if r.status_code != 200 or not r.url.lower().startswith("https://"):
+            return None
+        buf = bytearray()
+        for chunk in r.iter_content(64 * 1024):
+            buf += chunk
+            if len(buf) > IMAGE_MAX_BYTES:
+                return None
+        return bytes(buf)
 
 
 def _decodes(raw: bytes) -> bool:
@@ -629,9 +672,13 @@ def sam_masks(ledger: Ledger, tag: str, image: bytes, text: str, width: int, hei
     elapsed = time.time() - t0
     masks: dict[str, dict] = {}
     unreadable = 0
-    for rec in getattr(result, "records", None) or []:
-        if getattr(rec, "kind", None) != "mask":
-            continue
+    records = [r for r in getattr(result, "records", None) or [] if getattr(r, "kind", None) == "mask"]
+    dropped = max(0, len(records) - SAM_MAX_INSTANCES)
+    if dropped:  # keep the most confident, in the order SAM gave them; each kept one is a full-frame mask
+        conf = [as_number(getattr(r, "confidence", None)) or 0.0 for r in records]
+        keep = set(sorted(range(len(records)), key=lambda i: -conf[i])[:SAM_MAX_INSTANCES])
+        records = [r for i, r in enumerate(records) if i in keep]
+    for rec in records:
         try:
             m = _mask_record(rec, width, height, decode_mask_to_raster)
         except Exception:  # noqa: BLE001  (one unreadable record must not lose the others)
@@ -645,5 +692,7 @@ def sam_masks(ledger: Ledger, tag: str, image: bytes, text: str, width: int, hei
                                diagnostics=[str(d) for d in (getattr(result, "diagnostics", None) or [])][:5])
     if unreadable:
         row["unreadable"] = unreadable
+    if dropped:
+        row["dropped"] = dropped
     ledger.add(**row)
     return masks
