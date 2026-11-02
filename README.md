@@ -31,6 +31,14 @@
 > Realroom is an entry in the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon), Indie Developer track, under the problem statement "Build for Your World". The agent, the web app, the catalog index and the demo rooms were all made during the building period, October 27 to November 4, 2026.
 
 <p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/built-on-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/built-on-light.png">
+    <img alt="Built on Meta Model API (Muse Spark 1.3, SAM 3.1 and Muse Image 1.0 run the agent in every live run), Baseten and Fireworks AI (Muse Spark Open, open weights, tagged 3,781 and 594 catalog products) and Modal (web app, live runs, catalog jobs, SigLIP 2 embeddings)" src="docs/built-on-light.png" width="100%">
+  </picture>
+</p>
+
+<p align="center">
   <a href="https://chanjoongx--realroom.us-east.modal.run"><img src="docs/demo.webp" alt="The living-room run replayed in the app: the scan, the placement guide, the verify step and the before and after slider" width="100%"></a>
   <br>
   <sub>The living-room demo run, replayed in the app: scan, placement guide, verify, then the before and after slider.</sub>
@@ -151,6 +159,7 @@ The hosted version runs on Modal (`backend/modal_app.py`): one web container, th
 ## Credits
 
 - Product photos and data: Amazon Berkeley Objects by **Amazon.com**, licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Dataset by Matthieu Guillaumin, Thomas Dideriksen, Kenan Deng and Himanshu Arora (Amazon.com), Jasmine Collins and Jitendra Malik (UC Berkeley). Changes: photos were trimmed and resized, products were tagged by Muse Spark Open, and products are redrawn into room photos by Muse Image 1.0. Realroom is not affiliated with or endorsed by Amazon.
+- Compute: Meta Model API credits from Meta, and credits from the hackathon's inference partners Baseten, Fireworks AI and Modal.
 - [SigLIP 2](https://huggingface.co/google/siglip2-base-patch16-256) by Google, Apache 2.0.
 - Fonts: Geist and Geist Mono (Vercel) and Instrument Serif, all under the SIL Open Font License.
 - The demo rooms were generated with Muse Image 1.0.
