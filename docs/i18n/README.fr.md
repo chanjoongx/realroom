@@ -27,6 +27,7 @@
   <a href="#meta-models"><img alt="Muse Image 1.0" src="https://img.shields.io/badge/Muse_Image-1.0-ffb48c?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Muse Spark Open" src="https://img.shields.io/badge/Muse_Spark_Open-open_weights-d1b3ff?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Perception Encoder PE-Core B16" src="https://img.shields.io/badge/Perception_Encoder-PE--Core_B16-d1b3ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="https://github.com/chanjoongx/realroom/actions/workflows/ci.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/chanjoongx/realroom/ci.yml?branch=main&style=flat-square&label=tests&labelColor=1f2328"></a>
   <a href="../../LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
 </p>
 
@@ -81,9 +82,9 @@ Les pièces de démo ont été générées avec Muse Image 1.0 : ce dépôt ne 
 |---|---|---|---|---|---|---|
 | Salon, appartement de 2005 | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | canapé, tapis, lampadaire | 3 sur 3, le tapis après un tour de redessin | 70,3 % | 216&nbsp;s | 0,24 $ |
 | Pièce vide, jour d'emménagement | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | canapé, tapis, lampadaire, table basse, jardinière | 5 sur 5, le tapis après deux tours de redessin et la table basse après un | 63,3 % | 288&nbsp;s | 0,37 $ |
-| Studio, premier appartement | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | cadre de lit, linge de lit, tapis | 3 sur 3, le tapis après deux tours de redessin | 70,7 % | 244&nbsp;s | 0,30 $ |
+| Studio, premier appartement | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | cadre de lit, linge de lit, tapis | 2 sur 3 : un redessin du tapis a obtenu 9, mais la vérification finale lui a donné 6 pour un treillis trop marqué | 70,7 % | 244&nbsp;s | 0,30 $ |
 
-« Conformes » est le verdict de Muse Spark 1.3 sur un recadrage serré de chaque produit rendu, placé à côté de sa photo de catalogue. Les coûts sont des estimations établies d'après les tarifs publiés par Meta, enregistrées appel par appel.
+« Conformes » ne compte un produit que si toutes les vérifications de Muse Spark 1.3 sur ses pixels finaux disent « match ». Chaque vérification place un recadrage serré du produit rendu à côté de sa photo de catalogue. Les coûts sont des estimations établies d'après les tarifs publiés par Meta, enregistrées appel par appel.
 
 ## <a id="how-a-run-works"></a>Déroulement d'une exécution
 
@@ -105,7 +106,7 @@ flowchart LR
 | Choix | Muse Spark 1.3 | Spark voit la pièce et une planche numérotée de candidats pour chaque emplacement, le tout en une seule requête, ce qui lui permet de choisir un ensemble cohérent. |
 | Rendu | Muse Image 1.0 | Un seul appel `/images/edits`, avec la pièce, un guide de placement et les vraies photos des produits, renvoie deux ou trois candidats. Les outils de recherche web et de recherche d'images du modèle sont désactivés. |
 | Vérification | SAM 3.1, Muse Spark 1.3 | Chaque candidat est recalé sur l'original (homographie ECC) et ajusté en couleur. SAM 3.1 retrouve chaque nouveau produit, et Spark juge chaque recadrage de produit par rapport à sa photo de catalogue, ainsi que la scène dans son ensemble. Le meilleur candidat est conservé. |
-| Correction | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Un produit jugé partiel est découpé avec ce qui l'entoure, puis redessiné en plus grand d'après sa photo de catalogue, avec deux essais par tour et deux tours au plus. Un essai ne remplace la version en cours que si Spark lui donne une meilleure note, et les remarques de Spark orientent le tour suivant. Le désordre laissé par le rendu a droit à sa propre passe, vérifiée avec SAM 3.1. Si quelque chose a changé, Spark juge à nouveau la pièce terminée. |
+| Correction | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Un produit jugé partiel est découpé avec ce qui l'entoure, puis redessiné en plus grand d'après sa photo de catalogue, avec deux essais par tour et deux tours au plus. Un essai ne remplace la version en cours que si Spark lui donne une meilleure note, et les remarques de Spark orientent le tour suivant. Le désordre laissé par le rendu a droit à sa propre passe, vérifiée avec SAM 3.1. Si quelque chose a changé, Spark juge à nouveau la pièce terminée, et un produit n'est compté conforme que si ce jugement concorde. |
 | Composition | aucun | Le résultat ne prend du rendu que les masques des produits, une fine bordure autour d'eux, les ombres de contact et l'emprise au sol des objets retirés. Tous les autres pixels sont ceux de l'original. |
 
 L'application web rejoue chaque exécution à partir de son journal d'événements : l'analyse avec tous les contours, l'entonnoir de recherche, les planches de choix, tous les rendus candidats, chaque correction avec son avant et son après, et les calques finaux. L'en-tête de chaque étape indique l'identifiant du modèle qu'elle a appelé.
@@ -168,7 +169,7 @@ Ouvrez http://127.0.0.1:8787. Les pièces de démo rejouent pas à pas les exéc
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-Seule l'option `--live` fait passer du rejeu au direct. Avec elle, la zone d'envoi fait tourner l'agent complet sur votre photo, et la page suit l'exécution au fur et à mesure. Une exécution coûte entre 0,2 $ et 0,4 $ environ aux tarifs publiés par Meta, et son `ledger.jsonl` liste chaque appel. Le serveur local lance au plus 10 exécutions en direct par jour ; `--per-day` change cette limite.
+Seule l'option `--live` fait passer du rejeu au direct. Avec elle, la zone d'envoi fait tourner l'agent complet sur votre photo, et la page suit l'exécution au fur et à mesure. Une exécution coûte entre 0,2 $ et 0,4 $ environ aux tarifs publiés par Meta, et son `ledger.jsonl` liste chaque appel. Le serveur local lance au plus 10 exécutions en direct par jour ; `--per-day` change cette limite. Une exécution qui dépasse 12 minutes ou 0,60 $ saute les redessins qui lui restent et se termine avec ce qu'elle a.
 
 Pour exécuter l'agent sur une seule photo, sans l'application web :
 
@@ -183,7 +184,7 @@ Utilisez `--mode furnish` pour une pièce vide. Tant que `serve_local.py` tourne
 
 Pour reconstruire le catalogue, téléchargez les fiches ABO et les métadonnées des images dans `data/abo/`, puis suivez les étapes de la section [Le catalogue](#the-catalog). Les étapes Modal nécessitent un compte Modal et, pour l'étiquetage, `BASETEN_API_KEY` et `FIREWORKS_API_KEY` dans un secret Modal nommé `realroom-keys`.
 
-La version hébergée tourne sur Modal (`backend/modal_app.py`) : un conteneur web, le catalogue et les exécutions sur deux volumes, au plus trois exécutions en direct à la fois, 40 exécutions en direct par jour, trois par visiteur et 60 dollars d'appels de modèles au total. Les photos envoyées sont supprimées sous 24 heures.
+La version hébergée tourne sur Modal (`backend/modal_app.py`) : un conteneur web, le catalogue et les exécutions sur deux volumes, au plus trois exécutions en direct à la fois, 40 exécutions en direct par jour, trois par visiteur et 60 dollars d'appels de modèles au total. Les envois doivent être en JPEG, PNG ou WebP, de 12 Mo et 40 mégapixels au plus. Les données de localisation et d'appareil photo sont retirées avant l'enregistrement de la photo, et les visiteurs sont comptés par un hachage salé qui change chaque jour, jamais par leur adresse. Une photo qui montre une personne ou qui n'est pas une pièce est refusée et floutée aussitôt. Les résultats en direct sont à une adresse impossible à deviner et ne sont jamais mis en cache. Leurs `after.jpg` et `after.png` portent des métadonnées IPTC qui les signalent comme retouchés par IA. Les photos envoyées sont supprimées sous 24 heures.
 
 ## <a id="the-catalog"></a>Le catalogue
 
@@ -233,6 +234,15 @@ L'agent lui-même ne dépend pas d'ABO. Il lit un dossier de catalogue (`--catal
 
 Les scripts de `catalog/` construisent ce dossier à partir d'ABO. Pour un autre flux de produits, ce sont les étapes 1 à 3 qu'il faut réécrire, car ce sont elles qui transforment les fiches ABO en lignes et en photos. Pointez ensuite `serve_local.py` ou `run_demo.py` vers les nouveaux dossiers avec `--catalog` et `--photos`.
 
+## Tests
+
+```bash
+.venv/bin/pip install -r backend/requirements-test.txt
+.venv/bin/python -m pytest backend/tests
+```
+
+Les tests ne demandent aucune clé et n'appellent aucun modèle. Ils rejouent les trois exécutions enregistrées via l'API HTTP et comparent leurs chiffres à chaque ledger et à ce README. Ils font passer des envois par le contrôle d'entrée des exécutions en direct avec un lanceur factice : suppression des métadonnées, limites de taille et de format, plafonds par visiteur, par jour et de budget. Ils soumettent au pipeline des réponses en échec et des sorties de modèle mal formées, et vérifient que chaque modèle appelé par l'application est un modèle Meta joint uniquement sur api.meta.ai. GitHub Actions les lance à chaque push, avec la vérification des types et le build du web.
+
 ## Structure du dépôt
 
 ```text
@@ -240,6 +250,7 @@ backend/
   realroom/      the agent: scan.py, pick.py, render.py, verify.py, composite.py and pipeline.py,
                  catalog.py (search), meta.py (Meta Model API clients), server.py (API and site)
   scripts/       serve_local.py, run_demo.py, make_rooms.py (the demo rooms), pack_demo_photos.py
+  tests/         the test suite (no key, no network calls)
   modal_app.py   the hosted app on Modal
 catalog/         the catalog build from ABO, steps 1 to 6, plus get_photos.py and pack_photos.py
   index/         catalog.jsonl (4,375 products) and the Perception Encoder embeddings
@@ -250,7 +261,7 @@ docs/            README images and translations
 
 ## Limites
 
-- Les textures subtiles sont difficiles pour le modèle d'image. Un tapis crème au tissage entrecroisé discret est apparu trop marqué dans certains rendus et uni dans d'autres. La boucle de correction le détecte, et quand aucun redessin n'obtient une meilleure note, le résultat affiche « partial » au lieu de le cacher.
+- Les textures subtiles sont difficiles pour le modèle d'image. Un tapis crème au tissage entrecroisé discret est apparu trop marqué dans certains rendus et uni dans d'autres. La boucle de correction le détecte, mais les notes de Spark varient pour les mêmes pixels : dans l'exécution du studio, un redessin de ce tapis a obtenu 9 et la vérification finale lui a donné 6. Quand les vérifications divergent, le résultat affiche le verdict le plus bas.
 - Le plan change d'une exécution à l'autre pour une même consigne, car Spark refait la planification et le choix à chaque fois.
 - Là où se trouvait un objet retiré, le sol redessiné peut rejoindre le sol d'origine avec un léger raccord visible.
 - Les fiches viennent d'un jeu de données publié en 2021 : il n'y a donc pas de prix, et certains liens vers les produits ne s'ouvrent plus.

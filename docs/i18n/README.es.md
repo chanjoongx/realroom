@@ -27,6 +27,7 @@
   <a href="#meta-models"><img alt="Muse Image 1.0" src="https://img.shields.io/badge/Muse_Image-1.0-ffb48c?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Muse Spark Open" src="https://img.shields.io/badge/Muse_Spark_Open-open_weights-d1b3ff?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Perception Encoder PE-Core B16" src="https://img.shields.io/badge/Perception_Encoder-PE--Core_B16-d1b3ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="https://github.com/chanjoongx/realroom/actions/workflows/ci.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/chanjoongx/realroom/ci.yml?branch=main&style=flat-square&label=tests&labelColor=1f2328"></a>
   <a href="../../LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
 </p>
 
@@ -81,9 +82,9 @@ Las habitaciones de demostración se generaron con Muse Image 1.0, así que este
 |---|---|---|---|---|---|---|
 | Sala de estar, apartamento de 2005 | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofá, alfombra, lámpara de pie | 3 de 3, la alfombra tras una ronda de redibujado | 70.3&nbsp;% | 216&nbsp;s | $0.24 |
 | Habitación vacía, día de la mudanza | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofá, alfombra, lámpara de pie, mesa de centro, maceta | 5 de 5, la alfombra tras dos rondas de redibujado y la mesa de centro tras una | 63.3&nbsp;% | 288&nbsp;s | $0.37 |
-| Estudio, primer apartamento | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | estructura de cama, ropa de cama, alfombra | 3 de 3, la alfombra tras dos rondas de redibujado | 70.7&nbsp;% | 244&nbsp;s | $0.30 |
+| Estudio, primer apartamento | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | estructura de cama, ropa de cama, alfombra | 2 de 3: un redibujado de la alfombra obtuvo 9, pero la comprobación final le dio 6 por un enrejado demasiado marcado | 70.7&nbsp;% | 244&nbsp;s | $0.30 |
 
-"Coincidencia" es el veredicto de Muse Spark 1.3 sobre un recorte ajustado de cada producto renderizado, puesto junto a su foto de catálogo. Los costos son estimaciones basadas en los precios publicados por Meta, registradas por llamada.
+"Coincidencia" cuenta un producto solo cuando todas las comprobaciones de Muse Spark 1.3 sobre sus píxeles finales dicen "match". Cada comprobación pone un recorte ajustado del producto renderizado junto a su foto de catálogo. Los costos son estimaciones basadas en los precios publicados por Meta, registradas por llamada.
 
 ## <a id="how-a-run-works"></a>Cómo funciona una ejecución
 
@@ -105,7 +106,7 @@ flowchart LR
 | Elegir | Muse Spark 1.3 | Spark ve la habitación y una hoja numerada de candidatos para cada slot en una sola petición, así que elige un conjunto de piezas que combinen entre sí. |
 | Renderizar | Muse Image 1.0 | Una llamada a `/images/edits` con la habitación, una guía de colocación y las fotos reales de los productos devuelve dos o tres candidatos. Las herramientas de búsqueda web y de imágenes del modelo están desactivadas. |
 | Verificar | SAM 3.1, Muse Spark 1.3 | Cada candidato se alinea con el original (homografía ECC) y se ajusta su color. SAM 3.1 vuelve a localizar cada producto nuevo, y Spark evalúa el recorte de cada producto frente a su foto de catálogo, y también la escena en su conjunto. Se conserva el mejor candidato. |
-| Corregir | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Un producto con veredicto "partial" se recorta junto con su entorno y se vuelve a dibujar a mayor tamaño con su foto de catálogo como referencia, con dos intentos por ronda y hasta dos rondas. Un intento reemplaza a la versión actual solo si Spark le da una puntuación más alta, y las notas de Spark orientan la ronda siguiente. El desorden que dejó el render tiene su propia pasada, que se comprueba con SAM 3.1. Si algo cambió, Spark vuelve a evaluar la habitación terminada. |
+| Corregir | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Un producto con veredicto "partial" se recorta junto con su entorno y se vuelve a dibujar a mayor tamaño con su foto de catálogo como referencia, con dos intentos por ronda y hasta dos rondas. Un intento reemplaza a la versión actual solo si Spark le da una puntuación más alta, y las notas de Spark orientan la ronda siguiente. El desorden que dejó el render tiene su propia pasada, que se comprueba con SAM 3.1. Si algo cambió, Spark vuelve a evaluar la habitación terminada, y un producto solo cuenta como coincidencia si esta evaluación está de acuerdo. |
 | Componer | ninguno | El resultado toma del render solo las máscaras de los productos, un borde fino a su alrededor, las sombras de contacto y el área que ocupaban los objetos retirados. Todos los demás píxeles son los del original. |
 
 La app web reproduce cada ejecución a partir de su registro de eventos: el escaneo con todos los contornos, el embudo de búsqueda, las hojas de selección, todos los candidatos de render, cada corrección con su antes y después, y las capas finales. La cabecera de cada paso muestra el ID del modelo al que llamó.
@@ -168,7 +169,7 @@ Abre http://127.0.0.1:8787. Las habitaciones de demostración reproducen paso a 
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-`--live` es lo único que separa la reproducción del modo en vivo. Con esta opción, el cuadro de subida ejecuta el agente completo sobre tu foto y la página sigue la ejecución mientras avanza. Una ejecución cuesta entre $0.2 y $0.4 aproximadamente según los precios publicados por Meta, y su `ledger.jsonl` registra cada llamada. El servidor local inicia como máximo 10 ejecuciones en vivo al día; `--per-day` cambia ese límite.
+`--live` es lo único que separa la reproducción del modo en vivo. Con esta opción, el cuadro de subida ejecuta el agente completo sobre tu foto y la página sigue la ejecución mientras avanza. Una ejecución cuesta entre $0.2 y $0.4 aproximadamente según los precios publicados por Meta, y su `ledger.jsonl` registra cada llamada. El servidor local inicia como máximo 10 ejecuciones en vivo al día; `--per-day` cambia ese límite. Una ejecución que pasa de 12 minutos o de $0.60 se salta los redibujados que le quedan y termina con lo que tiene.
 
 Para ejecutar el agente sobre una sola foto sin la app web:
 
@@ -183,7 +184,7 @@ Usa `--mode furnish` para una habitación vacía. Mientras `serve_local.py` est�
 
 Para reconstruir el catálogo, descarga las fichas de ABO y los metadatos de las imágenes en `data/abo/` y luego ejecuta los pasos de [El catálogo](#the-catalog). Los pasos de Modal requieren una cuenta de Modal y, para el etiquetado, `BASETEN_API_KEY` y `FIREWORKS_API_KEY` en un secreto de Modal llamado `realroom-keys`.
 
-La versión alojada funciona en Modal (`backend/modal_app.py`): un contenedor web, el catálogo y las ejecuciones en dos volúmenes, como máximo tres ejecuciones en vivo a la vez, 40 ejecuciones en vivo al día, tres por visitante y 60 dólares en llamadas a modelos en total. Las fotos subidas se borran en un plazo de 24 horas.
+La versión alojada funciona en Modal (`backend/modal_app.py`): un contenedor web, el catálogo y las ejecuciones en dos volúmenes, como máximo tres ejecuciones en vivo a la vez, 40 ejecuciones en vivo al día, tres por visitante y 60 dólares en llamadas a modelos en total. Las subidas deben ser JPEG, PNG o WebP, de 12 MB y 40 megapíxeles como máximo. Antes de guardar una foto se eliminan los datos de ubicación y de la cámara, y a los visitantes se los cuenta con un hash con sal que cambia cada día, nunca por su dirección. Una foto en la que aparece una persona o que no es una habitación se rechaza y se difumina en el acto. Los resultados en vivo están en una dirección imposible de adivinar y nunca se guardan en caché. Sus `after.jpg` y `after.png` llevan metadatos IPTC que los marcan como editados con IA. Las fotos subidas se borran en un plazo de 24 horas.
 
 ## <a id="the-catalog"></a>El catálogo
 
@@ -233,6 +234,15 @@ El agente en sí no depende de ABO. Lee una carpeta de catálogo (`--catalog`) c
 
 Los scripts de `catalog/` construyen esta carpeta a partir de ABO. Para otro feed de productos, lo que hay que reescribir son los pasos 1 a 3, porque convierten las fichas de ABO en filas y fotos. Después, apunta `serve_local.py` o `run_demo.py` a las carpetas nuevas con `--catalog` y `--photos`.
 
+## Pruebas
+
+```bash
+.venv/bin/pip install -r backend/requirements-test.txt
+.venv/bin/python -m pytest backend/tests
+```
+
+Las pruebas no necesitan clave ni llaman a ningún modelo. Reproducen las tres ejecuciones grabadas a través de la API HTTP y comparan sus cifras con cada ledger y con este README. Hacen pasar subidas por el control de las ejecuciones en vivo con un lanzador falso: eliminación de metadatos, límites de tamaño y formato, y los topes por visitante, diarios y de presupuesto. Le dan al pipeline respuestas fallidas y salidas de modelo mal formadas, y comprueban que cada modelo que llama la app es un modelo de Meta al que solo se llega en api.meta.ai. GitHub Actions las ejecuta en cada push, junto con la comprobación de tipos y el build de la web.
+
 ## Estructura del repositorio
 
 ```text
@@ -240,6 +250,7 @@ backend/
   realroom/      the agent: scan.py, pick.py, render.py, verify.py, composite.py and pipeline.py,
                  catalog.py (search), meta.py (Meta Model API clients), server.py (API and site)
   scripts/       serve_local.py, run_demo.py, make_rooms.py (the demo rooms), pack_demo_photos.py
+  tests/         the test suite (no key, no network calls)
   modal_app.py   the hosted app on Modal
 catalog/         the catalog build from ABO, steps 1 to 6, plus get_photos.py and pack_photos.py
   index/         catalog.jsonl (4,375 products) and the Perception Encoder embeddings
@@ -250,7 +261,7 @@ docs/            README images and translations
 
 ## Limitaciones
 
-- Al modelo de imagen le cuestan las texturas sutiles. Una alfombra color crema con un tenue tejido entrecruzado salió demasiado marcada en algunos renders y lisa en otros. El bucle de corrección lo detecta, y cuando ningún redibujado obtiene más puntuación, el resultado dice "partial" en lugar de ocultarlo.
+- Al modelo de imagen le cuestan las texturas sutiles. Una alfombra color crema con un tenue tejido entrecruzado salió demasiado marcada en algunos renders y lisa en otros. El bucle de corrección lo detecta, pero las puntuaciones de Spark para los mismos píxeles varían: en la ejecución del estudio, un redibujado de esa alfombra obtuvo 9 y la comprobación final le dio 6. Cuando las comprobaciones no coinciden, el resultado muestra el veredicto más bajo.
 - El plan cambia entre ejecuciones con la misma petición, porque Spark vuelve a planificar y a elegir cada vez.
 - Donde estaba un objeto retirado, puede quedar una costura tenue entre el suelo redibujado y el suelo original.
 - Las fichas proceden de un conjunto de datos publicado en 2021, así que no hay precios y algunos enlaces de productos ya no abren.

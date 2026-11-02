@@ -27,6 +27,7 @@
   <a href="#meta-models"><img alt="Muse Image 1.0" src="https://img.shields.io/badge/Muse_Image-1.0-ffb48c?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Muse Spark Open" src="https://img.shields.io/badge/Muse_Spark_Open-open_weights-d1b3ff?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Perception Encoder PE-Core B16" src="https://img.shields.io/badge/Perception_Encoder-PE--Core_B16-d1b3ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="https://github.com/chanjoongx/realroom/actions/workflows/ci.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/chanjoongx/realroom/ci.yml?branch=main&style=flat-square&label=tests&labelColor=1f2328"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
 </p>
 
@@ -79,9 +80,9 @@ The demo rooms were generated with Muse Image 1.0, so this repository holds no p
 |---|---|---|---|---|---|---|
 | Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, rug, floor lamp | 3 of 3, the rug after one round of redraws | 70.3% | 216&nbsp;s | $0.24 |
 | Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofa, rug, floor lamp, coffee table, planter | 5 of 5, the rug after two rounds of redraws and the coffee table after one | 63.3% | 288&nbsp;s | $0.37 |
-| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | bed frame, bedding, rug | 3 of 3, the rug after two rounds of redraws | 70.7% | 244&nbsp;s | $0.30 |
+| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | bed frame, bedding, rug | 2 of 3: a redraw of the rug scored 9, but the final check gave it 6 for a lattice that came out too bold | 70.7% | 244&nbsp;s | $0.30 |
 
-"Matched" is Muse Spark 1.3's verdict on a close crop of each rendered product next to its catalog photo. Costs are estimates from Meta's published prices, logged per call.
+"Matched" counts a product only when every Muse Spark 1.3 check of its final pixels says match. Each check puts a close crop of the rendered product next to its catalog photo. Costs are estimates from Meta's published prices, logged per call.
 
 ## How a run works
 
@@ -103,7 +104,7 @@ flowchart LR
 | Pick | Muse Spark 1.3 | Spark sees the room and a numbered sheet of candidates for every slot in a single request, so it chooses a set that works together. |
 | Render | Muse Image 1.0 | One `/images/edits` call with the room, a placement guide and the real product photos returns two or three candidates. The model's web and image search tools are switched off. |
 | Verify | SAM 3.1, Muse Spark 1.3 | Each candidate is aligned to the original (ECC homography) and color-matched. SAM 3.1 finds every new product again, and Spark judges each product crop against its catalog photo and the scene as a whole. The best candidate is kept. |
-| Fix | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | A product judged partial is cut out with its surroundings and redrawn larger against its catalog photo, two tries per round and up to two rounds. A try replaces the current version only if Spark scores it higher, and Spark's notes steer the next round. Clutter the render left behind gets its own pass, checked with SAM 3.1. If anything changed, Spark judges the finished room again. |
+| Fix | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | A product judged partial is cut out with its surroundings and redrawn larger against its catalog photo, two tries per round and up to two rounds. A try replaces the current version only if Spark scores it higher, and Spark's notes steer the next round. Clutter the render left behind gets its own pass, checked with SAM 3.1. If anything changed, Spark judges the finished room again, and a product counts as matched only if this check agrees. |
 | Composite | none | The result takes from the render only the product masks, a thin fringe around them, contact shadows and the footprints of removed objects. Every other pixel is the original. |
 
 The web app replays each run from its event log: the scan with every outline, the search funnel, the pick sheets, all render candidates, each fix with its before and after, and the final layers. Each step's header shows the ID of the model it called.
@@ -166,7 +167,7 @@ Open http://127.0.0.1:8787. The demo rooms replay the runs in [`demo-runs/`](dem
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-`--live` is the only switch between replay and live. With it, the upload box runs the whole agent on your photo and the page follows the run while it works. One run costs about $0.2 to $0.4 at Meta's published prices, and its `ledger.jsonl` lists every call. The local server starts at most 10 live runs a day; `--per-day` changes that.
+`--live` is the only switch between replay and live. With it, the upload box runs the whole agent on your photo and the page follows the run while it works. One run costs about $0.2 to $0.4 at Meta's published prices, and its `ledger.jsonl` lists every call. The local server starts at most 10 live runs a day; `--per-day` changes that. A run that passes 12 minutes or $0.60 skips the redraws it has left and finishes with what it has.
 
 To run the agent on one photo without the web app:
 
@@ -181,7 +182,7 @@ Use `--mode furnish` for an empty room. While `serve_local.py` is running, the f
 
 To rebuild the catalog, download the ABO listings and image metadata into `data/abo/`, then run the steps in [The catalog](#the-catalog). The Modal steps need a Modal account and, for tagging, `BASETEN_API_KEY` and `FIREWORKS_API_KEY` in a Modal secret named `realroom-keys`.
 
-The hosted version runs on Modal (`backend/modal_app.py`): one web container, the catalog and the runs on two volumes, at most three live runs at a time, 40 live runs a day, three per visitor and 60 dollars of model calls in all. Uploaded photos are deleted within 24 hours.
+The hosted version runs on Modal (`backend/modal_app.py`): one web container, the catalog and the runs on two volumes, at most three live runs at a time, 40 live runs a day, three per visitor and 60 dollars of model calls in all. Uploads must be JPEG, PNG or WebP, at most 12 MB and 40 megapixels. Location and camera data are stripped before a photo is stored, and visitors are counted by a salted hash that changes every day, never by their address. A photo that shows a person or is not a room is refused and blurred at once. Live results sit at an unguessable address and are never cached. Their `after.jpg` and `after.png` carry IPTC metadata that marks them as AI-edited. Uploaded photos are deleted within 24 hours.
 
 ## The catalog
 
@@ -231,6 +232,15 @@ The agent itself does not depend on ABO. It reads a catalog folder (`--catalog`)
 
 The scripts in `catalog/` build this folder from ABO. For another product feed, steps 1 to 3 are the part to rewrite, because they turn ABO listings into rows and photos. Then point `serve_local.py` or `run_demo.py` at the new folders with `--catalog` and `--photos`.
 
+## Tests
+
+```bash
+.venv/bin/pip install -r backend/requirements-test.txt
+.venv/bin/python -m pytest backend/tests
+```
+
+The tests need no key and call no model. They replay the three recorded runs through the HTTP API and check their numbers against each ledger and this README. They push uploads through the live-run gate with a fake launcher: metadata removal, size and format limits, the per-visitor, daily and budget caps. They feed the pipeline failed and malformed model replies, and they check that every model the app calls is a Meta model reached only at api.meta.ai. GitHub Actions runs them on every push, with the web typecheck and build.
+
 ## Repository layout
 
 ```text
@@ -238,6 +248,7 @@ backend/
   realroom/      the agent: scan.py, pick.py, render.py, verify.py, composite.py and pipeline.py,
                  catalog.py (search), meta.py (Meta Model API clients), server.py (API and site)
   scripts/       serve_local.py, run_demo.py, make_rooms.py (the demo rooms), pack_demo_photos.py
+  tests/         the test suite (no key, no network calls)
   modal_app.py   the hosted app on Modal
 catalog/         the catalog build from ABO, steps 1 to 6, plus get_photos.py and pack_photos.py
   index/         catalog.jsonl (4,375 products) and the Perception Encoder embeddings
@@ -248,7 +259,7 @@ docs/            README images and translations
 
 ## Limits
 
-- Subtle textures are hard for the image model. A cream rug with a faint criss-cross weave came out too bold in some renders and plain in others. The fix loop catches this, and when no redraw scores higher the result says "partial" instead of hiding it.
+- Subtle textures are hard for the image model. A cream rug with a faint criss-cross weave came out too bold in some renders and plain in others. The fix loop catches this, but Spark's scores for the same pixels vary: in the studio run a redraw of that rug scored 9 and the final check scored it 6. When checks disagree, the result reports the lower verdict.
 - The plan changes between runs of the same brief, because Spark plans and picks again each time.
 - Where a removed object stood, the redrawn floor can meet the original floor along a faint seam.
 - The listings come from a dataset published in 2021, so there are no prices and some product links no longer open.

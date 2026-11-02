@@ -27,6 +27,7 @@
   <a href="#meta-models"><img alt="Muse Image 1.0" src="https://img.shields.io/badge/Muse_Image-1.0-ffb48c?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Muse Spark Open" src="https://img.shields.io/badge/Muse_Spark_Open-open_weights-d1b3ff?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Perception Encoder PE-Core B16" src="https://img.shields.io/badge/Perception_Encoder-PE--Core_B16-d1b3ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="https://github.com/chanjoongx/realroom/actions/workflows/ci.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/chanjoongx/realroom/ci.yml?branch=main&style=flat-square&label=tests&labelColor=1f2328"></a>
   <a href="../../LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
 </p>
 
@@ -81,9 +82,9 @@ Die Demo-Räume wurden mit Muse Image 1.0 erzeugt, daher enthält dieses Reposit
 |---|---|---|---|---|---|---|
 | Wohnzimmer, Wohnung von 2005 | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | Sofa, Teppich, Stehlampe | 3 von 3, der Teppich nach einer Runde Neuzeichnen | 70,3 % | 216&nbsp;s | $0.24 |
 | Leeres Zimmer, Einzugstag | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | Sofa, Teppich, Stehlampe, Couchtisch, Pflanzkübel | 5 von 5, der Teppich nach zwei Runden Neuzeichnen und der Couchtisch nach einer | 63,3 % | 288&nbsp;s | $0.37 |
-| Einzimmerwohnung, die erste eigene | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | Bettgestell, Bettwäsche, Teppich | 3 von 3, der Teppich nach zwei Runden Neuzeichnen | 70,7 % | 244&nbsp;s | $0.30 |
+| Einzimmerwohnung, die erste eigene | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | Bettgestell, Bettwäsche, Teppich | 2 von 3: eine Neuzeichnung des Teppichs bekam 9, die Schlussprüfung aber 6, weil das Gittermuster zu kräftig ausfiel | 70,7 % | 244&nbsp;s | $0.30 |
 
-„Übereinstimmung“ ist das Urteil von Muse Spark 1.3 über einen engen Ausschnitt jedes gerenderten Produkts neben seinem Katalogfoto. Die Kosten sind Schätzungen nach den veröffentlichten Preisen von Meta, pro Aufruf protokolliert.
+„Übereinstimmung“ zählt ein Produkt nur, wenn jede Prüfung seiner endgültigen Pixel durch Muse Spark 1.3 „match“ ergibt. Jede Prüfung legt einen engen Ausschnitt des gerenderten Produkts neben sein Katalogfoto. Die Kosten sind Schätzungen nach den veröffentlichten Preisen von Meta, pro Aufruf protokolliert.
 
 ## <a id="how-a-run-works"></a>So funktioniert ein Lauf
 
@@ -105,7 +106,7 @@ flowchart LR
 | Auswählen | Muse Spark 1.3 | Spark sieht in einer einzigen Anfrage den Raum und für jeden Slot ein nummeriertes Blatt mit Kandidaten und wählt deshalb eine Kombination, die zusammenpasst. |
 | Rendern | Muse Image 1.0 | Ein Aufruf von `/images/edits` mit dem Raum, einer Platzierungsvorlage und den echten Produktfotos liefert zwei oder drei Kandidaten. Die Tools des Modells für Web- und Bildsuche sind abgeschaltet. |
 | Prüfen | SAM 3.1, Muse Spark 1.3 | Jeder Kandidat wird am Original ausgerichtet (ECC-Homographie) und farblich angeglichen. SAM 3.1 findet jedes neue Produkt wieder, und Spark bewertet jeden Produktausschnitt im Vergleich zu seinem Katalogfoto und dazu die Szene als Ganzes. Der beste Kandidat wird behalten. |
-| Korrigieren | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Ein Produkt mit dem Urteil „partial“ wird samt Umgebung ausgeschnitten und anhand seines Katalogfotos größer neu gezeichnet, mit zwei Versuchen pro Runde und bis zu zwei Runden. Ein Versuch ersetzt die aktuelle Version nur, wenn Spark ihn höher bewertet, und die Anmerkungen von Spark steuern die nächste Runde. Kram, den das Rendering übrig gelassen hat, bekommt einen eigenen Durchgang, geprüft mit SAM 3.1. Hat sich etwas geändert, bewertet Spark den fertigen Raum noch einmal. |
+| Korrigieren | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Ein Produkt mit dem Urteil „partial“ wird samt Umgebung ausgeschnitten und anhand seines Katalogfotos größer neu gezeichnet, mit zwei Versuchen pro Runde und bis zu zwei Runden. Ein Versuch ersetzt die aktuelle Version nur, wenn Spark ihn höher bewertet, und die Anmerkungen von Spark steuern die nächste Runde. Kram, den das Rendering übrig gelassen hat, bekommt einen eigenen Durchgang, geprüft mit SAM 3.1. Hat sich etwas geändert, bewertet Spark den fertigen Raum noch einmal, und ein Produkt zählt nur dann als Übereinstimmung, wenn auch diese Bewertung zustimmt. |
 | Zusammensetzen | keine | Das Ergebnis übernimmt aus dem Rendering nur die Produktmasken, einen schmalen Rand darum, Kontaktschatten und die Stellflächen entfernter Objekte. Alle übrigen Pixel stammen aus dem Original. |
 
 Die Web-App spielt jeden Lauf aus seinem Event-Log ab: den Scan mit allen Umrissen, den Suchtrichter, die Auswahlblätter, alle Render-Kandidaten, jede Korrektur mit ihrem Vorher und Nachher und die finalen Ebenen. Die Kopfzeile jedes Schritts zeigt die ID des Modells, das er aufgerufen hat.
@@ -168,7 +169,7 @@ Unter Windows schreibst du `.venv\Scripts\` dort, wo in diesen Befehlen `.venv/b
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-`--live` ist der einzige Schalter zwischen Wiedergabe und Live-Betrieb. Damit führt das Upload-Feld den ganzen Agenten mit deinem Foto aus, und die Seite verfolgt den Lauf, während er arbeitet. Ein Lauf kostet zu den veröffentlichten Preisen von Meta etwa $0.2 bis $0.4, und seine `ledger.jsonl` listet jeden Aufruf auf. Der lokale Server startet höchstens 10 Live-Läufe pro Tag; `--per-day` ändert das.
+`--live` ist der einzige Schalter zwischen Wiedergabe und Live-Betrieb. Damit führt das Upload-Feld den ganzen Agenten mit deinem Foto aus, und die Seite verfolgt den Lauf, während er arbeitet. Ein Lauf kostet zu den veröffentlichten Preisen von Meta etwa $0.2 bis $0.4, und seine `ledger.jsonl` listet jeden Aufruf auf. Der lokale Server startet höchstens 10 Live-Läufe pro Tag; `--per-day` ändert das. Ein Lauf, der 12 Minuten oder $0.60 überschreitet, lässt die restlichen Neuzeichnungen aus und endet mit dem, was er hat.
 
 So führst du den Agenten ohne Web-App mit einem einzelnen Foto aus:
 
@@ -183,7 +184,7 @@ Für ein leeres Zimmer nimmst du `--mode furnish`. Solange `serve_local.py` läu
 
 Um den Katalog neu zu bauen, lädst du die ABO-Listings und die Bildmetadaten nach `data/abo/` herunter und führst dann die Schritte unter [Der Katalog](#the-catalog) aus. Die Modal-Schritte brauchen ein Modal-Konto und fürs Taggen `BASETEN_API_KEY` und `FIREWORKS_API_KEY` in einem Modal-Secret namens `realroom-keys`.
 
-Die gehostete Version läuft auf Modal (`backend/modal_app.py`): ein Web-Container, Katalog und Läufe auf zwei Volumes, höchstens drei Live-Läufe gleichzeitig, 40 Live-Läufe pro Tag, drei pro Person und insgesamt 60 Dollar für Modellaufrufe. Hochgeladene Fotos werden innerhalb von 24 Stunden gelöscht.
+Die gehostete Version läuft auf Modal (`backend/modal_app.py`): ein Web-Container, Katalog und Läufe auf zwei Volumes, höchstens drei Live-Läufe gleichzeitig, 40 Live-Läufe pro Tag, drei pro Person und insgesamt 60 Dollar für Modellaufrufe. Uploads müssen JPEG, PNG oder WebP sein, höchstens 12 MB und 40 Megapixel. Standort- und Kameradaten werden entfernt, bevor ein Foto gespeichert wird, und Besucher werden über einen gesalzenen Hash gezählt, der sich jeden Tag ändert, nie über ihre Adresse. Ein Foto, das eine Person zeigt oder keinen Raum, wird abgelehnt und sofort unscharf gemacht. Live-Ergebnisse liegen unter einer nicht zu erratenden Adresse und werden nie zwischengespeichert. Ihre `after.jpg` und `after.png` tragen IPTC-Metadaten, die sie als KI-bearbeitet kennzeichnen. Hochgeladene Fotos werden innerhalb von 24 Stunden gelöscht.
 
 ## <a id="the-catalog"></a>Der Katalog
 
@@ -233,6 +234,15 @@ Der Agent selbst hängt nicht von ABO ab. Er liest einen Katalogordner (`--catal
 
 Die Skripte in `catalog/` bauen diesen Ordner aus ABO. Für einen anderen Produkt-Feed schreibst du die Schritte 1 bis 3 neu, weil sie ABO-Listings in Zeilen und Fotos umwandeln. Danach übergibst du `serve_local.py` oder `run_demo.py` mit `--catalog` und `--photos` die neuen Ordner.
 
+## Tests
+
+```bash
+.venv/bin/pip install -r backend/requirements-test.txt
+.venv/bin/python -m pytest backend/tests
+```
+
+Die Tests brauchen keinen Schlüssel und rufen kein Modell auf. Sie spielen die drei aufgezeichneten Läufe über die HTTP-API ab und gleichen ihre Zahlen mit dem jeweiligen Ledger und dieser README ab. Mit einem Fake-Launcher schicken sie Uploads durch die Schranke für Live-Läufe: Entfernen der Metadaten, Grenzen für Größe und Format, die Obergrenzen pro Besucher, pro Tag und für das Budget. Sie füttern die Pipeline mit fehlgeschlagenen und fehlerhaften Modellantworten und prüfen, dass jedes Modell, das die App aufruft, ein Meta-Modell ist, das nur über api.meta.ai erreicht wird. GitHub Actions führt sie bei jedem Push aus, zusammen mit dem Typcheck und dem Build der Web-App.
+
 ## Aufbau des Repositorys
 
 ```text
@@ -240,6 +250,7 @@ backend/
   realroom/      the agent: scan.py, pick.py, render.py, verify.py, composite.py and pipeline.py,
                  catalog.py (search), meta.py (Meta Model API clients), server.py (API and site)
   scripts/       serve_local.py, run_demo.py, make_rooms.py (the demo rooms), pack_demo_photos.py
+  tests/         the test suite (no key, no network calls)
   modal_app.py   the hosted app on Modal
 catalog/         the catalog build from ABO, steps 1 to 6, plus get_photos.py and pack_photos.py
   index/         catalog.jsonl (4,375 products) and the Perception Encoder embeddings
@@ -250,7 +261,7 @@ docs/            README images and translations
 
 ## Grenzen
 
-- Feine Texturen fallen dem Bildmodell schwer. Ein cremefarbener Teppich mit zartem, gewebtem Kreuzmuster kam in manchen Renderings zu kräftig heraus und in anderen ganz ohne Muster. Die Korrekturschleife fängt das ab, und wenn keine Neuzeichnung höher bewertet wird, steht im Ergebnis „partial“, statt es zu verbergen.
+- Feine Texturen fallen dem Bildmodell schwer. Ein cremefarbener Teppich mit zartem, gewebtem Kreuzmuster kam in manchen Renderings zu kräftig heraus und in anderen ganz ohne Muster. Die Korrekturschleife fängt das ab, doch Sparks Bewertungen derselben Pixel schwanken: Im Studio-Lauf bekam eine Neuzeichnung dieses Teppichs 9 und die Schlussprüfung 6. Wenn sich Prüfungen widersprechen, zeigt das Ergebnis das niedrigere Urteil.
 - Der Plan unterscheidet sich zwischen Läufen mit derselben Vorgabe, weil Spark jedes Mal neu plant und auswählt.
 - Wo ein entferntes Objekt stand, kann der neu gezeichnete Boden mit einer feinen Naht an den Originalboden stoßen.
 - Die Listings stammen aus einem 2021 veröffentlichten Datensatz, daher gibt es keine Preise, und manche Produktlinks lassen sich nicht mehr öffnen.

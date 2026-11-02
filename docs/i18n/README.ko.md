@@ -27,6 +27,7 @@
   <a href="#meta-models"><img alt="Muse Image 1.0" src="https://img.shields.io/badge/Muse_Image-1.0-ffb48c?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Muse Spark Open" src="https://img.shields.io/badge/Muse_Spark_Open-open_weights-d1b3ff?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Perception Encoder PE-Core B16" src="https://img.shields.io/badge/Perception_Encoder-PE--Core_B16-d1b3ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="https://github.com/chanjoongx/realroom/actions/workflows/ci.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/chanjoongx/realroom/ci.yml?branch=main&style=flat-square&label=tests&labelColor=1f2328"></a>
   <a href="../../LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
 </p>
 
@@ -81,9 +82,9 @@ Realroom은 Meta 모델로 만든 에이전트입니다. 방 사진과 원하는
 |---|---|---|---|---|---|---|
 | 거실, 2005년식 아파트 | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | 소파, 러그, 플로어 램프 | 3개 중 3개, 러그는 한 라운드 다시 그린 뒤 | 70.3% | 216&nbsp;s | $0.24 |
 | 빈방, 이사 온 날 | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | 소파, 러그, 플로어 램프, 커피 테이블, 화분 | 5개 중 5개, 러그는 두 라운드, 커피 테이블은 한 라운드 다시 그린 뒤 | 63.3% | 288&nbsp;s | $0.37 |
-| 원룸, 첫 자취방 | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | 침대 프레임, 침구, 러그 | 3개 중 3개, 러그는 두 라운드 다시 그린 뒤 | 70.7% | 244&nbsp;s | $0.30 |
+| 원룸, 첫 자취방 | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | 침대 프레임, 침구, 러그 | 3개 중 2개: 러그는 다시 그려 9점을 받았지만 최종 확인에서 격자무늬가 너무 굵어 6점 | 70.7% | 244&nbsp;s | $0.30 |
 
-"일치"는 렌더된 상품을 하나씩 가까이 잘라 카탈로그 사진 옆에 놓고 Muse Spark 1.3이 내린 판정입니다. 비용은 Meta가 공개한 가격으로 계산한 추정치이며 호출마다 기록했습니다.
+"일치"는 Muse Spark 1.3이 상품의 최종 픽셀을 확인한 판정이 모두 match일 때만 셉니다. 확인할 때마다 렌더된 상품을 가까이 잘라 카탈로그 사진 옆에 놓고 봅니다. 비용은 Meta가 공개한 가격으로 계산한 추정치이며 호출마다 기록했습니다.
 
 ## <a id="how-a-run-works"></a>실행 과정
 
@@ -105,7 +106,7 @@ flowchart LR
 | 선택 | Muse Spark 1.3 | Spark는 요청 한 번에 방 사진과 슬롯마다 후보에 번호를 붙인 시트를 모두 봅니다. 그래서 서로 어울리는 조합을 고릅니다. |
 | 렌더 | Muse Image 1.0 | 방 사진, 배치 가이드, 실제 상품 사진을 넣은 `/images/edits` 호출 한 번으로 후보를 두세 개 받습니다. 모델의 웹 검색 도구와 이미지 검색 도구는 꺼 둡니다. |
 | 검증 | SAM 3.1, Muse Spark 1.3 | 후보마다 원본 기준으로 정렬하고(ECC 호모그래피) 색을 맞춥니다. SAM 3.1이 새 상품을 모두 다시 찾고, Spark는 잘라 낸 상품 이미지를 하나씩 카탈로그 사진과 견주며 장면 전체도 판정합니다. 가장 좋은 후보를 남깁니다. |
-| 수정 | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | partial로 판정된 상품은 주변과 함께 잘라 확대한 뒤 카탈로그 사진을 기준으로 다시 그립니다. 라운드마다 두 번 시도하고 최대 두 라운드까지 갑니다. 새로 그린 결과는 Spark가 더 높은 점수를 줄 때만 현재 버전을 대체합니다. 다음 라운드의 방향은 Spark의 메모가 잡습니다. 렌더가 남긴 잡동사니는 따로 한 번 더 지우고 SAM 3.1로 확인합니다. 바뀐 것이 있으면 Spark가 완성된 방을 다시 판정합니다. |
+| 수정 | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | partial로 판정된 상품은 주변과 함께 잘라 확대한 뒤 카탈로그 사진을 기준으로 다시 그립니다. 라운드마다 두 번 시도하고 최대 두 라운드까지 갑니다. 새로 그린 결과는 Spark가 더 높은 점수를 줄 때만 현재 버전을 대체합니다. 다음 라운드의 방향은 Spark의 메모가 잡습니다. 렌더가 남긴 잡동사니는 따로 한 번 더 지우고 SAM 3.1로 확인합니다. 바뀐 것이 있으면 Spark가 완성된 방을 다시 판정하고, 이 판정까지 match여야 일치로 셉니다. |
 | 합성 | 없음 | 결과물은 렌더에서 상품 마스크와 그 둘레의 얇은 테두리, 접촉 그림자, 치운 물건이 있던 자리만 가져옵니다. 나머지 픽셀은 모두 원본입니다. |
 
 웹 앱은 각 실행을 이벤트 로그에서 재생합니다. 모든 윤곽선을 표시한 스캔, 검색 퍼널, 선택 시트, 모든 렌더 후보, 수정별 전후 모습, 최종 레이어까지 나옵니다. 단계마다 헤더에는 그 단계가 호출한 모델의 ID가 표시됩니다.
@@ -168,7 +169,7 @@ http://127.0.0.1:8787 주소를 엽니다. 데모 방은 배포된 앱과 마찬
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-재생과 라이브는 `--live` 하나로 갈립니다. 이 옵션을 켜면 업로드 상자가 올린 사진으로 에이전트 전체를 돌리고, 페이지는 실행이 진행되는 동안 그 과정을 따라 보여 줍니다. 실행 한 번에 드는 비용은 Meta 공개 가격 기준 약 $0.2~$0.4이고 그 실행의 `ledger.jsonl`에 모든 호출이 남습니다. 로컬 서버는 라이브 실행을 하루 최대 10번까지 시작합니다. 이 횟수는 `--per-day`로 바꿉니다.
+재생과 라이브는 `--live` 하나로 갈립니다. 이 옵션을 켜면 업로드 상자가 올린 사진으로 에이전트 전체를 돌리고, 페이지는 실행이 진행되는 동안 그 과정을 따라 보여 줍니다. 실행 한 번에 드는 비용은 Meta 공개 가격 기준 약 $0.2~$0.4이고 그 실행의 `ledger.jsonl`에 모든 호출이 남습니다. 로컬 서버는 라이브 실행을 하루 최대 10번까지 시작합니다. 이 횟수는 `--per-day`로 바꿉니다. 실행이 12분이나 $0.60를 넘기면 남은 다시 그리기를 건너뛰고 그때까지의 결과로 마칩니다.
 
 웹 앱 없이 사진 한 장에 에이전트를 돌리려면 다음 명령을 씁니다.
 
@@ -183,7 +184,7 @@ http://127.0.0.1:8787 주소를 엽니다. 데모 방은 배포된 앱과 마찬
 
 카탈로그를 다시 만들려면 ABO 상품 정보와 이미지 메타데이터를 `data/abo/`에 내려받은 뒤 [카탈로그](#the-catalog)에 나온 단계를 실행합니다. Modal 단계에는 Modal 계정이 필요합니다. 태깅에는 `realroom-keys`라는 Modal 시크릿에 넣은 `BASETEN_API_KEY`와 `FIREWORKS_API_KEY`도 있어야 합니다.
 
-배포 버전은 Modal에서 돌아갑니다(`backend/modal_app.py`). 웹 컨테이너는 하나이고 카탈로그와 실행 기록은 볼륨 두 개에 둡니다. 라이브 실행은 동시에 최대 세 개, 하루 40번, 방문자당 세 번까지이고 모델 호출 비용은 모두 합쳐 60달러까지입니다. 업로드된 사진은 24시간 안에 삭제됩니다.
+배포 버전은 Modal에서 돌아갑니다(`backend/modal_app.py`). 웹 컨테이너는 하나이고 카탈로그와 실행 기록은 볼륨 두 개에 둡니다. 라이브 실행은 동시에 최대 세 개, 하루 40번, 방문자당 세 번까지이고 모델 호출 비용은 모두 합쳐 60달러까지입니다. 업로드는 JPEG, PNG, WebP만 받고 12MB, 40메가픽셀까지입니다. 사진을 저장하기 전에 위치 정보와 카메라 정보를 지우고, 방문자는 IP 주소 대신 날마다 바뀌는 솔트를 섞은 해시로 셉니다. 사람이 보이거나 방이 아닌 사진은 거절하고 바로 흐리게 만듭니다. 라이브 결과는 추측할 수 없는 주소에 두고 캐시하지 않습니다. 그 `after.jpg`와 `after.png`에는 AI로 편집했다는 IPTC 메타데이터가 들어갑니다. 업로드된 사진은 24시간 안에 삭제됩니다.
 
 ## <a id="the-catalog"></a>카탈로그
 
@@ -233,6 +234,15 @@ Muse Spark Open은 4,375개 중 3,781개를 Baseten에서, 594개를 Fireworks�
 
 `catalog/`의 스크립트가 ABO로 이 폴더를 만듭니다. 다른 상품 피드를 쓰려면 1~3단계를 새로 작성하면 됩니다. 이 단계들이 ABO 상품 정보를 행과 사진으로 바꾸기 때문입니다. 그다음 `--catalog`와 `--photos`로 `serve_local.py`나 `run_demo.py`가 새 폴더를 가리키게 합니다.
 
+## 테스트
+
+```bash
+.venv/bin/pip install -r backend/requirements-test.txt
+.venv/bin/python -m pytest backend/tests
+```
+
+테스트는 키가 필요 없고 모델을 부르지 않습니다. 녹화된 실행 세 개를 HTTP API로 다시 재생하고, 그 숫자를 각 ledger와 이 README에 대조합니다. 가짜 실행기를 써서 업로드를 실시간 실행의 관문에 통과시키며 메타데이터 제거, 크기와 형식 제한, 방문자별 · 하루 · 예산 한도를 확인합니다. 파이프라인에는 실패한 응답과 형식이 깨진 모델 출력을 넣어 보고, 앱이 부르는 모델이 모두 api.meta.ai로만 닿는 Meta 모델인지 확인합니다. GitHub Actions가 push마다 이 테스트를 웹 타입 검사, 빌드와 함께 돌립니다.
+
 ## 저장소 구조
 
 ```text
@@ -240,6 +250,7 @@ backend/
   realroom/      the agent: scan.py, pick.py, render.py, verify.py, composite.py and pipeline.py,
                  catalog.py (search), meta.py (Meta Model API clients), server.py (API and site)
   scripts/       serve_local.py, run_demo.py, make_rooms.py (the demo rooms), pack_demo_photos.py
+  tests/         the test suite (no key, no network calls)
   modal_app.py   the hosted app on Modal
 catalog/         the catalog build from ABO, steps 1 to 6, plus get_photos.py and pack_photos.py
   index/         catalog.jsonl (4,375 products) and the Perception Encoder embeddings
@@ -250,7 +261,7 @@ docs/            README images and translations
 
 ## 한계
 
-- 이미지 모델은 미묘한 질감을 어려워합니다. 희미한 격자 짜임이 있는 크림색 러그가 어떤 렌더에서는 너무 진하게, 다른 렌더에서는 밋밋하게 나왔습니다. 수정 루프가 이를 잡아내고, 다시 그려도 점수가 오르지 않으면 숨기지 않고 결과에 "partial"이라고 표시합니다.
+- 이미지 모델은 미묘한 질감을 어려워합니다. 희미한 격자 짜임이 있는 크림색 러그가 어떤 렌더에서는 너무 진하게, 다른 렌더에서는 밋밋하게 나왔습니다. 수정 루프가 이를 잡아내지만, 같은 픽셀에도 Spark의 점수는 흔들립니다. 원룸 실행에서 그 러그를 다시 그린 결과는 9점을 받았고 최종 확인에서는 6점을 받았습니다. 판정이 엇갈리면 결과에는 낮은 쪽을 표시합니다.
 - 같은 요청이라도 실행할 때마다 계획이 달라집니다. Spark가 매번 새로 계획하고 고르기 때문입니다.
 - 치운 물건이 있던 자리에서는 다시 그린 바닥과 원래 바닥 사이에 희미한 이음매가 생길 수 있습니다.
 - 상품 정보는 2021년에 공개된 데이터셋에서 가져와서 가격이 없고, 일부 상품 링크는 이제 열리지 않습니다.

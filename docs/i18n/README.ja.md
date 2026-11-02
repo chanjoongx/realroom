@@ -27,6 +27,7 @@
   <a href="#meta-models"><img alt="Muse Image 1.0" src="https://img.shields.io/badge/Muse_Image-1.0-ffb48c?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Muse Spark Open" src="https://img.shields.io/badge/Muse_Spark_Open-open_weights-d1b3ff?style=flat-square&labelColor=1f2328"></a>
   <a href="#meta-models"><img alt="Perception Encoder PE-Core B16" src="https://img.shields.io/badge/Perception_Encoder-PE--Core_B16-d1b3ff?style=flat-square&labelColor=1f2328"></a>
+  <a href="https://github.com/chanjoongx/realroom/actions/workflows/ci.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/chanjoongx/realroom/ci.yml?branch=main&style=flat-square&label=tests&labelColor=1f2328"></a>
   <a href="../../LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-a8acb3?style=flat-square&labelColor=1f2328"></a>
 </p>
 
@@ -81,9 +82,9 @@ Realroom は Meta のモデルで作ったエージェントです。部屋の�
 |---|---|---|---|---|---|---|
 | リビング、2005年築のマンション | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | ソファ、ラグ、フロアランプ | 3点中3点（ラグは描き直し1ラウンド後） | 70.3% | 216&nbsp;s | $0.24 |
 | 何もない部屋、引っ越し当日 | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | ソファ、ラグ、フロアランプ、コーヒーテーブル、プランター | 5点中5点（ラグは描き直し2ラウンド後、コーヒーテーブルは1ラウンド後） | 63.3% | 288&nbsp;s | $0.37 |
-| ワンルーム、初めての一人暮らし | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | ベッドフレーム、寝具、ラグ | 3点中3点（ラグは描き直し2ラウンド後） | 70.7% | 244&nbsp;s | $0.30 |
+| ワンルーム、初めての一人暮らし | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | ベッドフレーム、寝具、ラグ | 3点中2点（ラグは描き直しで9点が出たものの、最終確認で格子柄が太すぎると判定され6点） | 70.7% | 244&nbsp;s | $0.30 |
 
-「一致」は、レンダリングした各商品をアップで切り出してカタログ写真と並べ、それを見て Muse Spark 1.3 が下した判定です。費用は Meta の公表価格にもとづく見積もりで、呼び出しごとに記録しています。
+「一致」に数えるのは、最終的な画素を Muse Spark 1.3 が確認したすべての判定が「match」だった商品だけです。どの確認でも、レンダリングした商品をアップで切り出してカタログ写真と並べて見ます。 費用は Meta の公表価格にもとづく見積もりで、呼び出しごとに記録しています。
 
 ## <a id="how-a-run-works"></a>実行の仕組み
 
@@ -105,7 +106,7 @@ flowchart LR
 | 選定 | Muse Spark 1.3 | Spark は1回のリクエストで、部屋と、全スロットの候補を番号付きで並べたシートを見ます。そのため、互いに合う組み合わせを選べます。 |
 | レンダリング | Muse Image 1.0 | 部屋、配置ガイド、実際の商品写真を渡して `/images/edits` を1回呼び出すと、候補が2～3枚返ります。モデルの Web 検索ツールと画像検索ツールはオフにしています。 |
 | 検証 | SAM 3.1、Muse Spark 1.3 | 各候補を元の写真に位置合わせし（ECC ホモグラフィ）、色も合わせます。SAM 3.1 が新しい商品をすべてもう一度見つけ、Spark が商品ごとの切り出し画像をカタログ写真と見比べて判定し、シーン全体も判定します。最もよい候補を採用します。 |
-| 修正 | Muse Image 1.0、SAM 3.1、Muse Spark 1.3 | 「partial」（部分一致）と判定された商品は、周囲ごと切り出し、カタログ写真と照らし合わせながら拡大して描き直します。1ラウンドにつき2回試し、最大2ラウンドです。試した結果が今の版と入れ替わるのは Spark のスコアが上がったときだけで、Spark の所見が次のラウンドの方向を決めます。レンダリング画像に残ってしまった散らかった物は専用の工程で片付け、SAM 3.1 で確認します。何かが変わった場合は、仕上がった部屋を Spark がもう一度判定します。 |
+| 修正 | Muse Image 1.0、SAM 3.1、Muse Spark 1.3 | 「partial」（部分一致）と判定された商品は、周囲ごと切り出し、カタログ写真と照らし合わせながら拡大して描き直します。1ラウンドにつき2回試し、最大2ラウンドです。試した結果が今の版と入れ替わるのは Spark のスコアが上がったときだけで、Spark の所見が次のラウンドの方向を決めます。レンダリング画像に残ってしまった散らかった物は専用の工程で片付け、SAM 3.1 で確認します。何かが変わった場合は、仕上がった部屋を Spark がもう一度判定し、この判定も「match」のときだけ一致に数えます。 |
 | 合成 | なし | 最終結果がレンダリング画像から取るのは、商品のマスク部分、その周りの細い縁、接地影、取り除いた物があった範囲だけです。それ以外のピクセルはすべて元の写真のままです。 |
 
 Web アプリは、各実行をイベントログから再生します。輪郭をすべて表示したスキャン、検索の絞り込み、選定シート、すべてのレンダリング候補、修正ごとのビフォーアフター、最終的なレイヤーまで見られます。各ステップのヘッダーには、そのステップで呼び出したモデルの ID が表示されます。
@@ -168,7 +169,7 @@ http://127.0.0.1:8787 を開きます。デモの部屋では、公開版のア�
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-再生とライブを切り替えるのは `--live` だけです。これを付けると、アップロード欄から自分の写真でエージェント全体が動き、ページは実行中の様子を追って表示します。1回の実行の費用は Meta の公表価格で約$0.2～$0.4で、その実行の `ledger.jsonl` にすべての呼び出しが記録されます。ローカルサーバーが1日に始めるライブ実行は10回までで、`--per-day` で変えられます。
+再生とライブを切り替えるのは `--live` だけです。これを付けると、アップロード欄から自分の写真でエージェント全体が動き、ページは実行中の様子を追って表示します。1回の実行の費用は Meta の公表価格で約$0.2～$0.4で、その実行の `ledger.jsonl` にすべての呼び出しが記録されます。ローカルサーバーが1日に始めるライブ実行は10回までで、`--per-day` で変えられます。12分か$0.60を超えた実行は、残りの描き直しを飛ばし、その時点の結果で終わります。
 
 Web アプリを使わずに1枚の写真でエージェントを動かすには、次のようにします。
 
@@ -183,7 +184,7 @@ Web アプリを使わずに1枚の写真でエージェントを動かすには
 
 カタログを作り直すには、ABO の商品データと画像メタデータを `data/abo/` にダウンロードしてから、[カタログ](#the-catalog)の手順を実行します。Modal のステップには Modal のアカウントが必要です。タグ付けにはさらに、`realroom-keys` という名前の Modal シークレットに `BASETEN_API_KEY` と `FIREWORKS_API_KEY` を入れておく必要があります。
 
-公開版は Modal で動いています（`backend/modal_app.py`）。構成は Web コンテナ1つで、カタログと実行データは2つのボリュームに置いています。ライブ実行は同時に3件まで、1日40回まで、訪問者1人につき3回まで、モデル呼び出しの総額は60ドルまでです。アップロードされた写真は24時間以内に削除します。
+公開版は Modal で動いています（`backend/modal_app.py`）。構成は Web コンテナ1つで、カタログと実行データは2つのボリュームに置いています。ライブ実行は同時に3件まで、1日40回まで、訪問者1人につき3回まで、モデル呼び出しの総額は60ドルまでです。アップロードできるのは JPEG、PNG、WebP で、12MB・40メガピクセルまでです。写真を保存する前に位置情報とカメラ情報を取り除き、訪問者は IP アドレスの代わりに、日ごとに変わるソルト付きハッシュで数えます。人が写っている写真や部屋ではない写真は断り、すぐにぼかします。ライブ実行の結果は推測できないアドレスに置き、キャッシュしません。その `after.jpg` と `after.png` には、AI で編集したことを示す IPTC メタデータが入ります。アップロードされた写真は24時間以内に削除します。
 
 ## <a id="the-catalog"></a>カタログ
 
@@ -233,6 +234,15 @@ Muse Spark Open は、4,375点のうち3,781点を Baseten で、594点を Firew
 
 `catalog/` のスクリプトは、このフォルダーを ABO から作ります。別の商品フィードを使う場合、書き換えるのはステップ1～3です。ABO の商品データを行と写真に変換しているのがこの部分だからです。そのあと、`--catalog` と `--photos` で `serve_local.py` か `run_demo.py` に新しいフォルダーを指定します。
 
+## テスト
+
+```bash
+.venv/bin/pip install -r backend/requirements-test.txt
+.venv/bin/python -m pytest backend/tests
+```
+
+テストはキーが不要で、モデルを呼び出しません。記録済みの三つの実行を HTTP API で再生し、その数値を各 ledger とこの README に照らし合わせます。偽のランチャーを使ってアップロードをライブ実行の関門に通し、メタデータの除去、サイズと形式の制限、訪問者ごと・日ごと・予算の上限を確かめます。パイプラインには失敗した応答や壊れたモデル出力を与え、アプリが呼ぶモデルがすべて api.meta.ai だけにつながる Meta のモデルであることも確認します。GitHub Actions が push のたびに、Web の型チェックとビルドと合わせて実行します。
+
 ## リポジトリの構成
 
 ```text
@@ -240,6 +250,7 @@ backend/
   realroom/      the agent: scan.py, pick.py, render.py, verify.py, composite.py and pipeline.py,
                  catalog.py (search), meta.py (Meta Model API clients), server.py (API and site)
   scripts/       serve_local.py, run_demo.py, make_rooms.py (the demo rooms), pack_demo_photos.py
+  tests/         the test suite (no key, no network calls)
   modal_app.py   the hosted app on Modal
 catalog/         the catalog build from ABO, steps 1 to 6, plus get_photos.py and pack_photos.py
   index/         catalog.jsonl (4,375 products) and the Perception Encoder embeddings
@@ -250,7 +261,7 @@ docs/            README images and translations
 
 ## 制限事項
 
-- 画像モデルは繊細な質感が苦手です。かすかな格子状の織り目があるクリーム色のラグは、レンダリング画像によって織り目が強く出すぎたり、無地になったりしました。修正ループがこれを見つけ、どの描き直しもスコアが上がらないときは、隠さずに結果に「partial」と表示します。
+- 画像モデルは繊細な質感が苦手です。かすかな格子状の織り目があるクリーム色のラグは、レンダリング画像によって織り目が強く出すぎたり、無地になったりしました。修正ループがこれを見つけますが、同じ画素でも Spark のスコアは揺れます。ワンルームの実行では、このラグの描き直しが9点、最終確認では6点でした。判定が食い違うときは、結果に低いほうを表示します。
 - 同じ要望でも、実行するたびに計画が変わります。Spark が毎回、計画と選定をやり直すためです。
 - 取り除いた物があった場所では、描き直した床と元の床の間に、かすかな継ぎ目が出ることがあります。
 - 商品データは2021年に公開されたデータセットのものなので、価格はなく、一部の商品リンクはもう開けません。
