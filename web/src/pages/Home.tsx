@@ -163,6 +163,7 @@ export function Home() {
         <div>
           <Logo onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
           <p className="faint">Built for the Meta Global AI Developer Hackathon, 2026.</p>
+          <p className="faint">Built with Muse Spark Open.</p>
         </div>
         <div className="credits faint">
           <p>

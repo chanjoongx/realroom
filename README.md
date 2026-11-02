@@ -160,6 +160,7 @@ The hosted version runs on Modal (`backend/modal_app.py`): one web container, th
 
 - Product photos and data: Amazon Berkeley Objects by **Amazon.com**, licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Dataset by Matthieu Guillaumin, Thomas Dideriksen, Kenan Deng and Himanshu Arora (Amazon.com), Jasmine Collins and Jitendra Malik (UC Berkeley). Changes: photos were trimmed and resized, products were tagged by Muse Spark Open, and products are redrawn into room photos by Muse Image 1.0. Realroom is not affiliated with or endorsed by Amazon.
 - Compute: Meta Model API credits from Meta, and credits from the hackathon's inference partners Baseten, Fireworks AI and Modal.
+- Built with Muse Spark Open. Its weights are released under the [Muse Model License](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B), and Realroom calls the model through Baseten and Fireworks AI to tag the catalog.
 - [SigLIP 2](https://huggingface.co/google/siglip2-base-patch16-256) by Google, Apache 2.0.
 - Fonts: Geist and Geist Mono (Vercel) and Instrument Serif, all under the SIL Open Font License.
 - The demo rooms were generated with Muse Image 1.0.
