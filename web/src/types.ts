@@ -46,6 +46,8 @@ export interface Funnel {
   kind: number;
   fits: number;
   size_tolerance: number;
+  /** a size rule that is not a plus-or-minus band (bedding: "114 to 220 cm wide") */
+  fit_rule?: string;
   clean: number;
   shortlist?: number;
   ranked_by?: string[];
@@ -135,6 +137,9 @@ export interface Verdict {
   fix?: string;
   fixed?: boolean;
   error?: string;
+  /** a verdict of record (runs since 11-03): each separate look at the final pixels, and how many were asked */
+  checks?: { verdict: VerdictKind; score: number }[];
+  of?: number;
 }
 
 export interface SceneVerdict {
@@ -185,6 +190,8 @@ export interface ResultProduct {
   outline: string;
   crop: string;
   verdict: Verdict;
+  /** runs since 11-03: the verify or fix step's own verdict, kept beside the verdict of record */
+  render_verdict?: Verdict;
   fixed: boolean;
 }
 

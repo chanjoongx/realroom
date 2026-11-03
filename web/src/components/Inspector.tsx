@@ -207,7 +207,7 @@ function FunnelBars({ sl }: { sl: Slot }) {
   if (!f) return null;
   const rows = [
     { k: `${kindLabel(sl.kind).toLowerCase()} in catalog`, v: f.kind },
-    { k: `fit ${sizeCm(sl.size_cm, sl.kind)} ±${Math.round(f.size_tolerance * 100)}%`, v: f.fits },
+    { k: f.fit_rule ? `fit ${f.fit_rule}` : `fit ${sizeCm(sl.size_cm, sl.kind)} ±${Math.round(f.size_tolerance * 100)}%`, v: f.fits },
     { k: `short list (${(f.ranked_by ?? ["text"]).map((r) => (r === "pe-core" ? "PE-Core" : r)).join(" + ")})`, v: f.shortlist ?? 0 },
   ];
   const max = Math.max(1, f.kind);
@@ -581,7 +581,7 @@ export function FixPanel({ run, events, stopped }: PanelProps) {
         stage="fix"
         events={events}
         title={fixTitle(fixes)}
-        sub="A product that comes out only partly right is cut out with its surroundings and redrawn larger against its catalog photo, two tries per round. SAM 3.1 finds each try again, Spark judges it, and the best one replaces the first render only if it scores higher. Its notes steer the next round, until it matches or two rounds are spent. Clutter the render left behind gets its own pass, checked again with SAM 3.1."
+        sub="A product that comes out only partly right is cut out with its surroundings and redrawn larger against its catalog photo, two tries per round. A product the render left out is added at its planned spot the same way. SAM 3.1 finds each try again, Spark judges it, and the best one replaces the first render only if it scores higher. Its notes steer the next round, until it matches or two rounds are spent. Clutter the render left behind gets its own pass, checked again with SAM 3.1."
       />
       {fixes.map((f) =>
         f.kind === "clear" ? (
@@ -645,6 +645,8 @@ export function ResultPanel({ run, events, focus, setFocus }: PanelProps) {
   // each product is shown and counted with its verdict of record (see lib/verdicts.ts)
   const recs = recordProducts(res);
   const matches = recs.filter((p) => isMatch(p.verdict)).length;
+  // runs since 11-03: every product was counted from separate checks of the finished photo
+  const looks = recs.find((p) => Array.isArray(p.verdict.checks))?.verdict.of;
   const objs = Object.fromEntries((run.scan?.objects ?? []).map((o) => [o.id, o]));
   return (
     <>
@@ -655,6 +657,12 @@ export function ResultPanel({ run, events, focus, setFocus }: PanelProps) {
         sub={run.plan?.title}
       />
       <Section title="In this photo">
+        {looks ? (
+          <p className="pcard-note faint">
+            Muse Spark 1.3 checked each product {looks} times on its final pixels, each check on its own. A product
+            counts as a match when at least {Math.floor(looks / 2) + 1} of them say match.
+          </p>
+        ) : null}
         <div className="pcards">
           {recs.map((rp, i) => {
             const p = prods[rp.product];

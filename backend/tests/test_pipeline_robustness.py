@@ -502,8 +502,9 @@ def test_build_info_hashes_every_prompt(monkeypatch):
     monkeypatch.setenv("REALROOM_VERSION", "v-test")
     b = pipeline.build_info()
     assert b["version"] == "v-test"
-    assert set(b["prompts"]) == {"scan", "scan_refresh", "scan_furnish", "pick", "judge", "judge_one", "render",
-                                 "redraw", "clear"}
+    assert set(b["prompts"]) == {"scan", "scan_refresh", "scan_furnish", "pick", "judge", "judge_one", "locate", "render",
+                                 "redraw", "add", "clear"}
+    assert b["record_checks"] == verify.RECORD_CHECKS
     assert all(re.fullmatch(r"[0-9a-f]{12}", h) for h in [*b["prompts"].values(), *b["schemas"].values()])
 
 
@@ -514,28 +515,43 @@ def _v(verdict, score=None, **kw):
     return {"verdict": verdict, **({"score": score} if score is not None else {}), **kw}
 
 
-def test_a_match_needs_both_looks_when_the_final_check_ran():
-    own = [_v("match", 9), _v("match", 9, fixed=True), _v("partial", 6), _v("partial", 5)]
-    assert pipeline.match_count(own, None) == (2, [])
-    final = [{"index": 1, **_v("match", 9)}, {"index": 2, **_v("partial", 6)}, {"index": 3, **_v("match", 9)},
-             {"index": 4, **_v("mismatch", 2)}]
-    assert pipeline.match_count(own, final) == (1, [1, 2])
-    # a product the final check did not judge keeps its own verdict
-    assert pipeline.match_count(own, final[1:]) == (1, [1, 2])
-    # "not verified" never counts, and is not a disagreement
-    assert pipeline.match_count([pipeline.unverified(1)], [{"index": 1, **_v("match", 9)}]) == (0, [])
+def test_the_verdict_of_record_is_the_majority_of_three_looks():
+    m = verify.majority
+    assert m([_v("match", 9), _v("match", 9), _v("partial", 7)]) == {
+        "verdict": "match", "score": 9.0, "issues": [], "fix": "", "of": 3,
+        "checks": [_v("match", 9), _v("match", 9), _v("partial", 7)]}
+    one_vote = m([_v("match", 9), _v("partial", 7, issues=["too bold"], fix="Make it fainter."), _v("partial", 6)])
+    assert one_vote["verdict"] == "partial" and one_vote["score"] == 7.0
+    assert one_vote["issues"] in (["too bold"], [])
+    # a three-way split goes to the worse of the tied verdicts, and the score is still the median
+    assert m([_v("match", 9), _v("partial", 6), _v("mismatch", 3)])["verdict"] == "mismatch"
+    assert m([_v("match", 9), _v("partial", 6), _v("mismatch", 3)])["score"] == 6.0
+    # a failed look is no vote: two answers must both say match, one answer is not enough to decide
+    assert m([_v("match", 9), {"error": "busy"}, _v("match", 10)])["verdict"] == "match"
+    assert m([_v("match", 9), {"error": "busy"}, _v("partial", 7)])["verdict"] == "partial"
+    assert m([_v("match", 9), {"error": "busy"}, {"error": "busy"}]) == {
+        "verdict": "unverified", "issues": [], "fix": "", "checks": [_v("match", 9)], "of": 3}
+    assert m([])["verdict"] == "unverified"
+    # anything that is not a usable verdict is dropped before counting
+    assert m([_v("match", "9"), _v("great", 9), None, _v("match", 9), _v("match", 9)])["checks"] == [_v("match", 9)] * 2
 
 
-def test_the_studio_run_counts_two_matches_and_names_the_rug():
-    run = _run_json("studio")
-    own = [p["verdict"] for p in run["result"]["products"]]
-    final = run["result"]["final_check_products"]
-    assert pipeline.match_count(own, final) == (2, [2])
-    titles = [SimpleNamespace(title=run["products"][p["product"]]["title"]) for p in run["result"]["products"]]
-    text = pipeline._dispute_sentence(titles, own, final, [2])
-    assert text.startswith("Spark's two checks disagree on the ") and "match 9" in text and "partial 6" in text
-    assert text.endswith("so it is not counted as a match.")
-    assert chr(0x2013) not in text and chr(0x2014) not in text
+def test_record_checks_judge_every_product_the_same_number_of_times(monkeypatch, tmp_path):
+    seen = []
+
+    def judge_one(ledger, product, card, crop, tag):
+        seen.append((tag, crop.shape))
+        return _v("match", 9) if tag.startswith("record:p1") else _v("partial", 6, issues=["shade"], fix="Bigger.")
+
+    monkeypatch.setattr(verify, "judge_one", judge_one)
+    img = np.zeros((100, 200, 3), np.uint8)
+    out = verify.record_checks(meta.Ledger(tmp_path / "l.jsonl"), img, [(10, 10, 60, 60), (100, 20, 190, 90)], [object(), object()],
+                               [img, img])
+    assert sorted(t for t, _ in seen) == [f"record:p{k}c{i}" for k in (1, 2) for i in (1, 2, 3)]
+    assert [(r["index"], r["verdict"], r["score"], len(r["checks"])) for r in out] == [(1, "match", 9.0, 3),
+                                                                                     (2, "partial", 6.0, 3)]
+    assert out[1]["issues"] == ["shade"] and out[1]["fix"] == "Bigger."
+    assert verify.record_checks(meta.Ledger(tmp_path / "l.jsonl"), img, [], [], []) == []
 
 
 # ---------------------------------------------------------------- files: provenance and blurring
@@ -637,7 +653,12 @@ def tiny_catalog(tmp_path_factory):
 
 
 def _patch_models(monkeypatch, reading=None, judge=None, sam_fails=lambda tag: False, edit_fails=lambda tag: False,
-                  one=None):
+                  one=None, record=None, record_by=None, where=None, hide=(), draw=None):
+    """Fake model calls. `one` answers the fix stage's product checks; `record(k, i)` answers look i of product
+    k in the separate checks (by default each product gets its first-render verdict three times), and
+    `record_by(stage, k, i)` does the same knowing the stage ("check", "found" or "record"). `where` is Spark's
+    answer when asked to find a product in the whole photo, `hide` lists the products (0 rug, 1 lamp) SAM's
+    concept search does not know, and `draw(i, target_box)` moves where the render draws product i."""
     room = _room()
     seen = SimpleNamespace(spark=[], sam=[], edit=[], room=room)
 
@@ -649,10 +670,17 @@ def _patch_models(monkeypatch, reading=None, judge=None, sam_fails=lambda tag: F
         if schema_name == "product_picks":
             return {"picks": [{"slot": "s1", "pick": 1, "alternates": [2, 3], "reason": "fits"},
                               {"slot": "s2", "pick": 1, "alternates": [2], "reason": "fits"}], "set_comment": "Calm."}
+        if judge == "fail":
+            raise meta.ApiError(503, "busy")
         if schema_name == "render_judgement":
-            if judge == "fail":
-                raise meta.ApiError(503, "busy")
             return {"products": copy.deepcopy(PRODUCT_VERDICTS), "scene": dict(SCENE)}
+        if schema_name == "product_location":
+            return copy.deepcopy(where or {"found": False, "box": [0, 0, 0, 0]})
+        rec = re.match(r"(record|check|found):p(\d+)c(\d+)", tag)
+        if rec:
+            stage, k, i = rec.group(1), int(rec.group(2)), int(rec.group(3))
+            got = (record_by(stage, k, i) if record_by else record(k, i) if record else PRODUCT_VERDICTS[k - 1])
+            return {"product": {**copy.deepcopy(PRODUCT_VERDICTS[k - 1]), **got, "index": k}}
         return {"product": copy.deepcopy(one or PRODUCT_VERDICTS[1])}
 
     def sam_masks(ledger, tag, image, text, w, h):
@@ -670,6 +698,8 @@ def _patch_models(monkeypatch, reading=None, judge=None, sam_fails=lambda tag: F
             return out
         arr = imgutil.load_rgb(image).astype(int)
         for i, c in enumerate((RUG, LAMP)):
+            if i in hide:
+                continue
             m = np.all(np.abs(arr - c) < 12, axis=2)
             if m.sum() > 50:
                 ys, xs = np.nonzero(m)
@@ -686,8 +716,8 @@ def _patch_models(monkeypatch, reading=None, judge=None, sam_fails=lambda tag: F
         if tag.endswith(":redraw"):
             return [images[0]] * n
         out = room.copy()
-        for s, color in zip((reading or READING)["plan"]["slots"], (RUG, LAMP)):
-            x1, y1, x2, y2 = imgutil.norm_to_px(s["target_box"], W, H)
+        for i, (s, color) in enumerate(zip((reading or READING)["plan"]["slots"], (RUG, LAMP))):
+            x1, y1, x2, y2 = imgutil.norm_to_px(draw(i, s["target_box"]) if draw else s["target_box"], W, H)
             mx, my = (x2 - x1) // 8, (y2 - y1) // 8
             out[y1 + my:y2 - my, x1 + mx:x2 - mx] = color
         return [imgutil.png_bytes(out)] * n
@@ -776,19 +806,44 @@ def test_an_api_failure_stops_the_run_with_a_plain_sentence(monkeypatch, tmp_pat
     assert "realroom run r-test: render: ApiError" in capsys.readouterr().err
 
 
-def test_a_redraw_the_final_check_disputes_is_not_counted_as_a_match(monkeypatch, tmp_path, tiny_catalog):
-    seen = _patch_models(monkeypatch, one={**PRODUCT_VERDICTS[1], "verdict": "match", "score": 9, "issues": []})
+def test_a_redraw_that_scored_match_counts_only_when_the_record_checks_agree(monkeypatch, tmp_path, tiny_catalog):
+    match9 = {"verdict": "match", "score": 9, "issues": []}
+    partial = {"verdict": "partial", "score": 6, "issues": ["the shade is too small"]}
+    seen = _patch_models(monkeypatch, one={**PRODUCT_VERDICTS[1], **match9},
+                         record=lambda k, i: match9 if k == 1 or i == 1 else partial)
     _go(tiny_catalog, tmp_path, seen)
     run = _saved(tmp_path)
     assert run["status"] == "done"
-    lamp = run["result"]["products"][1]
-    assert lamp["fixed"] and lamp["verdict"]["verdict"] == "match"  # the verdict objects are left as they were
-    assert [p["verdict"] for p in run["result"]["final_check_products"]] == ["match", "partial"]
-    last = run["events"][-1]
-    assert last["title"] == "1 of 2 products match their catalog photos"
+    rug, lamp = run["result"]["products"]
+    # the redraw's own (best of its tries) verdict is kept for the record; the shown verdict is the majority
+    assert lamp["fixed"] and lamp["render_verdict"]["verdict"] == "match"
+    assert lamp["verdict"]["verdict"] == "partial" and [c["verdict"] for c in lamp["verdict"]["checks"]] == [
+        "match", "partial", "partial"]
+    assert rug["verdict"]["verdict"] == "match" and rug["verdict"]["of"] == 3
+    # every product is checked three times on the chosen candidate; only the redrawn lamp again at the end
+    assert sorted(t for t in seen.spark if t.startswith("check:")) == [
+        f"check:p{k}c{i}:judge1" for k in (1, 2) for i in (1, 2, 3)]
+    assert sorted(t for t in seen.spark if t.startswith("record:")) == [f"record:p2c{i}:judge1" for i in (1, 2, 3)]
+    first = next(e for e in run["events"] if e["title"] == "Checked each product 3 times on candidate 1")
+    assert first["stage"] == "verify" and first["usd"] > 0
     title = run["products"][lamp["product"]]["title"]
-    assert last["detail"].startswith(f"Spark's two checks disagree on the {title} (match 9 after its redraw, "
-                                     "partial 6 in the final check), so it is not counted as a match.")
+    checked, last = run["events"][-2:]
+    assert checked["title"] == f"Checked the {title} 3 times again on the finished photo"
+    assert checked["model"] == "muse-spark-1.3" and checked["usd"] > 0
+    assert last["title"] == "1 of 2 products match their catalog photos"
+    assert last["detail"].startswith(f"Spark's checks split on the {title} (1 of 3 say match, so it does not count).")
+
+
+def test_two_of_three_record_checks_make_a_match(monkeypatch, tmp_path, tiny_catalog):
+    match9 = {"verdict": "match", "score": 9, "issues": []}
+    seen = _patch_models(monkeypatch, record=lambda k, i: match9 if k == 1 or i != 2 else {"verdict": "partial",
+                                                                                          "score": 7})
+    _go(tiny_catalog, tmp_path, seen)
+    run = _saved(tmp_path)
+    lamp = run["result"]["products"][1]
+    assert lamp["verdict"]["verdict"] == "match" and lamp["verdict"]["score"] == 9.0
+    assert run["events"][-1]["title"] == "2 of 2 products match their catalog photos"
+    assert "(2 of 3 say match, so it counts)" in run["events"][-1]["detail"]
 
 
 def test_a_failure_while_clearing_clutter_is_skipped(monkeypatch, tmp_path, tiny_catalog):
@@ -908,3 +963,183 @@ def test_scan_sends_at_most_max_concepts_phrases_and_box_prompts_the_rest(monkey
     assert len(concept) == scan.MAX_CONCEPTS and "scan:sam:thing 0" in concept  # the shared phrase is kept
     # SAM found nothing for any phrase here, so every object is box-prompted, 16 to a request
     assert len(calls) - len(concept) == -(-len(objs) // 16)
+
+
+def test_one_instance_is_never_claimed_by_two_products():
+    h, w = 100, 200
+    planter = np.zeros((h, w), bool)
+    planter[40:80, 20:50] = True
+
+    def f(m):
+        ys, xs = np.nonzero(m)
+        return {"mask": m, "box": (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1),
+                "area": int(m.sum())}
+
+    out = render.one_claim_each([(f(planter), "concept:planter"), (f(planter.copy()), "concept:planter")],
+                                [(10, 30, 60, 90), (120, 30, 170, 90)])
+    assert out[0][1] == "concept:planter" and out[1] == (None, "taken")
+    # a pillow lying on a sofa is two things, even when the sofa's mask covers it
+    sofa = np.zeros((h, w), bool)
+    sofa[30:90, 10:150] = True
+    pillow = np.zeros((h, w), bool)
+    pillow[40:55, 30:50] = True
+    both = render.one_claim_each([(f(sofa), "concept:sofa"), (f(pillow), "concept:pillow")],
+                                 [(10, 30, 150, 90), (30, 40, 50, 55)])
+    assert all(x[0] is not None for x in both)
+
+
+def test_clearing_clutter_never_eats_into_an_object_the_plan_keeps():
+    from realroom import composite as C
+    h, w = 200, 300
+    orig = np.full((h, w, 3), 120, np.uint8)
+    out = orig.copy()
+    out[40:160, 60:240] = (200, 60, 60)  # the generator repainted a wide area, nightstand included
+    stand = np.zeros((h, w), bool)
+    stand[60:150, 100:200] = True  # kept
+    phone = np.zeros((h, w), bool)
+    phone[50:70, 140:160] = True  # removed: it stands on the nightstand and sticks out above it
+    m, _ = C.edit_mask_v2(orig, out, [], [phone], keep=stand)
+    assert m[52:68, 143:157].all()  # the phone itself goes
+    assert m[46:50, 145:155].all()  # and the ring around it where it is not on the nightstand
+    assert not m[72:80, 140:160].any()  # but the ring stops at the nightstand
+
+
+def _leave_out_the_lamp(monkeypatch, seen, prompts):
+    """The render draws the rug but not the lamp; a redraw paints the lamp in the middle of its crop."""
+    inner = meta.image_edit
+
+    def edit(ledger, tag, prompt, images, n=1, **kw):
+        prompts[tag] = prompt
+        got = inner(ledger, tag, prompt, images, n=n, **kw)
+        out = imgutil.load_rgb(got[0])
+        if tag.endswith(":redraw"):
+            ch, cw = out.shape[:2]
+            out[int(0.3 * ch):int(0.7 * ch), int(0.42 * cw):int(0.58 * cw)] = LAMP
+            return [imgutil.png_bytes(out)] * n
+        lamp = np.all(np.abs(out.astype(int) - np.array(LAMP)) < 12, axis=2)
+        out[lamp] = seen.room[lamp]
+        return [imgutil.png_bytes(out)] * n
+
+    monkeypatch.setattr(meta, "image_edit", edit)
+
+
+MATCH9 = {"verdict": "match", "score": 9, "issues": []}
+MISSING = {"verdict": "missing", "score": 0, "issues": ["no floor lamp in the crop"], "fix": "Add the lamp."}
+
+
+def test_a_product_the_render_left_out_is_added_at_its_planned_spot(monkeypatch, tmp_path, tiny_catalog):
+    seen = _patch_models(monkeypatch, one={**PRODUCT_VERDICTS[1], **MATCH9},
+                         record_by=lambda stage, k, i: MISSING if k == 2 and stage == "check" else MATCH9)
+    prompts = {}
+    _leave_out_the_lamp(monkeypatch, seen, prompts)
+    _go(tiny_catalog, tmp_path, seen)
+    run = _saved(tmp_path)
+    # the search beside the planned spot finds the rug for the lamp too, but the rug is the rug's
+    assert run["render"]["candidates"][0]["seg_how"][1] == "taken"
+    title = run["products"][run["result"]["products"][1]["product"]]["title"]
+    looked = next(e for e in run["events"] if e["title"] == f"Looked for the {title} in the whole photo")
+    assert "adds it at its planned spot" in looked["detail"] and "find:p2:locate" in seen.spark
+    assert "Add this floor lamp to image 1" in prompts["fix:p2r1:redraw"] and "Redraw only" not in prompts["fix:p2r1:redraw"]
+    assert run["fixes"][0]["before"]["verdict"] == "missing" and run["fixes"][0]["accepted"]
+    lamp = run["result"]["products"][1]
+    assert lamp["verdict"]["verdict"] == "match" and [c["verdict"] for c in lamp["verdict"]["checks"]] == ["match"] * 3
+    assert run["events"][-1]["title"] == "2 of 2 products match their catalog photos"
+
+
+def test_a_missing_product_spark_sees_at_its_spot_is_redrawn_not_added(monkeypatch, tmp_path, tiny_catalog):
+    seen = _patch_models(monkeypatch, one={**PRODUCT_VERDICTS[1], **MATCH9},
+                         record_by=lambda stage, k, i: MISSING if k == 2 and stage == "check" else MATCH9,
+                         where={"found": True, "box": READING["plan"]["slots"][1]["target_box"]})
+    prompts = {}
+    _leave_out_the_lamp(monkeypatch, seen, prompts)
+    _go(tiny_catalog, tmp_path, seen)
+    run = _saved(tmp_path)
+    assert "Redraw only the floor lamp in image 1" in prompts["fix:p2r1:redraw"] and "Add this" not in prompts["fix:p2r1:redraw"]
+    assert any(e["detail"].startswith("Spark sees it at its planned spot") for e in run["events"])
+
+
+def test_a_product_drawn_away_from_its_spot_is_found_there_not_added_twice(monkeypatch, tmp_path, tiny_catalog):
+    """11-04: the render drew a planter where a moving box had been, SAM's concept search did not know it as a
+    planter, the checks at the planned spot said missing, and the fix step added a second planter."""
+    reading = copy.deepcopy(READING)
+    reading["objects"].append({"id": "o2", "name": "cardboard box", "category": "clutter", "box": [40, 150, 200, 600],
+                               "sam_phrase": "cardboard box", "decision": "remove", "reason": "moving day"})
+    lamp_px = imgutil.norm_to_px([60, 200, 180, 560], W, H)
+    mx, my = (lamp_px[2] - lamp_px[0]) // 8, (lamp_px[3] - lamp_px[1]) // 8
+    drawn = (lamp_px[0] + mx, lamp_px[1] + my, lamp_px[2] - mx - 1, lamp_px[3] - my - 1)
+    where = [round(1000 * v / d) for v, d in zip(drawn, (W, H, W, H))]
+    seen = _patch_models(monkeypatch, reading=reading, hide=(1,), where={"found": True, "box": where},
+                         draw=lambda i, tb: [60, 200, 180, 560] if i == 1 else tb,
+                         record_by=lambda stage, k, i: MISSING if k == 2 and stage == "check" else MATCH9)
+    _go(tiny_catalog, tmp_path, seen)
+    run = _saved(tmp_path)
+    assert run["status"] == "done"
+    lamp = run["result"]["products"][1]
+    title = run["products"][lamp["product"]]["title"]
+    found = next(e for e in run["events"] if e["title"] == f"Found the {title} away from its planned spot")
+    assert found["stage"] == "verify" and "match 9, match 9, match 9" in found["detail"]
+    assert not any(t.startswith("fix:p2") for t in seen.edit)  # nothing added
+    assert sorted(t for t in seen.spark if t.startswith("found:")) == [f"found:p2c{i}:judge1" for i in (1, 2, 3)]
+    assert not any(t.startswith("record:") for t in seen.spark)  # its pixels did not change after those checks
+    x1, y1, x2, y2 = lamp["box"]
+    assert x1 >= drawn[0] - 2 and x2 <= drawn[2] + 3 and y1 >= drawn[1] - 2 and y2 <= drawn[3] + 3
+    assert lamp["verdict"]["verdict"] == "match"
+    assert run["events"][-1]["title"] == "2 of 2 products match their catalog photos"
+
+
+def test_a_redraw_that_finds_another_products_instance_is_dropped():
+    a = np.zeros((40, 40), bool)
+    a[5:20, 5:20] = True
+    b = np.zeros((40, 40), bool)
+    b[25:35, 25:35] = True
+    same = a.copy()
+    same[5:20, 18:21] = True  # nearly a's pixels
+    small = np.zeros((40, 40), bool)
+    small[8:12, 8:12] = True  # a pillow on a sofa: inside a, but a different thing
+    assert pipeline._claims_another(same, 1, [a, None, b])
+    assert not pipeline._claims_another(small, 1, [a, None, b])
+    assert not pipeline._claims_another(same, 0, [a, None, b])  # its own earlier outline does not count
+
+
+def test_the_separate_checks_steer_the_fix_step(monkeypatch, tmp_path, tiny_catalog):
+    """The one-request inspection calls the rug a match and the lamp partial; three separate checks of each say
+    the opposite, so the rug is the product that gets redrawn and the lamp counts as a match."""
+    partial = {"verdict": "partial", "score": 6, "issues": ["the weave is too bold"], "fix": "Make it subtler."}
+    match9 = {"verdict": "match", "score": 9, "issues": []}
+    seen = _patch_models(monkeypatch, one={**PRODUCT_VERDICTS[0], **match9},
+                         record=lambda k, i: partial if k == 1 else match9)
+    _go(tiny_catalog, tmp_path, seen)
+    run = _saved(tmp_path)
+    rug, lamp = run["result"]["products"]
+    assert [f["slot"] for f in run["fixes"]] == [rug["slot"]] and run["fixes"][0]["before"]["verdict"] == "partial"
+    assert any(t.startswith("fix:p1r1") for t in seen.edit) and not any(t.startswith("fix:p2") for t in seen.edit)
+    assert lamp["render_verdict"]["verdict"] == "partial" and lamp["verdict"]["verdict"] == "match"
+    # the redraw scored 9 in its own check, but the three checks of the finished photo still say partial
+    assert rug["fixed"] and rug["render_verdict"]["score"] == 9 and rug["verdict"]["verdict"] == "partial"
+    assert run["events"][-1]["title"] == "1 of 2 products match their catalog photos"
+
+
+def test_only_products_whose_own_pixels_changed_are_checked_again():
+    h, w = 100, 200
+
+    def mask(x1, y1, x2, y2):
+        m = np.zeros((h, w), bool)
+        m[y1:y2, x1:x2] = True
+        return m
+
+    boxes = [(10, 10, 40, 40), (60, 10, 90, 40), (110, 10, 140, 40), (150, 50, 190, 90), (10, 60, 40, 90)]
+    masks = [mask(*b) for b in boxes[:3]] + [None, mask(*boxes[4])]
+    first = [{"verdict": "match"}] * 4 + [{"verdict": "unverified"}]
+    comp0 = np.full((h, w, 3), 120, np.uint8)
+    after = comp0.copy()
+    after[5:9, 5:45] = 30  # only the margin around product 1
+    after[10:40, 60:62] = 30  # 60 of product 2's 900 pixels
+    after[39, 110:125] = 30  # 15 of product 3's 900 pixels, below the 2 % line
+    after[60:70, 160:170] = 30  # inside product 4's box (SAM had no mask for it)
+    checked = (comp0, boxes, masks)
+    assert pipeline._to_recheck(first, checked, after, boxes, masks, set()) == [1, 3, 4]
+    # a redrawn product is checked again even where the redraw kept its pixels, and so is one that moved
+    assert pipeline._to_recheck(first, checked, comp0.copy(), boxes, masks, {0}) == [0, 4]
+    moved = list(boxes)
+    moved[2] = (111, 10, 141, 40)
+    assert pipeline._to_recheck(first, checked, comp0.copy(), moved, masks, set()) == [2, 4]

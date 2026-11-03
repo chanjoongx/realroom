@@ -104,6 +104,48 @@ def test_catalog_rows_are_usable(catalog):
         assert all(float(p.size_cm[k]) > 0 for k in ("w", "d", "h")), p.id
 
 
+def test_bedding_is_sized_by_the_bed_it_covers(catalog):
+    """A duvet drapes over the mattress, so a 120 cm bed takes a 173 cm twin comforter (11-02 live run:
+    the old plus-or-minus band found none of the 17 for a 120 cm single and dropped the slot)."""
+    from realroom.catalog import bedding_band
+
+    assert bedding_band({"w": 120, "d": 200, "h": 15}) == (114.0, 220.0)
+    assert bedding_band({"w": 0, "d": 200, "h": 15}) == (0.0, 0.0)
+    for bed, must in ((100, 173.0), (120, 173.0), (150, 173.0), (200, 228.0)):
+        res = catalog.search("bedding", "plain white duvet cover", {"w": bed, "d": 200, "h": 15})
+        widths = {catalog.products[i["id"]].size_cm["w"] for i in res["items"]}
+        assert must in widths and min(widths) >= 0.95 * bed, (bed, widths)
+        assert res["funnel"]["fit_rule"].endswith("cm wide")
+
+
+def test_licensed_characters_are_never_offered(catalog):
+    assert len(catalog.licensed) >= 7
+    names = " ".join(catalog.products[pid].title for pid in catalog.licensed).lower()
+    assert "spiderman" in names and "minnie" in names and "london underground" in names
+    for kind, look in (("bedding", "kids character comforter, spiderman frozen star wars"),
+                       ("wall_art", "london underground map in a black frame")):
+        res = catalog.search(kind, look, None, k=200)
+        assert not {i["id"] for i in res["items"]} & catalog.licensed
+
+
+def test_plans_only_ask_for_kinds_the_catalog_offers(catalog):
+    from realroom import scan
+    from realroom.catalog import KINDS
+
+    assert "dining_table" in KINDS and "dining_table" not in catalog.kinds
+    assert set(catalog.kinds) <= set(KINDS) and "rug" in catalog.kinds
+    enum = scan.schema_for(catalog.kinds)["properties"]["plan"]["properties"]["slots"]["items"]["properties"]["kind"]["enum"]
+    assert enum == catalog.kinds
+    assert scan.schema_for(None) is scan.SCHEMA  # the hashed schema stays the full one
+    slot = {"slot": "a", "action": "add", "replaces": "", "target_box": [1, 2, 3, 4],
+            "size_cm": {"w": 120, "d": 80, "h": 75}, "look": "oak table", "color_family": "brown",
+            "placement": "middle", "why": "eat"}
+    reading = {"plan": {"slots": [dict(slot, kind="dining_table"), dict(slot, kind="rug")]}}
+    kept = scan.normalize_reading(reading, 3, catalog.kinds)["plan"]["slots"]
+    assert [s["kind"] for s in kept] == ["rug"]
+    assert [s["kind"] for s in scan.normalize_reading(reading, 3)["plan"]["slots"]] == ["dining_table", "rug"]
+
+
 def test_text_index_ranks_the_obvious_match_first(catalog):
     sofas = [pid for pid, p in catalog.products.items() if p.kind == "sofa"]
     lamps = [pid for pid, p in catalog.products.items() if p.kind == "floor_lamp"]
@@ -113,3 +155,33 @@ def test_text_index_ranks_the_obvious_match_first(catalog):
     assert sim.shape == (100,) and float(sim.min()) >= 0 and float(sim.max()) <= 1.0001
     top = [pids[i] for i in np.argsort(-sim)[:10]]
     assert sum(catalog.products[pid].kind == "floor_lamp" for pid in top) >= 8
+
+
+def test_sam_phrases_fall_back_to_the_kind_and_the_head_noun():
+    from types import SimpleNamespace
+
+    from realroom.render import sam_phrases
+    assert sam_phrases(SimpleNamespace(kind="accent_chair", sam_phrase="swivel chair")) == \
+        ["swivel chair", "accent chair", "armchair"]
+    assert sam_phrases(SimpleNamespace(kind="runner_rug", sam_phrase="runner rug")) == ["runner rug", "rug", "area rug"]
+    assert sam_phrases(SimpleNamespace(kind="floor_lamp", sam_phrase="")) == ["floor lamp", "lamp", "standing lamp"]
+
+
+def test_a_phrase_sam_does_not_find_falls_back_to_a_broader_one_before_the_box(monkeypatch):
+    from realroom import meta, render
+    h, w = 60, 80
+    mask = np.zeros((h, w), bool)
+    mask[20:50, 10:40] = True
+    asked = []
+
+    def fake_sam(ledger, tag, image_b, prompt, width, height):
+        asked.append(prompt)
+        if prompt != "accent chair":
+            return {}
+        return {"1": {"mask": mask, "conf": 0.9, "box": (10, 20, 40, 50), "area": int(mask.sum())}}
+
+    monkeypatch.setattr(meta, "sam_masks", fake_sam)
+    got, how = render.segment_product(None, b"", ["swivel chair", "accent chair", "armchair"], (8, 18, 42, 52), h, w,
+                                      np.full((h, w), 20.0))
+    assert how == "concept:accent chair" and asked == ["swivel chair", "accent chair"]
+    assert got["box"] == (10, 20, 40, 50)

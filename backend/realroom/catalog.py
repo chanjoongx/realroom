@@ -47,6 +47,19 @@ SIZE_RULES: dict[str, tuple[tuple[str, ...], float]] = {
     "mirror": (("h",), 0.40), "planter": (("h",), 0.50), "vase": (("h",), 0.50),
 }
 
+# Bedding (a duvet, comforter or coverlet) hangs over the mattress edges, so it is always wider than the
+# bed it covers: the planner sizes a bedding slot by that bed (a 120 cm mattress), and a product fits from
+# about the mattress width up to this much wider (both sides draping at most to the floor).
+BEDDING_DRAPE_CM = 100
+
+# Products whose design is someone else's character or trademark (a Disney comforter, a London
+# Underground map). The photos are CC BY 4.0, but the characters printed on the products are not ours to
+# restage in someone's room, so the search never offers them.
+LICENSED = re.compile(r"\b(disney|marvel|star wars|minnie|mickey|spider-?man|batman|superman|avengers|pok[eé]mon|"
+                      r"hello kitty|paw patrol|harry potter|peppa|sesame street|barbie|lego|jurassic|transformers|"
+                      r"minecraft|fortnite|super mario|nintendo|looney tunes|scooby|spongebob|nfl|nba|mlb|ncaa|"
+                      r"london underground|coca-?cola)\b|frozen character", re.I)
+
 RISK_PENALTY = {"low": 0.0, "medium": 0.06, "high": 0.25}
 WORD = re.compile(r"[a-z]+")
 STOP = set("a an the and or with of in on for to by from at as is are this that its it set piece pcs inch inches cm".split())
@@ -54,6 +67,14 @@ STOP = set("a an the and or with of in on for to by from at as is are this that 
 
 def tokens(text: str) -> list[str]:
     return [w for w in WORD.findall(text.lower()) if w not in STOP and len(w) > 1]
+
+
+def bedding_band(size: dict | None, widen: float = 1.0) -> tuple[float, float]:
+    """The widths (cm) a bedding product may have for a bed this wide: (0, 0) when no width is planned."""
+    want = float((size or {}).get("w") or 0)
+    if want <= 0:
+        return 0.0, 0.0
+    return round(want * 0.95, 1), round(want + BEDDING_DRAPE_CM * widen, 1)
 
 
 @dataclass
@@ -112,6 +133,11 @@ class Catalog:
                 cutout=bool(r.get("cutout")), sam_phrase=t.get("sam_phrase") or r["kind"].replace("_", " "),
                 url=r["url"], raw=r)
         self.ids = list(self.products)
+        self.licensed = {pid for pid, p in self.products.items()
+                         if LICENSED.search(" ".join([p.name, p.title, p.description]))}
+        # the kinds a plan may ask for: the ones this catalog can actually offer
+        offered = {p.kind for pid, p in self.products.items() if pid not in self.licensed}
+        self.kinds = [k for k in KINDS if k in offered]
         self._index_text()
         self.emb = None
         self.emb_row: dict[str, int] = {}
@@ -191,6 +217,9 @@ class Catalog:
         dims, tol = SIZE_RULES.get(kind, (("w",), 0.3))
         tol *= widen
         s = p.size_cm
+        if kind == "bedding":
+            lo, hi = bedding_band(size, widen)
+            return lo <= 0 or lo <= s["w"] <= hi
         if kind in ("rug", "runner_rug"):
             a, b = sorted((size.get("w", 0), size.get("d", 0)), reverse=True)
             x, y = sorted((s["w"], s["d"]), reverse=True)
@@ -207,7 +236,7 @@ class Catalog:
 
     def search(self, kind: str, look: str, size: dict | None = None, k: int = 24, exclude: set[str] | None = None,
                color_family: str | None = None) -> dict:
-        exclude = exclude or set()
+        exclude = (exclude or set()) | self.licensed
         pool = [p for p in self.products.values() if p.kind == kind and p.id not in exclude]
         funnel = {"kind": len(pool)}
         # widen the size band only until there is a real choice (never so far that everything "fits")
@@ -220,6 +249,10 @@ class Catalog:
             widen += 0.25
         funnel["fits"] = len(fit)
         funnel["size_tolerance"] = round(SIZE_RULES.get(kind, (("w",), 0.3))[1] * widen, 2)
+        if kind == "bedding" and size:
+            lo, hi = bedding_band(size, widen)
+            if lo > 0:
+                funnel["fit_rule"] = f"{lo:.0f} to {hi:.0f} cm wide"
         clean = [p for p in fit if p.raw.get("tag", {}).get("matches_listing", True)]
         funnel["clean"] = len(clean)
         if not clean:

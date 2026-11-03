@@ -4,9 +4,13 @@
   search   catalog funnel per slot: kind -> fits the room -> looks right (open-weight index)
   pick     Muse Spark 1.3 chooses a set from numbered contact sheets
   render   Muse Image 1.0 draws n candidates with the real product photos
-  verify   align + mask-guarded composite + Muse Spark 1.3 inspection of every product
-  fix      a product that is only partly right is cut out, redrawn bigger, checked again
-  result   original pixels everywhere except the new products, with the proof
+  verify   align + mask-guarded composite + Muse Spark 1.3 inspection of every product, then three
+           separate Muse Spark 1.3 checks of each product on the chosen candidate (a majority decides);
+           a product they call missing is looked for in the whole photo
+  fix      a product the checks call partial is cut out, redrawn bigger, checked again (one the render
+           left out is added at its planned spot)
+  result   original pixels everywhere except the new products, with the proof; a product whose pixels
+           changed after its checks is checked three times again, and the majorities are the verdicts of record
 
 Everything the interface shows is written to <out>/run.json plus images next to it. Every model
 call is logged with its latency and an estimated cost, and every stage prints one JSON line to
@@ -41,8 +45,8 @@ from .catalog import EMB_MODEL_ID, Catalog
 
 Event = Callable[[dict], None]
 
-DEADLINE_S = 12 * 60  # optional fix and clear work stops past this (the recorded runs took 216 to 288 s)
-SPEND_STOP_USD = 0.60  # and past this estimated spend (the recorded runs cost $0.24 to $0.37)
+DEADLINE_S = 12 * 60  # optional fix and clear work stops past this (11-03 tests: 291 to 492 s with the hosted settings)
+SPEND_STOP_USD = 0.60  # and past this estimated spend (same tests: $0.24 to $0.51; recorded demo runs $0.39 to $0.58)
 MAX_CLEAR = 6  # clutter objects one clearing pass checks and clears, the largest first (the recorded runs had 1 or 2)
 
 API_SENTENCE = ("The Meta Model API did not answer, so the run stopped and nothing more will be charged. "
@@ -187,12 +191,14 @@ def build_info() -> dict:
     prompts = {
         "scan": scan.PROMPT, "scan_refresh": scan.MODES["refresh"], "scan_furnish": scan.MODES["furnish"],
         "pick": pick.PROMPT, "judge": verify.JUDGE_PROMPT, "judge_one": verify.ONE_PROMPT,
+        "locate": verify.LOCATE_PROMPT,
         "render": render.edit_prompt({"objects": []}, [slot], [item], 2),
-        "redraw": render.redraw_prompt(item, ["{issue}"], "{fix}"),
+        "redraw": render.redraw_prompt(item, ["{issue}"], "{fix}"), "add": render.add_prompt(item, "{fix}"),
         "clear": render.clear_prompt(["{name}"]),
     }
-    schemas = {"scan": scan.SCHEMA, "pick": pick.SCHEMA, "judge": verify.SCHEMA, "judge_one": verify.ONE_SCHEMA}
-    return {"version": os.environ.get("REALROOM_VERSION", "dev"),
+    schemas = {"scan": scan.SCHEMA, "pick": pick.SCHEMA, "judge": verify.SCHEMA, "judge_one": verify.ONE_SCHEMA,
+               "locate": verify.LOCATE_SCHEMA}
+    return {"version": os.environ.get("REALROOM_VERSION", "dev"), "record_checks": verify.RECORD_CHECKS,
             "prompts": {k: _sha(v) for k, v in prompts.items()},
             "schemas": {k: _sha(json.dumps(v, sort_keys=True)) for k, v in schemas.items()}}
 
@@ -215,28 +221,6 @@ def unverified(index: int) -> dict:
     return {"index": index, "verdict": "unverified", "issues": [], "fix": ""}
 
 
-def match_count(verdicts: list[dict], final_products: list | None) -> tuple[int, list[int]]:
-    """How many products count as a match: the product's own verdict says match and, when the final check
-    ran and judged it (the same 1-based index), the final check says match too. Spark's two looks at the
-    same pixels can disagree either way, so one "match" alone is not enough. Also returns the positions
-    (0-based) where one says match and the other gives a different verdict."""
-    final: dict[int, dict] = {}
-    for p in final_products or []:
-        if isinstance(p, dict) and isinstance(p.get("index"), int):
-            final.setdefault(p["index"], p)
-    count, disputed = 0, []
-    for k, v in enumerate(verdicts):
-        own = (v or {}).get("verdict")
-        f = final.get(k + 1)
-        if f is None:
-            count += own == "match"
-        elif own == "match" and f.get("verdict") == "match":
-            count += 1
-        elif "match" in (own, f.get("verdict")) and own not in (None, "unverified"):
-            disputed.append(k)
-    return count, disputed
-
-
 def _score_text(v: dict) -> str:
     s = v.get("score")
     return f"{v.get('verdict', '?')} {s:g}" if isinstance(s, (int, float)) else str(v.get("verdict", "?"))
@@ -246,16 +230,96 @@ def _verdict_text(v: dict) -> str:
     return "not verified" if v.get("verdict") == "unverified" else f"{v.get('verdict', '?')} {v.get('score', '?')}"
 
 
-def _dispute_sentence(products: list, verdicts: list[dict], final_products: list, disputed: list[int]) -> str:
-    final = {p["index"]: p for p in reversed(final_products) if isinstance(p, dict) and isinstance(p.get("index"), int)}
+def _checks_text(r: dict) -> str:
+    """One product's record checks as text ("match 9, match 9, partial 7"), or why there are none."""
+    return ", ".join(_score_text(c) for c in r.get("checks", [])) or "no check came back"
+
+
+def _find_elsewhere(L: meta.Ledger, room: np.ndarray, best: dict, products: list, cards: list,
+                    k: int) -> tuple[str, dict | None, dict | None]:
+    """Product k, which the checks call missing at its planned spot, looked for in the whole chosen candidate:
+    Spark points at it (verify.locate), SAM 3.1 outlines it there (render.adopt) and the separate checks judge
+    it there. Returns ("elsewhere", outline, checks) when that holds up; ("here", None, None) when Spark points
+    at the planned spot itself (the product is there in some form, so it is redrawn, not added a second time);
+    ("none", None, None) otherwise: not found, an item that was in the photo before or is another product,
+    or one the checks there still call missing or do not judge."""
+    comp = best["comp"]
+    h, w = comp.shape[:2]
+    spot = verify.locate(L, comp, products[k], cards[k], tag=f"find:p{k + 1}")
+    if spot is None:
+        return "none", None, None
+    planned = tuple(int(v) for v in best["boxes"][k])
+    sx1, sy1, sx2, sy2 = spot
+    ix = max(0, min(sx2 + 1, planned[2]) - max(sx1, planned[0]))
+    iy = max(0, min(sy2 + 1, planned[3]) - max(sy1, planned[1]))
+    inter = float(ix * iy)
+    union = (sx2 + 1 - sx1) * (sy2 + 1 - sy1) + (planned[2] - planned[0]) * (planned[3] - planned[1]) - inter
+    if union > 0 and inter / union > 0.5:
+        return "here", None, None
+    others = np.zeros((h, w), dtype=bool)
+    for j, (f, _) in enumerate(best["found"]):
+        if j != k and f is not None:
+            others |= f["mask"]
+    got = render.adopt(L, room, comp, spot, others, tag=f"find:p{k + 1}")
+    if got is None:
+        return "none", None, None
+    again = verify.record_checks(L, comp, [got["box"]], [products[k]], [cards[k]], tag="found", index=[k + 1])[0]
+    if again["verdict"] in ("missing", "unverified"):
+        return "none", None, None
+    return "elsewhere", got, again
+
+
+def _claims_another(m: np.ndarray, k: int, sam_masks: list, iou_max: float = 0.6) -> bool:
+    """A redraw of product k whose new outline is nearly the same pixels as another product's: SAM found that
+    product's instance again, not a new one (see render.one_claim_each)."""
+    for j, o in enumerate(sam_masks):
+        if j == k or o is None:
+            continue
+        union = float((m | o).sum())
+        if union > 0 and float((m & o).sum()) / union > iou_max:
+            return True
+    return False
+
+
+RECHECK_FRAC = 0.02  # a product whose own pixels changed this much (or more) after its checks is checked again
+
+
+def _to_recheck(first: list[dict], checked: tuple, after: np.ndarray, boxes: list, masks: list,
+                redrawn: set[int], frac: float = RECHECK_FRAC) -> list[int]:
+    """The products whose checks on the chosen candidate no longer describe the finished photo: those whose
+    checks did not come back, that were redrawn or moved, or more than `frac` of whose own pixels (its mask on
+    the candidate and now, or its box where SAM had no mask) changed. A neighbor's redraw or a clearing pass
+    that only reaches the margin around a product leaves the product's checks standing."""
+    comp0, boxes0, masks0 = checked
+    h, w = after.shape[:2]
+    diff = np.any(after != comp0, axis=2)
+    out = []
+    for k in range(len(first)):
+        if first[k]["verdict"] == "unverified" or k in redrawn or tuple(boxes[k]) != tuple(boxes0[k]):
+            out.append(k)
+            continue
+        own = np.zeros((h, w), dtype=bool)
+        for m in (masks0[k], masks[k]):
+            if m is not None:
+                own |= m
+        if not own.any():
+            own = C.boxes_mask(h, w, [tuple(int(v) for v in boxes[k])])
+        n = int(own.sum())
+        if n and int((diff & own).sum()) > frac * n:
+            out.append(k)
+    return out
+
+
+def _split_sentence(products: list, record: list[dict], split: list[int]) -> str:
+    """Names the products whose record checks did not all agree, and which way the majority went."""
     parts = []
-    for k in disputed:
-        when = "after its redraw" if verdicts[k].get("fixed") else "on the first render"
-        parts.append(f"the {products[k].title} ({_score_text(verdicts[k])} {when}, "
-                     f"{_score_text(final[k + 1])} in the final check)")
+    for k in split:
+        r = record[k]
+        m = sum(1 for c in r["checks"] if c["verdict"] == "match")
+        parts.append(f"the {products[k].title} ({m} of {len(r['checks'])} say match, so it "
+                     f"{'counts' if r['verdict'] == 'match' else 'does not count'})")
     which = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
-    tail = "it is not counted as a match" if len(parts) == 1 else "they are not counted as matches"
-    return f"Spark's two checks disagree on {which}, so {tail}."
+    return f"Spark's checks split on {which}."
 
 
 def _skip_sentence(exc: BaseException, step: str, keeps: str) -> str:
@@ -362,7 +426,7 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
             model="muse-spark-1.3", status="start")
     n0 = len(L.rows())
     # the photo check reads Spark's answer before any SAM 3.1 request sends the photo again
-    sc = scan.scan(L, room, brief, mode, n_slots, tag="scan", check=photo_check)
+    sc = scan.scan(L, room, brief, mode, n_slots, tag="scan", check=photo_check, kinds=getattr(cat, "kinds", None))
     st = sc["stats"]
     R.event("scan", f"Found {st['objects']} objects and {len(sc['fixed'])} fixed elements",
             f"{sc['room_type']}, about {sc['dimensions_cm']['width']:g} x {sc['dimensions_cm']['depth']:g} cm "
@@ -478,6 +542,58 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
             ", ".join(f"{p.title}: {_verdict_text(verdicts[k + 1])}" for k, p in enumerate(products)),
             model="muse-spark-1.3 + sam-3.1", sec=round(time.time() - t, 1), usd=_cost_since(L, n0), status="done",
             scores=[c["score"] for c in cands])
+    # the separate checks (see verify.RECORD_CHECKS) of every product on the chosen candidate steer the fix step,
+    # and they are the verdicts of record for each product whose pixels do not change after them. The one-request
+    # inspection above ranks the candidates; it is the more lenient judge and stays as the render verdict.
+    inspected = dict(verdicts)
+    n0 = len(L.rows())
+    t = time.time()
+    nchk = verify.RECORD_CHECKS
+    checked_on = (best["comp"], list(best["boxes"]),
+                  [f[0]["mask"] if f[0] is not None else None for f in best["found"]])
+    first = verify.record_checks(L, best["comp"], list(best["boxes"]), products, cards, tag="check")
+    for k in range(len(products)):
+        if first[k]["verdict"] != "unverified":
+            verdicts[k + 1] = {**first[k], "index": k + 1}
+    R.event("verify", f"Checked each product {nchk} times on candidate {best_i + 1}",
+            f"Each check is a separate request with a close crop next to the catalog photo, and a product counts as a "
+            f"match when at least {nchk // 2 + 1} of the {nchk} say match. "
+            + " ".join(f"{p.title}: {_checks_text(first[k])}." for k, p in enumerate(products)),
+            model="muse-spark-1.3", sec=round(time.time() - t, 1), usd=_cost_since(L, n0), status="done")
+    # a product the checks call missing may be in the picture away from its planned spot, where neither SAM's
+    # search beside the spot nor the checks saw it: Spark looks for it in the whole photo, and when it is there
+    # the run takes that one instead of letting the fix step add a second
+    here = set()  # products Spark sees at their planned spot although the checks call them missing
+    for k in range(len(products)):
+        if verdicts[k + 1].get("verdict") != "missing" or limits.passed():
+            continue
+        n0 = len(L.rows())
+        t = time.time()
+        try:
+            where, got, again = _find_elsewhere(L, room, best, products, cards, k)
+        except Exception as exc:  # noqa: BLE001  (an optional step: the fix step adds the product instead)
+            R.problem(f"find p{k + 1}", exc)
+            continue
+        if where != "elsewhere":
+            if where == "here":
+                here.add(k)
+            R.event("verify", f"Looked for the {products[k].title} in the whole photo",
+                    "Spark sees it at its planned spot, so the fix step redraws it there instead of adding another."
+                    if where == "here" else
+                    f"Spark found no other {products[k].kind.replace('_', ' ')} that the render drew, so the fix "
+                    "step adds it at its planned spot.", model="muse-spark-1.3 + sam-3.1",
+                    sec=round(time.time() - t, 1), usd=_cost_since(L, n0), status="done")
+            continue
+        best["found"][k] = (got, "found elsewhere")
+        best["boxes"] = [got["box"] if j == k else b for j, b in enumerate(best["boxes"])]
+        first[k] = again
+        verdicts[k + 1] = {**again, "index": k + 1}
+        R.event("verify", f"Found the {products[k].title} away from its planned spot",
+                f"The render drew it at another place, where SAM 3.1 outlined it. Checked {nchk} times there: "
+                f"{_checks_text(again)}.", model="muse-spark-1.3 + sam-3.1", sec=round(time.time() - t, 1),
+                usd=_cost_since(L, n0), status="done")
+    checked_on = (best["comp"], list(best["boxes"]),
+                  [f[0]["mask"] if f[0] is not None else None for f in best["found"]])
 
     # ------------------------------------------------------------------ fix
     R.begin("fix")
@@ -486,8 +602,10 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
     masks = [f[0]["mask"] if f[0] is not None else None for f in best["found"]]
     sam_masks = [f[0].get("sam_mask", f[0]["mask"]) if f[0] is not None else None for f in best["found"]]
     fixes = []
-    weak = sorted([k for k in range(len(products)) if verdicts[k + 1].get("verdict") in ("partial", "mismatch")],
-                  key=lambda k: verdicts[k + 1]["score"])[:max_fixes]
+    # a product the render left out ("missing") is added at its planned spot; it goes first, being the furthest off
+    weak = sorted([k for k in range(len(products))
+                   if verdicts[k + 1].get("verdict") in ("partial", "mismatch", "missing")],
+                  key=lambda k: (verdicts[k + 1].get("verdict") != "missing", verdicts[k + 1]["score"]))[:max_fixes]
     keep_union = np.zeros((h, w), dtype=bool)  # objects that must not change: a redraw never grows into them
     for o in sc["objects"]:
         if o.get("_mask") is not None:
@@ -499,6 +617,7 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
         t = time.time()
         saved = (comp, list(boxes), list(masks), list(sam_masks), len(fixes))
         v0 = v = verdicts[k + 1]
+        i0 = inspected[k + 1]
         try:
             others = keep_union.copy()
             for j, mj in enumerate(masks):
@@ -521,7 +640,9 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
                 try:
                     rds = render.redraw_product(L, comp, room, products[k], cards[k], boxes[k], masks[k],
                                                 v.get("issues", []), v.get("fix", ""), tag=f"fix:p{k + 1}r{rounds}",
-                                                forbid=others, n=fix_tries)
+                                                forbid=others, n=fix_tries,
+                                                missing=v.get("verdict") == "missing" and k not in here)
+                    rds = [rd for rd in rds if not _claims_another(rd.get("sam_mask", rd["mask"]), k, sam_masks)]
                     js = []
                     if rds:
                         with cf.ThreadPoolExecutor(max_workers=len(rds)) as pool:
@@ -554,7 +675,7 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
             if best_try is None:
                 continue
             if accepted:
-                verdicts[k + 1] = v
+                verdicts[k + 1] = inspected[k + 1] = v
             after = v if accepted else best_try[2]
             x1, y1, x2, y2 = region
             shown = comp if accepted else best_try[1]["comp"]
@@ -572,7 +693,7 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
         except Exception as exc:  # noqa: BLE001  (an optional step: the run keeps the version it had)
             comp, boxes, masks, sam_masks = saved[0], saved[1], saved[2], saved[3]
             del fixes[saved[4]:]
-            verdicts[k + 1] = v0
+            verdicts[k + 1], inspected[k + 1] = v0, i0
             R.problem(f"fix p{k + 1}", exc)
             R.event("fix", f"Skipped redrawing the {products[k].title}",
                     _skip_sentence(exc, "the redraw", "the product keeps its current version"), status="done")
@@ -647,6 +768,22 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
     # ------------------------------------------------------------------ result
     R.begin("result")
     after = comp
+    # the verdicts of record: the checks on the chosen candidate stand for every product whose own pixels are
+    # the same now; a product that was redrawn, or whose pixels a later step changed, or whose checks did not
+    # come back, is checked RECORD_CHECKS times again on the finished photo (a kept redraw's own score is the
+    # best of several judged tries, so it never counts by itself)
+    slot_of = {s["id"]: k for k, s in enumerate(slots)}
+    redrawn = {slot_of[fx["slot"]] for fx in fixes if fx.get("kind") != "clear" and fx.get("accepted")}
+    redo = _to_recheck(first, checked_on, after, boxes, masks, redrawn)
+    record = [dict(first[k]) for k in range(len(products))]
+    n0 = len(L.rows())
+    t = time.time()
+    if redo:
+        again = verify.record_checks(L, after, [boxes[k] for k in redo], [products[k] for k in redo],
+                                     [cards[k] for k in redo], tag="record", index=[k + 1 for k in redo])
+        for k, r in zip(redo, again):
+            record[k] = r
+    rec_sec, rec_usd = round(time.time() - t, 1), _cost_since(L, n0)
     R.save_img(after, "after.jpg", 93)
     # lossless pair so anyone can re-check the pixel claim (the web page diffs them in the browser)
     imgutil.save_png(room, R.dir / "before.png")
@@ -691,7 +828,8 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
         R.save_img(crop, f"crop_{s['id']}.jpg", 90)
         prods_out.append({"slot": s["id"], "product": p.id, "box": list(boxes[k]),
                           "outline": render.mask_outline(m) if m is not None else "", "crop": f"crop_{s['id']}.jpg",
-                          "verdict": verdicts[k + 1], "fixed": bool(verdicts[k + 1].get("fixed"))})
+                          "verdict": record[k], "render_verdict": inspected[k + 1],
+                          "fixed": bool(verdicts[k + 1].get("fixed"))})
     absorbed = set(best.get("absorbed", []))
     removed_out = [{"id": o["id"], "name": o["name"], "box": o["box"], "outline": o["outline"],
                     **({"absorbed": True} if o["id"] in absorbed else {})}
@@ -724,23 +862,31 @@ def _run(R: Run, room: np.ndarray, cat: Catalog, brief: str, mode: str, n_slots:
                                               "metadata": "XMP", "files": marked}
     except Exception as exc:  # noqa: BLE001  (the label is extra: a run never fails for it)
         R.problem("provenance", exc)
-    own = [verdicts[k + 1] for k in range(len(products))]
-    matches, disputed = match_count(own, final_products)
-    lost = [k for k, v in enumerate(own) if v.get("verdict") == "unverified"]
+    n = verify.RECORD_CHECKS
+    matches = sum(1 for r in record if r["verdict"] == "match")
+    lost = [k for k, r in enumerate(record) if r["verdict"] == "unverified"]
+    split = [k for k, r in enumerate(record) if k not in lost and len({c["verdict"] for c in r["checks"]}) > 1]
     notes = []
-    if disputed:
-        notes.append(_dispute_sentence(products, own, final_products or [], disputed))
     if lost and len(lost) == len(products):
         title = "The products could not be checked against their catalog photos"
-        notes.append("Muse Spark 1.3 did not answer the inspection, so every product is marked not verified.")
+        notes.append("Muse Spark 1.3 did not answer the checks, so every product is marked not verified.")
     else:
         title = f"{matches} of {len(products)} products match their catalog photos"
+        if split:
+            notes.append(_split_sentence(products, record, split))
         if lost:
-            # "first inspection": the final check may still have judged it, and the page shows that score
-            notes.append("The first inspection of the " + " and the ".join(products[k].title for k in lost)
-                         + " failed, so " + ("it counts" if len(lost) == 1 else "they count") + " as not verified.")
+            notes.append("The checks of the " + " and the ".join(products[k].title for k in lost) + " did not come "
+                         "back, so " + ("it counts" if len(lost) == 1 else "they count") + " as not verified.")
     lp = R.data["result"]["proof"]["layers_pct"]
     notes.append(f"{R.data['result']['proof']['untouched_pct']:.1f}% of the photo is pixel-identical to the original "
                  f"(new products {lp['products']:.1f}%, cleared {lp['cleared']:.1f}%, shadows {lp['shadows']:.1f}%). "
                  f"The image model drifted everywhere else (mean dE {drift['dE_mean']}); those pixels were restored.")
+    if redo:
+        names = " and the ".join(products[k].title for k in redo)
+        why = {k: ("its first checks did not come back" if first[k]["verdict"] == "unverified" else
+                   "it was redrawn" if k in redrawn else "its pixels changed after the first checks")
+               for k in redo}
+        R.event("result", f"Checked the {names} {n} times again on the finished photo",
+                " ".join(f"{products[k].title}: {why[k]}, now {_checks_text(record[k])}." for k in redo),
+                model="muse-spark-1.3", sec=rec_sec, usd=rec_usd, status="done")
     R.event("result", title, " ".join(notes), status="done")

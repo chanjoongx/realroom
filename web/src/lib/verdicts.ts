@@ -27,15 +27,28 @@ function noteFor(v: Verdict, what: string): string {
   return v.score !== undefined ? `${what} ${v.score}` : `${what}: ${verdictLabel(v.verdict) || "no verdict"}`;
 }
 
+/** "2 of 3 checks say match: match 9, match 9, partial 7", with how many looks did not come back. */
+export function checksNote(v: Verdict): string {
+  const looks = v.checks ?? [];
+  const m = looks.filter((c) => c.verdict === "match").length;
+  const missing = (v.of ?? looks.length) - looks.length;
+  const each = looks.map((c) => `${verdictLabel(c.verdict)} ${c.score}`).join(", ");
+  return `${m} of ${looks.length} checks say match` + (each ? `: ${each}` : "") +
+    (missing > 0 ? ` (${missing} did not come back)` : "");
+}
+
 /**
- * The verdict of record for the product at 0-based position `pos` in `result.products`: the worse of
- * its own verdict (the verify step's, or the accepted redraw's) and the final check of the finished
- * image (`finalCheck` entry with `index === pos + 1`). Spark's two looks at the same pixels can
- * disagree either way, so the page shows the cautious one. With no final check entry, the product's
- * own verdict stands.
+ * The verdict of record for the product at 0-based position `pos` in `result.products`.
+ *
+ * Runs since 11-03 carry it already: Spark looked at the finished image several times, each look on its
+ * own, and the majority decided (`verdict.checks`). Older recorded runs have one or two looks: there it is
+ * the worse of the product's own verdict (the verify step's, or the accepted redraw's) and the final check
+ * of the finished image (`finalCheck` entry with `index === pos + 1`), because Spark's looks at the same
+ * pixels can disagree either way. With no final check entry, the product's own verdict stands.
  */
 export function recordVerdict(product: ResultProduct, pos: number, finalCheck?: Verdict[]): RecordVerdict {
   const own: Verdict = product.verdict ?? {};
+  if (Array.isArray(own.checks)) return { verdict: own.verdict ? own : { ...own, verdict: "unverified" }, note: checksNote(own) };
   const fin = finalCheck?.find((f) => f.index === pos + 1);
   if (!fin) return { verdict: own };
   const finalWorse = worse(fin, own);

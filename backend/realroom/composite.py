@@ -204,9 +204,14 @@ def edit_mask_v2(
     parts["fringe"] = _dilate(new, 0.006 * d) & (de > 9) & ~shadow_like
     if old.any():
         # the old object's footprint, plus any sliver of it SAM missed: pixels near it that the
-        # generator replaced with wall or floor (otherwise a dark remnant of an old sofa survives)
-        parts["removed"] = _dilate(old, 0.01 * d) | (_dilate(old, 0.025 * d) & (de > 10) & ~shadow_like)
-        parts["old_shadow"] = _dilate(old, 0.02 * d) & (dl > 6) & (dc < 8) & (de > 6)
+        # generator replaced with wall or floor (otherwise a dark remnant of an old sofa survives).
+        # The ring around it stops at objects the plan keeps: a phone and a cable on a nightstand go, the
+        # nightstand stays (11-03: the rings of the phone, the cable and a laundry basket took 60% of one)
+        ring_ok = np.ones((h, w), dtype=bool)
+        if keep is not None and keep.any():
+            ring_ok = ~_dilate(keep, 0.003 * d) | _dilate(old, 0.004 * d)
+        parts["removed"] = (_dilate(old, 0.01 * d) | (_dilate(old, 0.025 * d) & (de > 10) & ~shadow_like)) & ring_ok
+        parts["old_shadow"] = _dilate(old, 0.02 * d) & (dl > 6) & (dc < 8) & (de > 6) & ring_ok
     if old_zone is not None and old_zone.any():
         # wherever a removed object could still be (its Spark box too) and the generator changed the
         # pixels, take the generator's version: a box SAM missed must not come back from the original

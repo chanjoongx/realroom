@@ -92,6 +92,21 @@ def redraw_prompt(product, issues: list[str], fix: str) -> str:
         f"is, with the same light, shadows and photo grain. No text, no outlines.")
 
 
+def add_prompt(product, fix: str) -> str:
+    """The redraw prompt for a product the render left out: there is nothing to redraw, so it asks for the
+    product to be added in the middle of the crop (the crop is centred on the planned spot)."""
+    kind = product.kind.replace("_", " ")
+    s = product.size_cm or {}
+    size = " x ".join(f"{float(s.get(k) or 0):.0f}" for k in ("w", "d", "h"))
+    return (
+        f"Image 1 is a crop from a real room photo. Image 2 is the reference photo of the product: {product.title}, "
+        f"{product.description} Add this {kind} to image 1, in the middle of the crop, where a {kind} naturally "
+        f"goes (on the floor, on the wall or on furniture), at its real size of about {size} cm (width x depth x "
+        f"height) and in the photo's perspective. It must be exactly this product: same shape, proportions, color, "
+        f"material, texture, pattern and details. {fix} Keep everything else in image 1 exactly as it is, with the "
+        f"same light, shadows and photo grain, and give the product a soft contact shadow. No text, no outlines.")
+
+
 def clear_prompt(names: list[str]) -> str:
     return (
         f"Image 1 is a crop from a real room photo. Remove these completely: {'; '.join(names)}. Where they were, "
@@ -188,10 +203,29 @@ def elsewhere(masks: dict, best: dict | None, target: tuple, h: int, w: int, de:
     return max(alts, key=lambda t: t[0])[1] if alts else None
 
 
-def segment_product(ledger, image_b: bytes, phrase: str, target: tuple, h: int, w: int, de: np.ndarray,
+def sam_phrases(product, limit: int = 3) -> list[str]:
+    """The concept phrases to ask SAM 3.1 for a product, most specific first: the product's own phrase ("swivel
+    chair") and its synonyms, then its kind ("accent chair") and the kind's synonyms, then the head noun
+    ("chair"). Most catalog phrases have no synonyms of their own, and without the broader phrases a phrase SAM
+    does not find goes straight to the box prompt, which can return the wrong region (11-03: a redrawn patch of
+    floor taken for the chair)."""
+    own = (getattr(product, "sam_phrase", "") or "").strip().lower()
+    kind = product.kind.replace("_", " ")
+    head = own.split()[-1] if own else ""
+    out: list[str] = []
+    for p in [own, *SYNONYMS.get(own, []), kind, *SYNONYMS.get(kind, []), head, *SYNONYMS.get(head, [])]:
+        if p and p not in out:
+            out.append(p)
+    return out[:limit]
+
+
+def segment_product(ledger, image_b: bytes, phrase: str | list[str], target: tuple, h: int, w: int, de: np.ndarray,
                     count: int = 1, tag: str = "seg") -> tuple[dict | None, str]:
+    """SAM 3.1 instances of the product near its target: up to three concept phrases (a list from sam_phrases,
+    or one phrase and its synonyms), then the box prompt."""
+    phrases = [phrase, *SYNONYMS.get(phrase.lower(), [])] if isinstance(phrase, str) else list(phrase)
     tried = []
-    for alt in [phrase] + SYNONYMS.get(phrase.lower(), []):
+    for alt in phrases:
         if alt in tried:
             continue
         tried.append(alt)
@@ -209,6 +243,50 @@ def segment_product(ledger, image_b: bytes, phrase: str, target: tuple, h: int, 
         m = {**m, "mask": m["mask"] | hull}
         return _merge([m]), "box"
     return None, "none"
+
+
+def one_claim_each(found: list, targets: list, iou_max: float = 0.6) -> list:
+    """No two products may claim the same thing in the picture. When two products' masks are nearly the same
+    pixels (IoU above iou_max: one instance found twice, not a pillow lying on a sofa), the product whose
+    planned box holds more of that mask keeps it and the other counts as not found ("taken"), so the checks
+    look at its planned spot and see it missing. 11-03: two planters were planned and the render drew one;
+    the search beside the planned spot gave the second slot that same planter, and both were judged a match."""
+    out = list(found)
+
+    def held(f: dict, t: tuple) -> float:
+        x1, y1, x2, y2 = (max(0, int(v)) for v in t)
+        return float(f["mask"][y1:y2, x1:x2].sum()) / max(1.0, float(f["mask"].sum()))
+
+    for i in range(len(out)):
+        for j in range(i + 1, len(out)):
+            a, b = out[i][0], out[j][0]
+            if a is None or b is None:
+                continue
+            union = float((a["mask"] | b["mask"]).sum())
+            if union <= 0 or float((a["mask"] & b["mask"]).sum()) / union <= iou_max:
+                continue
+            loser = j if held(a, targets[i]) >= held(b, targets[j]) else i
+            out[loser] = (None, "taken")
+    return out
+
+
+def adopt(ledger: meta.Ledger, room: np.ndarray, comp: np.ndarray, box: tuple, others: np.ndarray,
+          tag: str) -> dict | None:
+    """SAM 3.1's mask of the item in `box` (a pixel box from verify.locate, x2 and y2 inclusive), kept only
+    when the item is new in the picture (at least half its pixels differ from the original photo) and at most
+    30 % of it lies on another product."""
+    h, w = comp.shape[:2]
+    got = meta.sam_masks(ledger, f"{tag}:box", imgutil.png_bytes(comp), meta.box_prompt({"1": box}, w, h), w, h)
+    m = (got.get("1") or {}).get("mask")
+    if m is None or m.shape != (h, w) or not m.any():
+        return None
+    n = float(m.sum())
+    new = np.any(comp != room, axis=2)
+    if float((m & new).sum()) / n < 0.5 or float((m & others).sum()) / n > 0.3:
+        return None
+    ys, xs = np.nonzero(m)
+    return {"mask": m, "sam_mask": m, "box": (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1),
+            "area": int(n), "conf": got["1"].get("conf"), "n": 1}
 
 
 def _merge(ms: list[dict]) -> dict:
@@ -243,11 +321,10 @@ def composite_candidate(ledger: meta.Ledger, room: np.ndarray, out_bytes: bytes,
     def seg(i):
         p = products[i]
         count = 2 if p.kind == "throw_pillow" and "2" in (p.name.lower().split("set of")[-1][:3]) else 1
-        return segment_product(ledger, out_b, p.sam_phrase or p.kind.replace("_", " "), targets[i], h, w, de, count,
-                               f"{tag}:p{i + 1}")
+        return segment_product(ledger, out_b, sam_phrases(p), targets[i], h, w, de, count, f"{tag}:p{i + 1}")
 
     with cf.ThreadPoolExecutor(max_workers=4) as pool:
-        found = list(pool.map(seg, range(len(products))))
+        found = one_claim_each(list(pool.map(seg, range(len(products)))), targets)
     old_masks = []
     for o in gone:
         m = objs[o["id"]].get("_mask")
@@ -337,22 +414,23 @@ def _square_region(box: tuple, h: int, w: int, grow: float = 0.45, min_side: int
 
 def redraw_product(ledger: meta.Ledger, comp: np.ndarray, room: np.ndarray, product, card: np.ndarray,
                    box: tuple, prev_mask: np.ndarray | None, issues: list[str], fix: str, tag: str,
-                   forbid: np.ndarray | None = None, n: int = 1) -> list[dict]:
+                   forbid: np.ndarray | None = None, n: int = 1, missing: bool = False) -> list[dict]:
     """Cut the product's neighbourhood out of the composite and redraw it against the reference at a
     larger scale, n tries in one call. Each try is aligned back, found again with SAM 3.1 and pasted
-    through its new mask; the caller judges them."""
+    through its new mask; the caller judges them. A product the render left out (`missing`, box = its
+    planned spot) is added there instead."""
     h, w = comp.shape[:2]
     rx1, ry1, rx2, ry2 = _square_region(box, h, w)
     crop = comp[ry1:ry2, rx1:rx2].copy()
     ch, cw = crop.shape[:2]
-    prompt = redraw_prompt(product, issues, fix)
+    prompt = add_prompt(product, fix) if missing else redraw_prompt(product, issues, fix)
     inputs = [imgutil.png_bytes(crop), imgutil.jpeg_bytes(card, quality=92)]
     outs = _edit_sized(ledger, f"{tag}:redraw", prompt, inputs, n, size_param(cw, ch, long_side=1536))
     lb = (box[0] - rx1, box[1] - ry1, box[2] - rx1, box[3] - ry1)
     static = ~C.boxes_mask(ch, cw, [lb], grow=0.06)
     forbid_c = forbid[ry1:ry2, rx1:rx2] if forbid is not None else None
     prev_c = prev_mask[ry1:ry2, rx1:rx2] if prev_mask is not None else None
-    phrase = product.sam_phrase or product.kind.replace("_", " ")
+    phrase = sam_phrases(product)
 
     def place(i_raw: tuple[int, bytes]) -> dict | None:
         i, raw = i_raw
