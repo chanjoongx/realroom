@@ -185,3 +185,33 @@ def test_a_phrase_sam_does_not_find_falls_back_to_a_broader_one_before_the_box(m
                                       np.full((h, w), 20.0))
     assert how == "concept:accent chair" and asked == ["swivel chair", "accent chair"]
     assert got["box"] == (10, 20, 40, 50)
+
+
+def test_saved_images_are_swapped_in_whole(tmp_path):
+    """A page can fetch before.jpg while a live run writes it again (on upload and when the pipeline starts).
+    The file is swapped in whole, never truncated in place, and a reader that has it open keeps the whole old
+    file (11-04 smoke run: the page got a cut-off before.jpg)."""
+    import threading
+    import time
+
+    from realroom import imgutil
+
+    a = np.zeros((40, 60, 3), np.uint8)
+    a[:, :30] = 200
+    b = np.full((40, 60, 3), 90, np.uint8)
+    for name in ("x.jpg", "x.png"):
+        first = imgutil.save(a, tmp_path / name, 94).read_bytes()
+        assert imgutil.save(a, tmp_path / name, 94).read_bytes() == first  # same pixels, same bytes
+    assert imgutil.load_rgb(imgutil.save(a, tmp_path / "x.webp")).shape == (40, 60, 3)
+
+    p = imgutil.save(a, tmp_path / "before.jpg", 94)
+    old = p.read_bytes()
+    with open(p, "rb") as f:
+        t = threading.Thread(target=imgutil.save, args=(b, p, 94))
+        t.start()
+        time.sleep(0.1)
+        got = f.read()
+    t.join(5)
+    assert got == old and not t.is_alive()
+    assert np.abs(imgutil.load_rgb(p).astype(int) - 90).max() <= 2
+    assert sorted(x.name for x in tmp_path.iterdir()) == ["before.jpg", "x.jpg", "x.png", "x.webp"]

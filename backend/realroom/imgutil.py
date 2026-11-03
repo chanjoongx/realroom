@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import os
 import pathlib
+import time
 import zlib
 
 import cv2
@@ -42,20 +43,29 @@ def jpeg_bytes(arr: np.ndarray, quality: int = 92, max_side: int | None = None) 
 
 
 def save(arr: np.ndarray, path: str | pathlib.Path, quality: int = 92) -> pathlib.Path:
+    """Encoded in memory and swapped in whole: the server may be sending this file while a run writes it
+    again (a live run saves before.jpg on upload and again when the pipeline starts, and a page that
+    fetched it in between got a cut-off response, 11-04)."""
     path = pathlib.Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.suffix.lower() in (".jpg", ".jpeg"):
-        Image.fromarray(arr).save(path, format="JPEG", quality=quality, subsampling=0)
+        data = jpeg_bytes(arr, quality)
     else:
-        Image.fromarray(arr).save(path)
+        buf = io.BytesIO()
+        Image.fromarray(arr).save(buf, format=Image.registered_extensions()[path.suffix.lower()])
+        data = buf.getvalue()
+    _replace_bytes(path, data)
     return path
 
 
 def save_png(arr: np.ndarray, path: str | pathlib.Path, compress: int = 6) -> pathlib.Path:
-    """Lossless PNG with no colour chunks, so a browser canvas reads back the exact pixel values."""
+    """Lossless PNG with no colour chunks, so a browser canvas reads back the exact pixel values. Swapped in
+    whole, like save()."""
     path = pathlib.Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(arr).save(path, format="PNG", compress_level=compress)
+    buf = io.BytesIO()
+    Image.fromarray(arr).save(buf, format="PNG", compress_level=compress)
+    _replace_bytes(path, buf.getvalue())
     return path
 
 
@@ -139,11 +149,19 @@ def crop_box(arr: np.ndarray, box: tuple[int, int, int, int], margin: float = 0.
     return arr[max(0, y1 - my):min(h, y2 + my), max(0, x1 - mx):min(w, x2 + mx)].copy()
 
 
-def _replace_bytes(path: pathlib.Path, data: bytes) -> None:
-    """Write next to the file, then swap it in, so a reader never sees half a file."""
+def _replace_bytes(path: pathlib.Path, data: bytes, tries: int = 40) -> None:
+    """Write next to the file, then swap it in, so a reader never sees half a file. Windows refuses the swap
+    while another handle has the file open (the local server sending it), so it waits for that to end."""
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_bytes(data)
-    os.replace(tmp, path)
+    for i in range(tries):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if i == tries - 1:
+                raise
+            time.sleep(0.05)
 
 
 # ---------------------------------------------------------------- blurring a photo that must not be kept
