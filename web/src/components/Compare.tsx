@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type Reac
 import { reducedMotion } from "../lib/stages";
 
 /** Before/after wipe. The handle sweeps in once on mount (unless the viewer asks for reduced
- *  motion), then follows the pointer or the keys. */
+ *  motion) and settles at `rest`, then follows the pointer or the keys. */
 export function Compare({
   before,
   after,
@@ -11,6 +11,7 @@ export function Compare({
   labels = ["Before", "After"],
   alts = ["Original photo", "Edited photo"],
   priority = false,
+  rest = 50,
 }: {
   before: string;
   after: string;
@@ -20,25 +21,32 @@ export function Compare({
   alts?: [string, string];
   /** above the fold: fetch both photos first */
   priority?: boolean;
+  /** where the handle settles, in percent from the left edge */
+  rest?: number;
 }) {
   const sweep = intro && !reducedMotion();
-  const [x, setX] = useState(sweep ? 97 : 50);
+  const [x, setX] = useState(sweep ? 97 : rest);
   const ref = useRef<HTMLDivElement>(null);
+  const tagL = useRef<HTMLSpanElement>(null);
+  const tagR = useRef<HTMLSpanElement>(null);
   const dragging = useRef(false);
   const moved = useRef(false);
 
   useEffect(() => {
-    if (!sweep) return;
+    if (!sweep) {
+      if (!moved.current) setX(rest);
+      return;
+    }
     let raf = 0;
-    const t0 = performance.now();
+    let t0 = -1; // the first frame, so the sweep starts at 97 instead of part way
     const from = 97;
-    const to = 50;
     const dur = 1400;
     const step = (now: number) => {
       if (dragging.current || moved.current) return;
+      if (t0 < 0) t0 = now;
       const k = Math.min(1, (now - t0) / dur);
       const e = 1 - Math.pow(1 - k, 3);
-      setX(from + (to - from) * e);
+      setX(from + (rest - from) * e);
       if (k < 1) raf = requestAnimationFrame(step);
     };
     const start = window.setTimeout(() => (raf = requestAnimationFrame(step)), 250);
@@ -46,7 +54,23 @@ export function Compare({
       window.clearTimeout(start);
       cancelAnimationFrame(raf);
     };
-  }, [sweep, after]);
+  }, [sweep, after, rest]);
+
+  // the width of the photo and how far each corner tag reaches into it, in px: a tag hides
+  // only when the handle would run into it
+  const [fit, setFit] = useState<{ w: number; l: number; r: number } | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const l = tagL.current;
+      const r = tagR.current;
+      setFit({ w: el.clientWidth, l: l ? l.offsetLeft + l.offsetWidth : 0, r: r ? r.offsetLeft : el.clientWidth });
+    };
+    const ro = new ResizeObserver(measure);
+    for (const n of [el, tagL.current, tagR.current]) if (n) ro.observe(n);
+    return () => ro.disconnect();
+  }, []);
 
   const moveTo = useCallback((clientX: number) => {
     const r = ref.current?.getBoundingClientRect();
@@ -73,6 +97,9 @@ export function Compare({
   };
 
   const shown = Math.round(x);
+  const px = fit ? (x / 100) * fit.w : 0;
+  const showBefore = fit ? px > fit.l + 8 : x > 12;
+  const showAfter = fit ? px < fit.r - 8 : x < 88;
   return (
     <div
       ref={ref}
@@ -97,26 +124,28 @@ export function Compare({
         <img className="photo-img" src={after} alt={alts[1]} draggable={false} fetchPriority={priority ? "high" : undefined} />
         {afterLayer}
       </div>
-      <div
-        className="compare-handle"
-        style={{ left: `${x}%` }}
-        role="slider"
-        tabIndex={0}
-        aria-label="Compare before and after"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={shown}
-        aria-valuetext={`${labels[0]} ${shown}%, ${labels[1]} ${100 - shown}%`}
-        onKeyDown={onKey}
-      >
-        <span className="knob">
-          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-            <path d="M7 4 2.5 9 7 14M11 4l4.5 5L11 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
+      {/* a full-width track moved with a transform, so the sweep never shifts layout */}
+      <div className="compare-track" style={{ transform: `translateX(${x}%)` }}>
+        <div
+          className="compare-handle"
+          role="slider"
+          tabIndex={0}
+          aria-label="Compare before and after"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={shown}
+          aria-valuetext={`${labels[0]} ${shown}%, ${labels[1]} ${100 - shown}%`}
+          onKeyDown={onKey}
+        >
+          <span className="knob">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M7 4 2.5 9 7 14M11 4l4.5 5L11 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </div>
       </div>
-      <span className="compare-tag left mono" style={{ opacity: x > 12 ? 1 : 0 }}>{labels[0]}</span>
-      <span className="compare-tag right mono" style={{ opacity: x < 88 ? 1 : 0 }}>{labels[1]}</span>
+      <span ref={tagL} className="compare-tag left mono" style={{ opacity: showBefore ? 1 : 0 }}>{labels[0]}</span>
+      <span ref={tagR} className="compare-tag right mono" style={{ opacity: showAfter ? 1 : 0 }}>{labels[1]}</span>
     </div>
   );
 }

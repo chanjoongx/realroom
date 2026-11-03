@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowRight, ImageUp, LoaderCircle } from "lucide-react";
 import { getConfig, getDemos, netMessage, runFile, startRun } from "../api";
 import { Compare } from "../components/Compare";
@@ -75,8 +75,17 @@ export function Home() {
               each product against its catalog photo and copies everything else back from your original.
             </p>
             <div className="hero-cta">
-              <a className="btn primary" href="#rooms">
-                Open a demo room <ArrowRight size={15} />
+              <a
+                className="btn primary"
+                href={hero ? `/r/${hero.id}` : "#rooms"}
+                onClick={(e) => {
+                  // a plain click opens the run in place; a modifier click keeps the browser's own behavior
+                  if (!hero || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  navigate(`/r/${hero.id}`);
+                }}
+              >
+                Watch a demo run <ArrowRight size={15} />
               </a>
               <a className="btn" href="#try">
                 <ImageUp size={15} /> Use your own photo
@@ -105,6 +114,7 @@ export function Home() {
                     after={runFile(hero.id, hero.after)}
                     alts={[`${hero.title}, an AI-generated demo room, before`, `${hero.title} after Realroom added real products`]}
                     priority
+                    rest={32}
                   />
                 </Photo>
                 <span className="hero-cap mono faint">{hero.title} · AI-generated demo room · drag to compare</span>
@@ -131,6 +141,7 @@ export function Home() {
                   <img src={runFile(d.id, d.before)} alt="" className="ri-before" loading="lazy" decoding="async" />
                   <img src={runFile(d.id, d.after)} alt="" className="ri-after" loading="lazy" decoding="async" />
                   <span className="room-kicker mono">{d.kicker}</span>
+                  <span className="room-before mono" aria-hidden="true">Before</span>
                 </span>
                 <span className="room-body">
                   <span className="room-title">{d.title}</span>
@@ -282,13 +293,26 @@ async function prepare(file: File): Promise<{ blob: Blob; url: string; w: number
   return { blob, url: URL.createObjectURL(blob), w, h };
 }
 
+const MODES = [
+  { id: "refresh", label: "Refresh a lived-in room" },
+  { id: "furnish", label: "Furnish an empty room" },
+] as const;
+type Mode = (typeof MODES)[number]["id"];
+
+/** Arrow keys move the choice in a radio group, like native radio buttons. */
+const ARROW_STEP: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+
 function Upload({ cfg, retry }: { cfg: Load<AppConfig>; retry: () => void }) {
   const [photo, setPhoto] = useState<{ blob: Blob; url: string; w: number; h: number } | null>(null);
   const [brief, setBrief] = useState("");
-  const [mode, setMode] = useState<"refresh" | "furnish">("refresh");
+  const [mode, setMode] = useState<Mode>("refresh");
   const [busy, setBusy] = useState(false);
+  // a problem with the photo shows at the drop zone, a problem starting the run under the button
+  const [fileErr, setFileErr] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const modeBtns = useRef<(HTMLButtonElement | null)[]>([]);
   const conf = cfg.state === "ok" ? cfg.data : null;
   const live = conf?.live ?? false;
   const left = conf?.runs_left_today;
@@ -302,16 +326,27 @@ function Upload({ cfg, retry }: { cfg: Load<AppConfig>; retry: () => void }) {
 
   async function onFile(f?: File) {
     if (!f) return;
+    setFileErr(null);
     setErr(null);
     if (!/^image\/(jpeg|png|webp)$/.test(f.type)) {
-      setErr("Use a JPEG, PNG or WebP photo.");
+      setFileErr("Use a JPEG, PNG or WebP photo.");
       return;
     }
     try {
       setPhoto(await prepare(f));
     } catch {
-      setErr("This photo could not be read.");
+      setFileErr("This photo could not be read.");
     }
+  }
+
+  function onModeKey(e: KeyboardEvent<HTMLDivElement>) {
+    const step = ARROW_STEP[e.key];
+    if (!step) return;
+    e.preventDefault();
+    const i = MODES.findIndex((m) => m.id === mode);
+    const j = (i + step + MODES.length) % MODES.length;
+    setMode(MODES[j].id);
+    modeBtns.current[j]?.focus();
   }
 
   async function go() {
@@ -333,51 +368,81 @@ function Upload({ cfg, retry }: { cfg: Load<AppConfig>; retry: () => void }) {
         <span className="label">Your photo</span>
         <h2 className="serif">Run it on your own room.</h2>
         <p className="muted">
-          A wide photo taken from a corner works best. A run takes three to four minutes. Your photo is sent to Meta's
+          A wide photo taken from a corner works best. A run takes about four to eight minutes. Your photo is sent to Meta's
           model API for this run and deleted from Realroom within 24 hours.
         </p>
       </div>
       <div className="try-box">
-        <div
-          className={`drop${photo ? " has" : ""}`}
-          onClick={() => input.current?.click()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
+        <div className="drop-col">
+          <div
+            className={`drop${photo ? " has" : ""}${over ? " is-over" : ""}${fileErr ? " is-error" : ""}`}
+            onClick={() => input.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                input.current?.click();
+              }
+            }}
+            onDragEnter={(e) => {
               e.preventDefault();
-              input.current?.click();
-            }
-          }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            onFile(e.dataTransfer.files?.[0]);
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label={photo ? "Change the room photo" : undefined}
-        >
-          {photo ? (
-            <img src={photo.url} alt="Your room" />
-          ) : (
-            <span className="drop-hint">
-              <ImageUp size={22} />
-              <span>Drop a room photo, or click to choose one</span>
-              <span className="faint mono">JPEG, PNG or WebP</span>
-            </span>
+              setOver(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (!over) setOver(true);
+            }}
+            onDragLeave={(e) => {
+              // leaving for a child of the drop zone is not leaving it
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(false);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setOver(false);
+              onFile(e.dataTransfer.files?.[0]);
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={photo ? "Change the room photo" : undefined}
+            aria-describedby={fileErr ? "drop-err" : undefined}
+          >
+            {photo ? (
+              <img src={photo.url} alt="Your room" />
+            ) : (
+              <span className="drop-hint">
+                <ImageUp size={22} />
+                <span>{over ? "Drop the photo here" : "Drop a room photo, or click to choose one"}</span>
+                <span className="faint mono">JPEG, PNG or WebP</span>
+              </span>
+            )}
+            <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+          </div>
+          {fileErr && (
+            <p id="drop-err" className="err" role="alert">
+              {fileErr}
+            </p>
           )}
-          <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => onFile(e.target.files?.[0])} />
         </div>
         <div className="try-form">
-          <div className="seg" role="radiogroup" aria-label="What should Realroom do">
-            <button role="radio" aria-checked={mode === "refresh"} className={mode === "refresh" ? "on" : ""} onClick={() => setMode("refresh")}>
-              Refresh a lived-in room
-            </button>
-            <button role="radio" aria-checked={mode === "furnish"} className={mode === "furnish" ? "on" : ""} onClick={() => setMode("furnish")}>
-              Furnish an empty room
-            </button>
+          <div className="seg" role="radiogroup" aria-label="What should Realroom do" onKeyDown={onModeKey}>
+            {MODES.map((m, i) => (
+              <button
+                key={m.id}
+                ref={(el) => {
+                  modeBtns.current[i] = el;
+                }}
+                type="button"
+                role="radio"
+                aria-checked={mode === m.id}
+                tabIndex={mode === m.id ? 0 : -1}
+                className={mode === m.id ? "on" : ""}
+                onClick={() => setMode(m.id)}
+              >
+                {m.label}
+              </button>
+            ))}
           </div>
           <label className="label" htmlFor="brief">
-            What do you want?
+            What do you want? (optional)
           </label>
           <textarea
             id="brief"

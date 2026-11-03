@@ -59,7 +59,7 @@ function Section({ title, children, aside }: { title: string; children: ReactNod
   return (
     <section className="ins-sec">
       <div className="ins-sec-head">
-        <span className="label">{title}</span>
+        <h3 className="label">{title}</h3>
         {aside}
       </div>
       {children}
@@ -581,8 +581,17 @@ export function FixPanel({ run, events, stopped }: PanelProps) {
         stage="fix"
         events={events}
         title={fixTitle(fixes)}
-        sub="A product that comes out only partly right is cut out with its surroundings and redrawn larger against its catalog photo, two tries per round. A product the render left out is added at its planned spot the same way. SAM 3.1 finds each try again, Spark judges it, and the best one replaces the first render only if it scores higher. Its notes steer the next round, until it matches or two rounds are spent. Clutter the render left behind gets its own pass, checked again with SAM 3.1."
+        sub="Weak products are cut out and redrawn against their catalog photo, and Spark keeps a redraw only if it scores higher."
       />
+      <details className="prompt-box how-box">
+        <summary className="label">How the redraw works</summary>
+        <p>
+          A product that comes out only partly right is cut out with its surroundings and redrawn larger, two tries per
+          round. A product the render left out is added at its planned spot the same way. SAM 3.1 finds each try again
+          and Spark judges it. Its notes steer the next round, until the product matches or two rounds are spent. Clutter
+          the render left behind gets its own pass, checked again with SAM 3.1.
+        </p>
+      </details>
       {fixes.map((f) =>
         f.kind === "clear" ? (
           <Section key={f.slot} title={`Clutter: ${(f.names ?? []).join(", ")}`}>
@@ -656,6 +665,42 @@ export function ResultPanel({ run, events, focus, setFocus }: PanelProps) {
         title={`${matches} of ${recs.length} products verified`}
         sub={run.plan?.title}
       />
+      {/* the proof comes first: the products are numbered on the photo already */}
+      <Section title="Proof">
+        <div className="proof-big">
+          <span className="proof-num serif num">{pr.untouched_pct.toFixed(1)}%</span>
+          <span className="proof-cap">of the photo is pixel-identical to the original.</span>
+        </div>
+        {lp && (
+          <>
+            <div className="stack-bar" aria-hidden="true">
+              <span style={{ width: `${lp.products}%`, background: "var(--new)" }} />
+              <span style={{ width: `${lp.cleared}%`, background: "var(--remove)" }} />
+              <span style={{ width: `${lp.shadows}%`, background: "var(--shadow-layer)" }} />
+              <span style={{ width: `${pr.untouched_pct}%`, background: "var(--surface-3)" }} />
+            </div>
+            <div className="stack-legend mono num">
+              <span><i style={{ background: "var(--new)" }} />products {pct(lp.products)}</span>
+              <span><i style={{ background: "var(--remove)" }} />cleared {pct(lp.cleared)}</span>
+              <span><i style={{ background: "var(--shadow-layer)" }} />shadows {pct(lp.shadows)}</span>
+              <span><i style={{ background: "var(--surface-3)" }} />untouched {pct(pr.untouched_pct)}</span>
+            </div>
+          </>
+        )}
+        <p className="ins-text muted">
+          Muse Image redraws the whole frame, and on its own it shifted this photo by up to{" "}
+          <span className="mono num">{pr.alignment_shift_px.toFixed(1)} px</span> and changed colors everywhere (mean ΔE{" "}
+          <span className="mono num">{pr.model_drift_dE}</span>). Realroom aligns the render back to the photo and keeps
+          only the new products, their shadows and the cleared spots. Every other pixel is copied from the original.
+        </p>
+        {res.lossless && (
+          <PixelCheck
+            beforeUrl={runFile(run.id, res.lossless.before)}
+            afterUrl={runFile(run.id, res.lossless.after)}
+            claimed={pr.untouched_pct}
+          />
+        )}
+      </Section>
       <Section title="In this photo">
         {looks ? (
           <p className="pcard-note faint">
@@ -693,41 +738,6 @@ export function ResultPanel({ run, events, focus, setFocus }: PanelProps) {
             );
           })}
         </div>
-      </Section>
-      <Section title="Proof">
-        <div className="proof-big">
-          <span className="proof-num serif num">{pr.untouched_pct.toFixed(1)}%</span>
-          <span className="proof-cap">of the photo is pixel-identical to the original.</span>
-        </div>
-        {lp && (
-          <>
-            <div className="stack-bar" aria-hidden="true">
-              <span style={{ width: `${lp.products}%`, background: "var(--new)" }} />
-              <span style={{ width: `${lp.cleared}%`, background: "var(--remove)" }} />
-              <span style={{ width: `${lp.shadows}%`, background: "var(--shadow-layer)" }} />
-              <span style={{ width: `${pr.untouched_pct}%`, background: "var(--surface-3)" }} />
-            </div>
-            <div className="stack-legend mono num">
-              <span><i style={{ background: "var(--new)" }} />products {pct(lp.products)}</span>
-              <span><i style={{ background: "var(--remove)" }} />cleared {pct(lp.cleared)}</span>
-              <span><i style={{ background: "var(--shadow-layer)" }} />shadows {pct(lp.shadows)}</span>
-              <span><i style={{ background: "var(--surface-3)" }} />untouched {pct(pr.untouched_pct)}</span>
-            </div>
-          </>
-        )}
-        <p className="ins-text muted">
-          Muse Image redraws the whole frame, and on its own it shifted this photo by up to{" "}
-          <span className="mono num">{pr.alignment_shift_px.toFixed(1)} px</span> and changed colors everywhere (mean ΔE{" "}
-          <span className="mono num">{pr.model_drift_dE}</span>). Realroom aligns the render back to the photo and keeps
-          only the new products, their shadows and the cleared spots. Every other pixel is copied from the original.
-        </p>
-        {res.lossless && (
-          <PixelCheck
-            beforeUrl={runFile(run.id, res.lossless.before)}
-            afterUrl={runFile(run.id, res.lossless.after)}
-            claimed={pr.untouched_pct}
-          />
-        )}
       </Section>
       <SceneScores
         s={res.scene}

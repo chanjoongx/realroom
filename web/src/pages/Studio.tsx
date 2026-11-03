@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { LoaderCircle, TriangleAlert } from "lucide-react";
 import { getRun, netMessage } from "../api";
 import { CanvasView } from "../components/CanvasView";
 import { PANELS, Working } from "../components/Inspector";
 import { Rail } from "../components/Rail";
-import { TopBar, type Conn } from "../components/TopBar";
+import { TopBar, type ClockAnchor, type Conn } from "../components/TopBar";
 import { navigate } from "../lib/router";
 import { useReplay } from "../lib/replay";
 import { isStageId, plainError, STAGE_NAME, stoppedStage } from "../lib/stages";
@@ -24,6 +24,7 @@ const STALLED = "No new progress for 15 minutes. The server may have restarted, 
 
 export function Studio({ id }: { id: string }) {
   const [run, setRun] = useState<Run | null>(null);
+  const [clock, setClock] = useState<ClockAnchor | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [conn, setConn] = useState<Conn>("ok");
   // the run was still going when it loaded: show every event as it arrives instead of replaying
@@ -65,6 +66,11 @@ export function Studio({ id }: { id: string }) {
           lastChange = Date.now();
         }
         if (r.status === "running") setFollowLive(true);
+        // the top bar's clock counts on from the response that puts the run furthest along: the server
+        // writes elapsed_s only with each event, so any response can only be behind the true time
+        const e = typeof r.elapsed_s === "number" ? r.elapsed_s : 0;
+        const at = performance.now();
+        setClock((c) => (c && c.e - c.at / 1000 >= e - at / 1000 ? c : { e, at }));
         setRun(r);
         setLoadErr(null);
         if (r.status !== "running") {
@@ -167,10 +173,36 @@ export function Studio({ id }: { id: string }) {
     );
   }
   if (!run) {
+    // live run ids are "u", the UTC start minute and 24 hex digits; any other id is a recorded demo
+    const what = /^u\d{8}[0-9a-f]{24}$/.test(id) ? "Loading the run" : "Loading the recorded run";
     return (
       <div className="studio">
         <TopBar run={null} rp={null} />
-        <main className="studio-loading mono faint">loading run {id}</main>
+        <div className="studio-body is-loading">
+          <div className="rail sk-rail" aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+              <span key={i} className="sk-step">
+                <i />
+                <b style={{ width: `${[58, 52, 66, 60, 70, 74, 48][i]}%` }} />
+              </span>
+            ))}
+          </div>
+          <main className="canvas-area">
+            <div className="photo-fit" style={{ "--ar": "4 / 3", "--arn": 4 / 3 } as CSSProperties}>
+              <div className="photo-box sk-photo">
+                <p className="sk-msg" role="status">
+                  {what}
+                </p>
+              </div>
+            </div>
+          </main>
+          <aside className="inspector sk-ins" aria-hidden="true">
+            <span className="sk-line short" />
+            <span className="sk-line title" />
+            <span className="sk-line" />
+            <span className="sk-line mid" />
+          </aside>
+        </div>
       </div>
     );
   }
@@ -202,7 +234,7 @@ export function Studio({ id }: { id: string }) {
 
   return (
     <div className="studio">
-      <TopBar run={run} rp={rp} conn={conn} />
+      <TopBar run={run} rp={rp} conn={conn} clock={clock} />
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {announce}
       </div>
@@ -233,7 +265,8 @@ export function Studio({ id }: { id: string }) {
           stoppedAt={stopAt}
           onSelect={setPicked}
         />
-        <main className="canvas-area">
+        {/* on a phone the canvas is sized to the photo (--room-hw, height over width) */}
+        <main className="canvas-area" style={{ "--room-hw": run.room.h / run.room.w } as CSSProperties}>
           <h1 className="sr-only">
             {roomTitle}, {rp.mode === "live" ? "live run" : "recorded run"}
           </h1>

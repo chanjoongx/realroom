@@ -4,6 +4,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-height: 24px;
   color: var(--text);
 }
 
@@ -63,6 +64,10 @@
   padding: 0 6px;
   font-size: 10px;
   gap: 5px;
+}
+
+.model-chip .dot {
+  flex: none;
 }
 
 .spin {
@@ -183,6 +188,11 @@
   padding-right: 6px;
 }
 
+.tb-eta {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .tb-controls {
   gap: 2px;
 }
@@ -244,6 +254,64 @@
 .studio-error :is(h1, h2) {
   font-size: 34px;
   margin: 0;
+}
+
+/* while a run loads: the page's three columns in outline and one calm line */
+.sk-step {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin: 2px 0 16px;
+}
+
+.sk-step i {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+}
+
+.sk-step b,
+.sk-line {
+  display: block;
+  height: 11px;
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+
+.sk-photo {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2.4s linear infinite;
+}
+
+.sk-msg {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.sk-ins {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.sk-line.short {
+  width: 22%;
+}
+
+.sk-line.title {
+  height: 26px;
+  width: 70%;
+}
+
+.sk-line.mid {
+  width: 82%;
 }
 
 .studio-error-actions {
@@ -372,11 +440,13 @@
   min-width: 0;
 }
 
+/* a title may wrap in a narrow rail: it grows instead of running over the chips below it */
 .rail-title {
   font-size: 13.5px;
   font-weight: 500;
-  line-height: 25px;
-  height: 25px;
+  line-height: 1.3;
+  min-height: 25px;
+  padding-top: 3px; /* a single line still centers on the 25 px icon */
 }
 
 .is-todo .rail-title {
@@ -572,7 +642,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 21px;
+  height: 24px; /* the smallest target WCAG 2.5.8 allows */
   max-width: 34%;
   padding: 0 8px 0 7px;
   transform: translate(4px, 4px);
@@ -881,7 +951,7 @@
 }
 
 .tab.on .tab-kept {
-  color: #0a7a55;
+  color: #08704e; /* 5.1:1 on the selected tab */
 }
 
 .legend {
@@ -945,6 +1015,15 @@
   text-transform: uppercase;
 }
 
+.drift-note {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-2);
+}
+
 .drift-scale {
   height: 6px;
   border-radius: 3px;
@@ -970,15 +1049,34 @@
   inset: 0;
 }
 
+/* as wide as the photo and moved with translateX(x%), so the handle sits at x% of the photo */
+.compare-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+  z-index: 4;
+}
+
 .compare-handle {
   position: absolute;
   top: 0;
   bottom: 0;
+  left: 0;
   width: 2px;
   margin-left: -1px;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 0 24px rgba(0, 0, 0, 0.35);
-  z-index: 4;
+  pointer-events: auto;
+}
+
+/* the ring goes around the knob: an outline on the 2 px line is hard to see */
+.compare-handle:focus-visible {
+  outline: none;
+}
+
+.compare-handle:focus-visible .knob {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--new), 0 8px 26px rgba(0, 0, 0, 0.4);
 }
 
 .compare-handle .knob {
@@ -1019,10 +1117,17 @@
   right: 14px;
 }
 
+/* taller than the canvas (several crops in a short window): start at the top and scroll, so no
+   crop slides under the top bar */
 .fix-canvas {
   height: 100%;
+  container-type: size;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 1px;
   display: grid;
   align-content: center;
+  align-content: safe center;
   gap: 18px;
 }
 
@@ -1051,8 +1156,9 @@
   gap: 16px;
 }
 
+/* two crops one above the other: each takes at most half the canvas, less its caption and Spark's note */
 .fix-canvas.stacked img {
-  max-height: 40vh;
+  max-height: min(40vh, calc(50cqh - 52px));
 }
 
 .fix-canvas figcaption {
@@ -1060,6 +1166,14 @@
   font-size: 10.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* Spark's main reason for the redraw, under the first render */
+.fix-why {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
   color: var(--text-2);
 }
 
@@ -1157,6 +1271,12 @@
   margin-bottom: 10px;
 }
 
+/* section titles are headings for screen readers and look like the other labels */
+.ins-sec-head h3 {
+  margin: 0;
+  font-weight: 400;
+}
+
 .ins-text {
   font-size: 13px;
   line-height: 1.6;
@@ -1164,13 +1284,13 @@
 }
 
 .ins-note {
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1.5;
   margin: 8px 0 0;
 }
 
 .ins-foot {
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1.55;
   margin: 24px 0 0;
   padding-top: 14px;
@@ -1195,7 +1315,7 @@
 }
 
 .fact-k {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .fact-v {
@@ -1507,7 +1627,7 @@
 
 .pcard-note {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .pcard-note .mono {
@@ -1552,7 +1672,7 @@
 
 .alts .label {
   margin-right: 4px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .input-strip {
@@ -1584,7 +1704,7 @@
 .in-cap {
   display: block;
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-3);
@@ -1597,6 +1717,13 @@
 .prompt-box summary {
   cursor: pointer;
   padding: 6px 0;
+}
+
+.how-box p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2);
 }
 
 .prompt-box pre {
@@ -1624,7 +1751,7 @@
   text-align: left;
   font-weight: 400;
   padding: 0 6px 6px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .cand-table td {
@@ -1649,7 +1776,7 @@
   display: block;
   margin-top: 3px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-2);
   white-space: nowrap;
 }
@@ -1719,7 +1846,7 @@
 
 .pair-imgs figcaption {
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-3);
@@ -1755,7 +1882,7 @@
 
 .fix-pair figcaption {
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-3);
@@ -2093,13 +2220,33 @@
   object-fit: cover;
 }
 
-.ri-after {
-  opacity: 0;
+/* the finished room shows first (a touch screen never hovers); hover or focus shows the photo it started from */
+.ri-after,
+.room-before {
   transition: opacity 0.6s var(--ease);
 }
 
 .room-card:hover .ri-after,
 .room-card:focus-visible .ri-after {
+  opacity: 0;
+}
+
+.room-before {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(11, 12, 14, 0.72);
+  backdrop-filter: blur(6px);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.room-card:hover .room-before,
+.room-card:focus-visible .room-before {
   opacity: 1;
 }
 
@@ -2214,6 +2361,23 @@
   border-color: var(--line-2);
 }
 
+.drop.is-over {
+  border-style: dashed;
+  border-color: var(--new);
+  background: var(--new-dim);
+}
+
+.drop.is-error {
+  border-color: var(--remove);
+}
+
+.drop-col {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+}
+
 .drop img {
   width: 100%;
   height: 100%;
@@ -2247,12 +2411,18 @@
   resize: vertical;
   padding: 11px 13px;
   border-radius: 11px;
-  border: 1px solid var(--line-2);
+  /* 3:1 or more against the box and the panel around it (WCAG 1.4.11) */
+  border: 1px solid rgba(255, 255, 255, 0.36);
   background: var(--bg-2);
   color: var(--text);
   font: inherit;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.try-form textarea::placeholder {
+  color: var(--text-3);
+  opacity: 1;
 }
 
 .try-form .btn.primary {
@@ -2330,6 +2500,28 @@
   .studio-body {
     grid-template-columns: 240px minmax(0, 1fr) 368px;
   }
+  /* in the narrower rail a long chip ends in an ellipsis (its title has the full text) instead of
+     pushing the rail sideways */
+  .model-chip.compact {
+    max-width: 100%;
+  }
+  .model-chip.compact .model-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* the 240 px rail: a little less space on the right keeps the short chips whole */
+@media (min-width: 1121px) and (max-width: 1320px) {
+  .rail {
+    padding-right: 6px;
+  }
+  .rail-btn {
+    gap: 8px;
+    padding-right: 6px;
+  }
 }
 
 @media (max-width: 1120px) {
@@ -2364,6 +2556,17 @@
     margin: 0;
     white-space: nowrap;
   }
+  .sk-rail {
+    display: flex;
+    gap: 4px;
+    overflow: hidden;
+  }
+  .sk-step {
+    flex: none;
+    grid-template-columns: 25px 72px;
+    padding: 6px;
+    margin: 0;
+  }
   .hero,
   .try-box,
   .home-foot {
@@ -2386,6 +2589,11 @@
   .canvas-area {
     height: 64vh;
     padding: 14px 14px 62px;
+  }
+  /* a single photo gets a canvas of its own shape instead of floating in 64vh (the padding adds
+     28 px across and 76 px down); the candidate grid and the fix crops keep the taller canvas */
+  .canvas-area:has(> .photo-fit) {
+    height: min(64vh, calc((100vw - 28px) * var(--room-hw, 0.75) + 76px));
   }
   .inspector {
     border-left: 0;
@@ -2476,5 +2684,13 @@
   }
   .tb-controls .btn.sm {
     padding: 0 8px;
+  }
+}
+
+/* phones: a scan label keeps its colored dot and id (the inspector lists the names), so the
+   labels stop piling up on a small photo */
+@media (max-width: 600px) {
+  .obj-tag .txt {
+    display: none;
   }
 }

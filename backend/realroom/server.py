@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import gzip
 import hashlib
 import hmac
 import io
@@ -41,6 +42,8 @@ RUN_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 FILE_NAME = re.compile(r"[A-Za-z0-9_.-]{1,80}\.(jpg|png|webp)")
 PID = re.compile(r"[A-Z0-9]{10}")
 MEDIA = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+# the built web page's files that are sent gzipped to a browser that accepts it
+TEXT_ASSETS = {".js": "text/javascript", ".css": "text/css"}
 
 # Uploads. Only these decoders ever see a visitor's bytes, and the pixel count is read from the file
 # header before anything is decoded (Pillow itself only warns from 89 MP and refuses from 179 MP).
@@ -391,6 +394,28 @@ def sweep_interrupted(runs_dir: pathlib.Path, older_than_s: float,
 
 # ---------------------------------------------------------------- app
 
+def accepts_gzip(header: str) -> bool:
+    """Whether an Accept-Encoding header allows gzip, by name or by "*" ("gzip;q=0" refuses it)."""
+    named: bool | None = None
+    star = False
+    for part in header.split(","):
+        coding, _, params = part.partition(";")
+        coding = coding.strip().lower()
+        q = 1.0
+        for param in params.split(";"):
+            key, _, value = param.partition("=")
+            if key.strip().lower() == "q":
+                try:
+                    q = float(value.strip())
+                except ValueError:
+                    q = 0.0
+        if coding in ("gzip", "x-gzip"):
+            named = q > 0
+        elif coding == "*":
+            star = q > 0
+    return named if named is not None else star
+
+
 def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathlib.Path | None, limits: Limits,
                launcher: Launcher | None = None, demos_file: pathlib.Path | None = None,
                refresh: Callable[[], None] | None = None,
@@ -584,12 +609,31 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
                 index_cache.update(mtime=mt, body=f.read_bytes())
             return index_cache["body"]
 
+        gz_cache: dict[str, tuple[float, bytes]] = {}
+
+        def gzipped(f: pathlib.Path) -> bytes:
+            # compressed once per file and kept until the file changes (a rebuild writes new names anyway)
+            mt = f.stat().st_mtime
+            hit = gz_cache.get(str(f))
+            if hit is None or hit[0] != mt:
+                hit = (mt, gzip.compress(f.read_bytes(), compresslevel=9, mtime=0))
+                gz_cache[str(f)] = hit
+            return hit[1]
+
         @app.get("/{path:path}")
-        def spa(path: str):
+        def spa(path: str, request: Request):
             if path.startswith(("api/", "runs/", "catalog/")):
                 raise HTTPException(404)
             f = (web_dir / path).resolve()
             if path and f.is_file() and web_dir.resolve() in f.parents:
+                if path.startswith("assets/") and f.suffix in TEXT_ASSETS:
+                    # the bundle's script and stylesheet shrink to about a third; images and fonts are
+                    # compressed already and go out as they are, like everything else
+                    vary = {"Vary": "Accept-Encoding"}
+                    if accepts_gzip(request.headers.get("accept-encoding", "")) and "range" not in request.headers:
+                        return Response(gzipped(f), media_type=TEXT_ASSETS[f.suffix],
+                                        headers={"Content-Encoding": "gzip", **vary})
+                    return FileResponse(f, media_type=TEXT_ASSETS[f.suffix], headers=vary)
                 return FileResponse(f)
             if path.startswith("assets/"):
                 raise HTTPException(404)

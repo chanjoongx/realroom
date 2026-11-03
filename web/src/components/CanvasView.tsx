@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Activity, Columns2, Layers } from "lucide-react";
 import { runFile } from "../api";
+import { undash } from "../lib/format";
 import { STAGE_NAME } from "../lib/stages";
 import { recordProducts } from "../lib/verdicts";
-import type { Run, RunEvent, StageId } from "../types";
+import type { Box, FixRecord, Run, RunEvent, StageId } from "../types";
 import { Compare } from "./Compare";
 import { ProductMarks, ScanOverlay, SlotBoxes } from "./Overlays";
 import { Photo } from "./Photo";
@@ -161,24 +162,28 @@ export function CanvasView({
     const stacked = run.fixes!.length === 1 && (fx2 - fx1) / Math.max(1, fy2 - fy1) > 1.4;
     return (
       <div className={`fix-canvas${stacked ? " stacked" : ""}`}>
-        {run.fixes!.map((fx) => (
-          <div key={fx.slot} className="fix-canvas-row">
-            <figure>
-              <img src={runFile(run.id, fx.images[0])} alt="First render" />
-              <figcaption className="mono">
-                {fx.kind === "clear"
-                  ? `first render · ${(fx.names ?? []).join(", ")} left`
-                  : `first render · ${fx.before.verdict} ${fx.before.score}`}
-              </figcaption>
-            </figure>
-            <figure>
-              <img src={runFile(run.id, fx.images[1])} alt={fx.kind === "clear" ? "Cleared" : "Redrawn"} />
-              <figcaption className="mono">
-                {fx.kind === "clear" ? "cleared · checked with SAM 3.1" : `redrawn · ${fx.after.verdict} ${fx.after.score}`}
-              </figcaption>
-            </figure>
-          </div>
-        ))}
+        {run.fixes!.map((fx) => {
+          const why = fx.kind === "clear" ? "" : fixReason(fx);
+          return (
+            <div key={fx.slot} className="fix-canvas-row">
+              <figure>
+                <img src={runFile(run.id, fx.images[0])} alt="First render" />
+                <figcaption className="mono">
+                  {fx.kind === "clear"
+                    ? `first render · ${(fx.names ?? []).join(", ")} left`
+                    : `first render · ${fx.before.verdict} ${fx.before.score}`}
+                </figcaption>
+                {why && <p className="fix-why">Spark: {why}</p>}
+              </figure>
+              <figure>
+                <img src={runFile(run.id, fx.images[1])} alt={fx.kind === "clear" ? "Cleared" : "Redrawn"} />
+                <figcaption className="mono">
+                  {fx.kind === "clear" ? "cleared · checked with SAM 3.1" : `redrawn · ${fx.after.verdict} ${fx.after.score}`}
+                </figcaption>
+              </figure>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -186,6 +191,7 @@ export function CanvasView({
   if (stage === "result" && run.result) {
     const res = run.result;
     const after = runFile(run.id, res.after);
+    const recs = recordProducts(res);
     const edited = run.room.ai_generated ? "Edited photo" : "Edited photo, products drawn by Muse Image 1.0 (AI-edited)";
     const tabs: { id: ResultMode; label: string; icon: typeof Columns2 }[] = [
       { id: "compare", label: "Before / after", icon: Columns2 },
@@ -200,7 +206,8 @@ export function CanvasView({
               before={before}
               after={after}
               alts={[beforeAlt, `${room}, ${edited.charAt(0).toLowerCase()}${edited.slice(1)}`]}
-              afterLayer={<ProductMarks items={recordProducts(res)} w={w} h={h} focus={focus} onFocus={setFocus} showOutline={!!focus} />}
+              rest={restAt(recs, w)}
+              afterLayer={<ProductMarks items={recs} w={w} h={h} focus={focus} onFocus={setFocus} showOutline={!!focus} />}
             />
           </Photo>
         )}
@@ -211,9 +218,12 @@ export function CanvasView({
           </Photo>
         )}
         {mode === "drift" && (
-          <Photo src={runFile(run.id, res.drift)} w={w} h={h} alt="Model drift map: what Muse Image changed on its own, brighter where it changed more">
+          <Photo src={runFile(run.id, res.drift)} w={w} h={h} alt="Model drift map: where Muse Image changed the photo, brighter where it changed more">
             <div className="drift-legend">
-              <span className="mono">What Muse Image changed on its own, before Realroom restored it</span>
+              <span className="mono">Where Muse Image changed the photo</span>
+              <span className="drift-note">
+                The new products were meant to change. Every other pixel was copied back from the original.
+              </span>
               <span className="drift-scale" />
               <span className="mono faint drift-ends">
                 <span>no change</span>
@@ -234,6 +244,23 @@ export function CanvasView({
   }
 
   return <Photo src={before} w={w} h={h} alt={beforeAlt} />;
+}
+
+/** Where the result wipe settles: 3% left of the leftmost new product, so every product and its
+ *  number are on the after side while a strip of the original stays in view. Kept within 10 to 50%,
+ *  except that it moves further left rather than cover a number (each sits at its product's middle). */
+function restAt(items: { box?: Box | null }[], w: number): number {
+  const boxes = items.map((p) => p.box).filter((b): b is Box => Array.isArray(b) && b.length === 4);
+  if (!boxes.length || !(w > 0)) return 50;
+  const left = (Math.min(...boxes.map((b) => b[0])) / w) * 100;
+  const mid = (Math.min(...boxes.map((b) => (b[0] + b[2]) / 2)) / w) * 100;
+  return Math.min(50, Math.max(Math.min(10, mid - 2), left - 3, 2));
+}
+
+/** Spark's main reason a product was redrawn: its first issue, or else its note on color. */
+function fixReason(f: FixRecord): string {
+  const why = f.before.issues?.find((s) => s.trim()) ?? f.before.color ?? "";
+  return undash(why.trim());
 }
 
 function CandidateGrid({ run }: { run: Run }) {
