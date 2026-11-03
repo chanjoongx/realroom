@@ -46,7 +46,7 @@
 > [!NOTE]
 > Realroom is an entry in the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon), Indie Developer track, under the problem statement "Build for Your World". The agent, the web app, the catalog index and the demo rooms were all made during the building period, October 27 to November 4, 2026.
 >
-> The hosted app replays the three recorded runs and runs the whole agent live on an uploaded photo, up to 40 times a day. On your own machine the same app replays the runs with no key, or runs live with your own Meta Model API key. Both ways are in [Run it](#run-it).
+> The hosted app replays the three recorded runs and runs the whole agent live on an uploaded photo, up to 40 times a day. A live run takes about four to eight minutes, and the page follows the run while it works. On your own machine the same app replays the runs with no key, or runs live with your own Meta Model API key. Both ways are in [Run it](#run-it).
 
 <p align="center">
   <picture>
@@ -62,7 +62,7 @@
   <sub>The living-room demo run, replayed in the app: scan, placement guide, verify, then the before and after slider.</sub>
 </p>
 
-Realroom is an agent built on Meta's models. You give it a room photo and one sentence about what you want. It reads the room, plans what to add or replace, searches 4,375 real products for pieces that fit the space, and renders them into the photo. Then it checks its own work. SAM 3.1 finds each product again in the render, Muse Spark 1.3 compares it with the product's catalog photo, and anything that came out wrong is redrawn. Only the new products, their shadows and the spots that were cleared come from the image model. Everything else is copied back from your original photo, and the page lets you verify that count in your own browser.
+Realroom is an agent built on Meta's models. You give it a room photo and one sentence about what you want. Muse Spark 1.3 reads the room and plans what to add or replace, and SAM 3.1 outlines every object. The agent searches 4,375 real products for pieces whose listed dimensions fit the space and ranks them by their Muse Spark Open descriptions and by Meta's Perception Encoder. Spark picks a set that works together, and Muse Image 1.0 draws it into the photo. Then the agent checks its own work: SAM 3.1 finds each product again in the render, Muse Spark 1.3 compares it with its catalog photo in three separate checks, and a product that came out wrong is redrawn. Only the new products, their shadows and the spots that were cleared come from the render. Every other pixel is copied back from your original photo, and the page lets you check that count in your own browser.
 
 Try it at [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). The demo rooms replay recorded runs, and the upload box runs the whole agent on your own photo.
 
@@ -82,7 +82,7 @@ The demo rooms were generated with Muse Image 1.0, so this repository holds no p
 | Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofa, rug, floor lamp, coffee table, planter | 5 of 5, the rug and the floor lamp after one round of redraws each | 63.6% | 384&nbsp;s | $0.58 |
 | Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | bedding, rug, wall art | 3 of 3, the bedding after one round of redraws | 67.5% | 477&nbsp;s | $0.40 |
 
-"Matched" counts a product when at least two of three separate Muse Spark 1.3 checks of its final pixels say match. Each check puts a close crop of the product next to its catalog photo, and the app lists all three verdicts. Costs are estimates from Meta's published prices, logged per call.
+"Matched" counts a product when at least two of three separate Muse Spark 1.3 checks of its final pixels say match. Each check puts a close crop of the product next to its catalog photo, and the app lists all three verdicts. Costs are estimates from Meta's published prices, logged per call. The recorded runs drew three candidates and could redraw up to two products. Live runs draw two and redraw at most one, so they cost less, about $0.2 to $0.5.
 
 ## How a run works
 
@@ -123,6 +123,8 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 | Muse Spark Open | Baseten, Fireworks | tags and descriptions for the whole catalog |
 | `pe-core-b16-224` | open weights, in the app's server (Modal, or your machine) | Perception Encoder: matches each slot's look against the catalog photos |
 
+When it runs, Realroom calls only the first three models, all at api.meta.ai, and runs the Perception Encoder in its own server. Muse Spark Open tagged the catalog before any run. [`backend/tests/test_meta_only.py`](backend/tests/test_meta_only.py) checks the agent's code in `backend/realroom/`: it fails if the model IDs there are not the four in this table, if the API address is not api.meta.ai, or if any string in that code holds another URL or names a common non-Meta model such as GPT, Claude, Gemini, Flux or SigLIP.
+
 ## What you can check
 
 - `before.png` and `after.png` are lossless. In the app, the **Check it in your browser** button downloads both, compares them pixel by pixel and shows the share that is identical.
@@ -133,16 +135,16 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 
 ## Run it
 
-You need Python 3.12, plus Node 20 or later for the web build. Install once:
+You need Python 3.12 (PyTorch 2.6.0 has no wheels for Python 3.14) and Node 22.12 or later (20.19 also works) for the web build. Install once:
 
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
 ```
 
-On Windows, write `.venv\Scripts\` where these commands say `.venv/bin/`.
+On Windows, create the environment with `py -3.12 -m venv .venv` and write `.venv\Scripts\` where these commands say `.venv/bin/`.
 
 ### Replay the recorded runs (no key)
 
@@ -151,6 +153,8 @@ On Windows, write `.venv\Scripts\` where these commands say `.venv/bin/`.
 ```
 
 Open http://127.0.0.1:8787. The demo rooms replay the runs in [`demo-runs/`](demo-runs) step by step, as on the hosted app. No model is called. The product photos those runs show are in `demo-runs/_photos`, and the upload box says that live runs are off.
+
+Replaying needs no PyTorch. If replay is all you want, run `.venv/bin/pip install -r backend/requirements-test.txt` in place of the two `pip` lines above: it installs every Python package the replay server and the tests use. The web build is still needed.
 
 ### Live runs with your own Meta Model API key
 
@@ -278,4 +282,4 @@ docs/            README images and translations
 - Fonts: Geist and Geist Mono (Vercel) and Instrument Serif, all under the SIL Open Font License.
 - The demo rooms were generated with Muse Image 1.0.
 
-Built by [Chanjoong Kim](https://github.com/chanjoongx). Code: MIT, see [LICENSE](LICENSE).
+Built by [Chanjoong Kim](https://github.com/chanjoongx), an AI student at Kookmin University in Seoul. Code: MIT, see [LICENSE](LICENSE).

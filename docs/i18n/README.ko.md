@@ -48,7 +48,7 @@
 > [!NOTE]
 > Realroom은 [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon)의 Indie Developer 트랙에 "Build for Your World" 과제로 낸 출품작입니다. 에이전트, 웹 앱, 카탈로그 인덱스, 데모 방은 모두 개발 기간인 2026년 10월 27일부터 11월 4일 사이에 만들었습니다.
 >
-> 배포된 앱은 기록된 실행 세 개를 재생하고 업로드한 사진으로 에이전트 전체를 하루 40번까지 라이브로 돌립니다. 로컬에서는 같은 앱이 키 없이 실행을 재생하거나 본인의 Meta Model API 키로 라이브 실행을 돌립니다. 두 방법 모두 [실행하기](#run-it)에 있습니다.
+> 배포된 앱은 기록된 실행 세 개를 재생하고 업로드한 사진으로 에이전트 전체를 하루 40번까지 라이브로 돌립니다. 라이브 실행은 한 번에 4~8분쯤 걸리고 페이지는 실행이 진행되는 동안 그 과정을 따라 보여 줍니다. 로컬에서는 같은 앱이 키 없이 실행을 재생하거나 본인의 Meta Model API 키로 라이브 실행을 돌립니다. 두 방법 모두 [실행하기](#run-it)에 있습니다.
 
 <p align="center">
   <picture>
@@ -64,7 +64,7 @@
   <sub>앱에서 재생한 거실 데모 실행입니다. 스캔, 배치 가이드, 검증을 차례로 보여 주고 마지막에 전후 비교 슬라이더가 나옵니다.</sub>
 </p>
 
-Realroom은 Meta 모델로 만든 에이전트입니다. 방 사진과 원하는 것을 적은 문장 하나를 넣으면 에이전트가 방을 읽고 무엇을 더하거나 바꿀지 계획한 뒤 실제 상품 4,375개 중에서 공간에 맞는 것을 찾아 사진 속에 렌더합니다. 그다음 자기 결과물을 스스로 검사합니다. SAM 3.1이 렌더 결과에서 상품을 하나씩 다시 찾으면 Muse Spark 1.3이 그 상품을 카탈로그 사진과 비교합니다. 잘못 나온 것은 다시 그립니다. 이미지 모델이 만든 부분은 새 상품과 그 그림자, 치운 자리뿐입니다. 나머지는 모두 원본 사진에서 그대로 다시 가져옵니다. 그 개수는 페이지에서 브라우저로 직접 확인할 수 있습니다.
+Realroom은 Meta 모델로 만든 에이전트입니다. 방 사진과 원하는 것을 적은 문장 하나를 넣으면 Muse Spark 1.3이 방을 읽고 무엇을 더하거나 바꿀지 계획합니다. SAM 3.1은 방 안의 물건마다 윤곽을 땁니다. 에이전트는 실제 상품 4,375개 중에서 상품 정보에 적힌 치수가 공간에 맞는 것을 찾아 Muse Spark Open이 쓴 설명과 Meta의 Perception Encoder로 순위를 매깁니다. Spark가 서로 어울리는 조합을 고르면 Muse Image 1.0이 그 상품들을 사진 속에 그려 넣습니다. 그다음 에이전트가 자기 결과물을 스스로 검사합니다. SAM 3.1이 렌더 결과에서 상품을 하나씩 다시 찾으면 Muse Spark 1.3이 그 상품을 카탈로그 사진과 따로 세 번 비교합니다. 잘못 나온 상품은 다시 그립니다. 렌더에서 온 부분은 새 상품과 그 그림자, 치운 자리뿐입니다. 나머지 픽셀은 모두 원본 사진에서 그대로 다시 가져옵니다. 그 개수는 페이지에서 브라우저로 직접 확인할 수 있습니다.
 
 [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run)에서 써 볼 수 있습니다. 데모 방은 기록된 실행을 재생하고, 업로드 상자는 직접 올린 사진으로 에이전트 전체를 돌립니다.
 
@@ -84,7 +84,7 @@ Realroom은 Meta 모델로 만든 에이전트입니다. 방 사진과 원하는
 | 빈방, 이사 온 날 | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | 소파, 러그, 플로어 램프, 커피 테이블, 화분 | 5개 중 5개, 러그와 플로어 램프는 각각 한 라운드 다시 그린 뒤 | 63.6% | 384&nbsp;s | $0.58 |
 | 원룸, 첫 자취방 | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | 침구, 러그, 벽 장식 | 3개 중 3개, 침구는 한 라운드 다시 그린 뒤 | 67.5% | 477&nbsp;s | $0.40 |
 
-"일치"는 Muse Spark 1.3이 상품의 최종 픽셀을 따로 세 번 확인해 두 번 이상 match로 판정한 경우에 셉니다. 확인할 때마다 상품을 가까이 잘라 카탈로그 사진 옆에 놓고 봅니다. 앱은 세 판정을 모두 보여 줍니다. 비용은 Meta가 공개한 가격으로 계산한 추정치이며 호출마다 기록했습니다.
+"일치"는 Muse Spark 1.3이 상품의 최종 픽셀을 따로 세 번 확인해 두 번 이상 match로 판정한 경우에 셉니다. 확인할 때마다 상품을 가까이 잘라 카탈로그 사진 옆에 놓고 봅니다. 앱은 세 판정을 모두 보여 줍니다. 비용은 Meta가 공개한 가격으로 계산한 추정치이며 호출마다 기록했습니다. 기록된 실행은 후보를 세 개 그렸고 상품을 두 개까지 다시 그릴 수 있었습니다. 라이브 실행은 후보 두 개에 다시 그리는 상품도 하나까지라 비용이 약 $0.2~$0.5로 더 적습니다.
 
 ## <a id="how-a-run-works"></a>실행 과정
 
@@ -125,6 +125,8 @@ flowchart LR
 | Muse Spark Open | Baseten, Fireworks | 카탈로그 전체의 태그와 설명 |
 | `pe-core-b16-224` | 공개 가중치, 앱 서버 안(Modal 또는 로컬 컴퓨터) | Perception Encoder: 슬롯마다 생김새를 카탈로그 사진과 대조 |
 
+실행 중에 Realroom이 호출하는 모델은 이 표의 앞 세 모델뿐이고 모두 api.meta.ai에 있습니다. Perception Encoder는 앱 서버 안에서 직접 돌립니다. Muse Spark Open은 카탈로그를 만들 때 미리 태그를 달았습니다. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py)는 `backend/realroom/`의 에이전트 코드를 검사합니다. 그 코드의 모델 ID가 이 표의 네 개와 다르거나 API 주소가 api.meta.ai가 아니면 테스트가 실패합니다. 코드 안의 문자열에 다른 URL이 있거나 GPT, Claude, Gemini, Flux, SigLIP처럼 널리 쓰이는 Meta 밖 모델의 이름이 있어도 실패합니다.
+
 ## 확인할 수 있는 것
 
 - `before.png`와 `after.png`는 무손실입니다. 앱의 **Check it in your browser**는 두 파일을 내려받아 브라우저에서 픽셀 단위로 비교한 뒤 똑같은 픽셀의 비율을 보여 줍니다.
@@ -135,16 +137,16 @@ flowchart LR
 
 ## <a id="run-it"></a>실행하기
 
-Python 3.12와 웹 빌드용 Node 20 이상이 필요합니다. 처음에 한 번 설치합니다.
+Python 3.12가 필요합니다(PyTorch 2.6.0에는 Python 3.14용 휠이 없습니다). 웹 빌드에는 Node 22.12 이상이 필요하며 20.19에서도 됩니다. 처음에 한 번 설치합니다.
 
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
 ```
 
-Windows에서는 명령에 나오는 `.venv/bin/`을 `.venv\Scripts\`로 바꿔 씁니다.
+Windows에서는 `py -3.12 -m venv .venv`로 환경을 만들고 명령에 나오는 `.venv/bin/`을 `.venv\Scripts\`로 바꿔 씁니다.
 
 ### 기록된 실행 재생하기 (키 없이)
 
@@ -153,6 +155,8 @@ Windows에서는 명령에 나오는 `.venv/bin/`을 `.venv\Scripts\`로 바꿔 
 ```
 
 http://127.0.0.1:8787 주소를 엽니다. 데모 방은 배포된 앱과 마찬가지로 [`demo-runs/`](../../demo-runs)의 실행을 단계별로 재생합니다. 모델은 호출하지 않습니다. 이 실행들에 나오는 상품 사진은 `demo-runs/_photos`에 있고, 업로드 상자에는 라이브 실행이 꺼져 있다는 안내가 나옵니다.
+
+재생에는 PyTorch가 필요 없습니다. 재생만 하려면 위의 `pip` 두 줄 대신 `.venv/bin/pip install -r backend/requirements-test.txt`를 실행합니다. 재생 서버와 테스트가 쓰는 Python 패키지가 모두 설치됩니다. 웹 빌드는 그대로 필요합니다.
 
 ### 본인 Meta Model API 키로 라이브 실행하기
 
@@ -280,4 +284,4 @@ docs/            README images and translations
 - 글꼴: Geist와 Geist Mono(Vercel), Instrument Serif. 모두 SIL Open Font License를 따릅니다.
 - 데모 방은 Muse Image 1.0으로 생성했습니다.
 
-[Chanjoong Kim](https://github.com/chanjoongx)이 만들었습니다. 코드 라이선스는 MIT입니다([LICENSE](../../LICENSE) 참고).
+서울 국민대학교 인공지능학부 학생인 [Chanjoong Kim](https://github.com/chanjoongx)이 만들었습니다. 코드 라이선스는 MIT입니다([LICENSE](../../LICENSE) 참고).

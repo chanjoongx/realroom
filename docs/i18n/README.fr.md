@@ -48,7 +48,7 @@
 > [!NOTE]
 > Realroom participe au [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon), dans la catégorie Indie Developer, sur le sujet « Build for Your World ». L'agent, l'application web, l'index du catalogue et les pièces de démo ont tous été réalisés pendant la période de développement, du 27 octobre au 4 novembre 2026.
 >
-> L'application hébergée rejoue les trois exécutions enregistrées et fait tourner l'agent complet en direct sur une photo envoyée, jusqu'à 40 fois par jour. Sur votre propre machine, la même application rejoue les exécutions sans clé, ou fonctionne en direct avec votre propre clé Meta Model API. Les deux méthodes sont décrites dans [Lancer Realroom](#run-it).
+> L'application hébergée rejoue les trois exécutions enregistrées et fait tourner l'agent complet en direct sur une photo envoyée, jusqu'à 40 fois par jour. Une exécution en direct prend environ quatre à huit minutes, et la page la suit au fur et à mesure. Sur votre propre machine, la même application rejoue les exécutions sans clé, ou fonctionne en direct avec votre propre clé Meta Model API. Les deux méthodes sont décrites dans [Lancer Realroom](#run-it).
 
 <p align="center">
   <picture>
@@ -64,7 +64,7 @@
   <sub>L'exécution de démo sur le salon, rejouée dans l'application : analyse, guide de placement, vérification, puis le curseur avant/après.</sub>
 </p>
 
-Realroom est un agent construit sur les modèles de Meta. Vous lui donnez la photo d'une pièce et une phrase qui décrit ce que vous voulez. Il analyse la pièce, prévoit ce qu'il faut ajouter ou remplacer, cherche parmi 4 375 produits réels des meubles adaptés à l'espace, puis génère leur rendu dans la photo. Ensuite, il vérifie son propre travail. SAM 3.1 retrouve chaque produit dans le rendu, Muse Spark 1.3 le compare à la photo de catalogue du produit, et tout ce qui est mal rendu est redessiné. Seuls les nouveaux produits, leurs ombres et les zones dégagées viennent du modèle d'image. Tout le reste est recopié depuis votre photo d'origine, et la page vous permet d'en vérifier le décompte dans votre propre navigateur.
+Realroom est un agent construit sur les modèles de Meta. Vous lui donnez la photo d'une pièce et une phrase qui décrit ce que vous voulez. Muse Spark 1.3 analyse la pièce et prévoit ce qu'il faut ajouter ou remplacer, et SAM 3.1 détoure chaque objet. L'agent cherche parmi 4 375 produits réels des meubles dont les dimensions indiquées dans l'annonce conviennent à l'espace, puis les classe selon leurs descriptions écrites par Muse Spark Open et selon le Perception Encoder de Meta. Spark choisit un ensemble cohérent, et Muse Image 1.0 le dessine dans la photo. Ensuite, l'agent vérifie son propre travail : SAM 3.1 retrouve chaque produit dans le rendu, Muse Spark 1.3 le compare à sa photo de catalogue lors de trois vérifications séparées, et un produit mal rendu est redessiné. Seuls les nouveaux produits, leurs ombres et les zones dégagées viennent du rendu. Tous les autres pixels sont recopiés depuis votre photo d'origine, et la page vous permet d'en vérifier le décompte dans votre propre navigateur.
 
 Essayez-le sur [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). Les pièces de démo rejouent des exécutions enregistrées, et la zone d'envoi fait tourner l'agent complet sur votre propre photo.
 
@@ -84,7 +84,7 @@ Les pièces de démo ont été générées avec Muse Image 1.0 : ce dépôt ne 
 | Pièce vide, jour d'emménagement | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | canapé, tapis, lampadaire, table basse, jardinière | 5 sur 5, le tapis et le lampadaire après un tour de redessin chacun | 63,6 % | 384&nbsp;s | 0,58 $ |
 | Studio, premier appartement | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | linge de lit, tapis, décoration murale | 3 sur 3, le linge de lit après un tour de redessin | 67,5 % | 477&nbsp;s | 0,40 $ |
 
-« Conformes » compte un produit lorsqu'au moins deux vérifications sur trois, faites séparément par Muse Spark 1.3 sur ses pixels finaux, disent « match ». Chaque vérification place un recadrage serré du produit à côté de sa photo de catalogue, et l'application affiche les trois verdicts. Les coûts sont des estimations établies d'après les tarifs publiés par Meta, enregistrées appel par appel.
+« Conformes » compte un produit lorsqu'au moins deux vérifications sur trois, faites séparément par Muse Spark 1.3 sur ses pixels finaux, disent « match ». Chaque vérification place un recadrage serré du produit à côté de sa photo de catalogue, et l'application affiche les trois verdicts. Les coûts sont des estimations établies d'après les tarifs publiés par Meta, enregistrées appel par appel. Les exécutions enregistrées ont dessiné trois candidats et pouvaient redessiner jusqu'à deux produits. Les exécutions en direct en dessinent deux et redessinent au plus un produit, elles coûtent donc moins cher, entre 0,2 $ et 0,5 $ environ.
 
 ## <a id="how-a-run-works"></a>Déroulement d'une exécution
 
@@ -125,6 +125,8 @@ Ci-dessus, l'étape de vérification de l'exécution sur le salon. Muse Image a 
 | Muse Spark Open | Baseten, Fireworks | étiquettes et descriptions de tout le catalogue |
 | `pe-core-b16-224` | poids ouverts, sur le serveur de l'application (Modal, ou votre machine) | Perception Encoder : compare l'aspect de chaque emplacement aux photos du catalogue |
 
+Pendant une exécution, Realroom n'appelle que les trois premiers modèles, tous sur api.meta.ai, et fait tourner le Perception Encoder sur son propre serveur. Muse Spark Open a étiqueté le catalogue avant toute exécution. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) vérifie le code de l'agent dans `backend/realroom/` : le test échoue si les identifiants de modèle qui s'y trouvent ne sont pas les quatre de ce tableau, si l'adresse de l'API n'est pas api.meta.ai, ou si une chaîne de ce code contient une autre URL ou nomme un modèle courant qui n'est pas de Meta, comme GPT, Claude, Gemini, Flux ou SigLIP.
+
 ## Ce que vous pouvez vérifier
 
 - `before.png` et `after.png` sont enregistrés sans perte. Dans l'application, **Check it in your browser** télécharge les deux fichiers et les compare pixel par pixel dans votre navigateur, puis affiche la part de pixels identiques.
@@ -135,16 +137,16 @@ Ci-dessus, l'étape de vérification de l'exécution sur le salon. Muse Image a 
 
 ## <a id="run-it"></a>Lancer Realroom
 
-Il vous faut Python 3.12, ainsi que Node 20 ou plus récent pour compiler l'interface web. Installez une fois pour toutes :
+Il vous faut Python 3.12 (PyTorch 2.6.0 n'a pas de wheels pour Python 3.14), ainsi que Node 22.12 ou plus récent (20.19 fonctionne aussi) pour compiler l'interface web. Installez une fois pour toutes :
 
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
 ```
 
-Sous Windows, remplacez `.venv/bin/` par `.venv\Scripts\` dans ces commandes.
+Sous Windows, créez l'environnement avec `py -3.12 -m venv .venv` et remplacez `.venv/bin/` par `.venv\Scripts\` dans ces commandes.
 
 ### Rejouer les exécutions enregistrées (sans clé)
 
@@ -153,6 +155,8 @@ Sous Windows, remplacez `.venv/bin/` par `.venv\Scripts\` dans ces commandes.
 ```
 
 Ouvrez http://127.0.0.1:8787. Les pièces de démo rejouent pas à pas les exécutions de [`demo-runs/`](../../demo-runs), comme sur l'application hébergée. Aucun modèle n'est appelé. Les photos de produits que montrent ces exécutions se trouvent dans `demo-runs/_photos`, et la zone d'envoi indique que les exécutions en direct sont désactivées.
+
+Le rejeu n'a pas besoin de PyTorch. Si vous voulez seulement rejouer, lancez `.venv/bin/pip install -r backend/requirements-test.txt` à la place des deux lignes `pip` ci-dessus : cela installe tous les paquets Python qu'utilisent le serveur de rejeu et les tests. La compilation de l'interface web reste nécessaire.
 
 ### Exécutions en direct avec votre propre clé Meta Model API
 
@@ -280,4 +284,4 @@ docs/            README images and translations
 - Polices : Geist et Geist Mono (Vercel), ainsi qu'Instrument Serif, toutes sous la SIL Open Font License.
 - Les pièces de démo ont été générées avec Muse Image 1.0.
 
-Réalisé par [Chanjoong Kim](https://github.com/chanjoongx). Code : MIT, voir [LICENSE](../../LICENSE).
+Réalisé par [Chanjoong Kim](https://github.com/chanjoongx), étudiant en IA à l'université Kookmin, à Séoul. Code : MIT, voir [LICENSE](../../LICENSE).

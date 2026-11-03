@@ -48,7 +48,7 @@
 > [!NOTE]
 > Realroom は [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon) の Indie Developer トラックに、課題「Build for Your World」で応募した作品です。エージェント、Web アプリ、カタログのインデックス、デモの部屋は、どれも開発期間（2026年10月27日から11月4日まで）に作りました。
 >
-> 公開版のアプリでは、記録済みの3件の実行を再生できるほか、アップロードした写真でエージェント全体をライブ実行できます（1日40回まで）。手元のマシンでも同じアプリで、キーなしに実行を再生することも、自分の Meta Model API キーでライブ実行することもできます。どちらの方法も[実行方法](#run-it)で説明しています。
+> 公開版のアプリでは、記録済みの3件の実行を再生できるほか、アップロードした写真でエージェント全体をライブ実行できます（1日40回まで）。ライブ実行は1回あたり4～8分ほどかかり、ページは実行中の様子を追って表示します。手元のマシンでも同じアプリで、キーなしに実行を再生することも、自分の Meta Model API キーでライブ実行することもできます。どちらの方法も[実行方法](#run-it)で説明しています。
 
 <p align="center">
   <picture>
@@ -64,7 +64,7 @@
   <sub>リビングのデモ実行をアプリで再生したところ：スキャン、配置ガイド、検証、そしてビフォーアフターのスライダー。</sub>
 </p>
 
-Realroom は Meta のモデルで作ったエージェントです。部屋の写真と、どうしたいかを書いた一文を渡します。エージェントは部屋を読み取り、何を加えて何を置き換えるかを計画し、4,375点の実在の商品からその空間に合うものを探して、写真の中にレンダリングします。それから、自分の仕事をチェックします。SAM 3.1 がレンダリング画像の中で各商品をもう一度見つけ、Muse Spark 1.3 がそれを商品のカタログ写真と比べ、うまく描けなかったものは描き直します。画像モデルの出力を使うのは、新しい商品とその影、物を取り除いた箇所だけです。それ以外はすべて元の写真からコピーして戻しており、そのピクセル数はページ上で、自分のブラウザを使って確かめられます。
+Realroom は Meta のモデルで作ったエージェントです。部屋の写真と、どうしたいかを書いた一文を渡します。Muse Spark 1.3 が部屋を読み取って何を加えて何を置き換えるかを計画し、SAM 3.1 が部屋の物ひとつひとつの輪郭を取ります。エージェントは4,375点の実在の商品から、記載された寸法がその空間に合うものを探し、Muse Spark Open が書いた説明文と Meta の Perception Encoder で順位を付けます。Spark が互いに合う組み合わせを選び、Muse Image 1.0 がそれを写真の中に描き込みます。それから、エージェントは自分の仕事をチェックします。SAM 3.1 がレンダリング画像の中で各商品をもう一度見つけ、Muse Spark 1.3 がそれをカタログ写真と別々に3回比べ、うまく描けなかった商品は描き直します。レンダリング画像から使うのは、新しい商品とその影、物を取り除いた箇所だけです。それ以外のピクセルはすべて元の写真からコピーして戻しており、そのピクセル数はページ上で、自分のブラウザを使って確かめられます。
 
 [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run) で試せます。デモの部屋では記録済みの実行を再生し、アップロード欄では自分の写真でエージェント全体を実行します。
 
@@ -84,7 +84,7 @@ Realroom は Meta のモデルで作ったエージェントです。部屋の�
 | 何もない部屋、引っ越し当日 | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | ソファ、ラグ、フロアランプ、コーヒーテーブル、プランター | 5点中5点（ラグとフロアランプはそれぞれ描き直し1ラウンド後） | 63.6% | 384&nbsp;s | $0.58 |
 | ワンルーム、初めての一人暮らし | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | 寝具、ラグ、ウォールアート | 3点中3点（寝具は描き直し1ラウンド後） | 67.5% | 477&nbsp;s | $0.40 |
 
-「一致」に数えるのは、最終的な画素を Muse Spark 1.3 が別々に3回確認し、そのうち2回以上の判定が「match」だった商品です。どの確認でも商品をアップで切り出してカタログ写真と並べて見ており、アプリには3つの判定がすべて表示されます。費用は Meta の公表価格にもとづく見積もりで、呼び出しごとに記録しています。
+「一致」に数えるのは、最終的な画素を Muse Spark 1.3 が別々に3回確認し、そのうち2回以上の判定が「match」だった商品です。どの確認でも商品をアップで切り出してカタログ写真と並べて見ており、アプリには3つの判定がすべて表示されます。費用は Meta の公表価格にもとづく見積もりで、呼び出しごとに記録しています。記録済みの実行では候補を3枚描き、描き直せる商品は2点まででした。ライブ実行では候補が2枚、描き直す商品は1点までなので費用が少なく、約$0.2～$0.5です。
 
 ## <a id="how-a-run-works"></a>実行の仕組み
 
@@ -125,6 +125,8 @@ Web アプリは、各実行をイベントログから再生します。輪郭�
 | Muse Spark Open | Baseten、Fireworks | カタログ全体のタグと説明文 |
 | `pe-core-b16-224` | オープンウェイト、アプリのサーバー内（Modal または手元のマシン） | Perception Encoder：各スロットの見た目をカタログ写真と照合 |
 
+実行中に Realroom が呼び出すのはこの表の最初の3つのモデルだけで、どれも api.meta.ai にあります。Perception Encoder はアプリ自身のサーバーで動かします。Muse Spark Open は、実行より前にカタログのタグ付けに使いました。[`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) は `backend/realroom/` のエージェントのコードを検査します。そこにあるモデル ID がこの表の4つと違うとき、API のアドレスが api.meta.ai でないとき、またはそのコードの文字列に別の URL や、GPT、Claude、Gemini、Flux、SigLIP など広く使われている Meta 以外のモデルの名前が含まれるときに、テストは失敗します。
+
 ## 自分で確かめられること
 
 - `before.png` と `after.png` は可逆圧縮の画像です。アプリの **Check it in your browser** ボタンは、両方をダウンロードしてピクセルごとに比較し、一致する割合を表示します。
@@ -135,16 +137,16 @@ Web アプリは、各実行をイベントログから再生します。輪郭�
 
 ## <a id="run-it"></a>実行方法
 
-Python 3.12 と、Web ビルド用に Node 20 以降が必要です。最初に一度だけインストールします。
+Python 3.12（PyTorch 2.6.0 には Python 3.14 用の wheel がありません）と、Web ビルド用に Node 22.12 以降（20.19 でも動きます）が必要です。最初に一度だけインストールします。
 
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
 ```
 
-Windows では、これらのコマンドの `.venv/bin/` を `.venv\Scripts\` に読み替えてください。
+Windows では、`py -3.12 -m venv .venv` で環境を作り、これらのコマンドの `.venv/bin/` を `.venv\Scripts\` に読み替えてください。
 
 ### 記録済みの実行を再生する（キー不要）
 
@@ -153,6 +155,8 @@ Windows では、これらのコマンドの `.venv/bin/` を `.venv\Scripts\` �
 ```
 
 http://127.0.0.1:8787 を開きます。デモの部屋では、公開版のアプリと同じように [`demo-runs/`](../../demo-runs) の実行をステップごとに再生します。モデルは呼び出しません。これらの実行に出てくる商品写真は `demo-runs/_photos` にあり、アップロード欄にはライブ実行がオフであることが表示されます。
+
+再生には PyTorch は要りません。再生だけしたい場合は、上の `pip` の2行の代わりに `.venv/bin/pip install -r backend/requirements-test.txt` を実行してください。再生サーバーとテストが使う Python パッケージがすべて入ります。Web ビルドは同じように必要です。
 
 ### 自分の Meta Model API キーでライブ実行する
 
@@ -280,4 +284,4 @@ docs/            README images and translations
 - フォント：Geist と Geist Mono（Vercel）、Instrument Serif。いずれも SIL Open Font License です。
 - デモの部屋は Muse Image 1.0 で生成しました。
 
-[Chanjoong Kim](https://github.com/chanjoongx) が作りました。コードは MIT ライセンスです（[LICENSE](../../LICENSE) を参照）。
+ソウルの国民大学校で AI を学ぶ [Chanjoong Kim](https://github.com/chanjoongx) が作りました。コードは MIT ライセンスです（[LICENSE](../../LICENSE) を参照）。

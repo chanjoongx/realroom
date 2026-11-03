@@ -48,7 +48,7 @@
 > [!NOTE]
 > O Realroom é um projeto inscrito no [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon), na trilha Indie Developer, dentro do desafio "Build for Your World". O agente, o app web, o índice do catálogo e os cômodos de demonstração foram todos feitos durante o período de desenvolvimento, de 27 de outubro a 4 de novembro de 2026.
 >
-> O app hospedado reproduz as três execuções gravadas e roda o agente inteiro ao vivo em uma foto enviada, até 40 vezes por dia. Na sua máquina, o mesmo app reproduz as execuções sem chave ou roda ao vivo com a sua própria chave da Meta Model API. As duas formas estão em [Como executar](#run-it).
+> O app hospedado reproduz as três execuções gravadas e roda o agente inteiro ao vivo em uma foto enviada, até 40 vezes por dia. Uma execução ao vivo leva cerca de quatro a oito minutos, e a página acompanha a execução enquanto ela acontece. Na sua máquina, o mesmo app reproduz as execuções sem chave ou roda ao vivo com a sua própria chave da Meta Model API. As duas formas estão em [Como executar](#run-it).
 
 <p align="center">
   <picture>
@@ -64,7 +64,7 @@
   <sub>A execução de demonstração da sala de estar, reproduzida no app: análise, guia de posicionamento, verificação e, por fim, o slider de antes e depois.</sub>
 </p>
 
-O Realroom é um agente feito com os modelos da Meta. Você envia uma foto de um cômodo e uma frase sobre o que quer. Ele lê o cômodo, planeja o que adicionar ou substituir, procura entre 4.375 produtos reais as peças que cabem no espaço e as renderiza na foto. Depois, confere o próprio trabalho. O SAM 3.1 encontra de novo cada produto na imagem renderizada, o Muse Spark 1.3 compara cada um com a foto dele no catálogo, e o que saiu errado é redesenhado. Só os produtos novos, as sombras deles e as áreas que foram limpas vêm do modelo de imagem. Todo o resto é copiado de volta da sua foto original, e a página permite verificar essa contagem no seu próprio navegador.
+O Realroom é um agente feito com os modelos da Meta. Você envia uma foto de um cômodo e uma frase sobre o que quer. O Muse Spark 1.3 lê o cômodo e planeja o que adicionar ou substituir, e o SAM 3.1 contorna cada objeto. O agente procura entre 4.375 produtos reais as peças cujas medidas informadas no anúncio cabem no espaço e as ordena pelas descrições do Muse Spark Open e pelo Perception Encoder da Meta. O Spark escolhe um conjunto que combina, e o Muse Image 1.0 o desenha na foto. Depois, o agente confere o próprio trabalho: o SAM 3.1 encontra de novo cada produto na imagem renderizada, o Muse Spark 1.3 compara cada um com a foto dele no catálogo em três checagens independentes, e um produto que saiu errado é redesenhado. Só os produtos novos, as sombras deles e as áreas que foram limpas vêm da renderização. Todos os outros pixels são copiados de volta da sua foto original, e a página permite verificar essa contagem no seu próprio navegador.
 
 Experimente em [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). Os cômodos de demonstração reproduzem execuções gravadas, e a caixa de upload roda o agente inteiro na sua própria foto.
 
@@ -84,7 +84,7 @@ Os cômodos de demonstração foram gerados com o Muse Image 1.0, então este re
 | Cômodo vazio, dia da mudança | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofá, tapete, luminária de chão, mesa de centro, vaso de planta | 5 de 5, o tapete e a luminária de chão depois de uma rodada de redesenho cada um | 63,6% | 384&nbsp;s | US$&nbsp;0,58 |
 | Studio, primeiro apartamento | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | roupa de cama, tapete, quadro | 3 de 3, a roupa de cama depois de uma rodada de redesenho | 67,5% | 477&nbsp;s | US$&nbsp;0,40 |
 
-"Correspondem" conta um produto quando pelo menos duas de três checagens independentes do Muse Spark 1.3 sobre os pixels finais dele dizem "match". Cada checagem põe um recorte fechado do produto ao lado da foto dele no catálogo, e o app lista os três vereditos. Os custos são estimativas com base nos preços publicados pela Meta, registradas a cada chamada.
+"Correspondem" conta um produto quando pelo menos duas de três checagens independentes do Muse Spark 1.3 sobre os pixels finais dele dizem "match". Cada checagem põe um recorte fechado do produto ao lado da foto dele no catálogo, e o app lista os três vereditos. Os custos são estimativas com base nos preços publicados pela Meta, registradas a cada chamada. As execuções gravadas desenharam três candidatos e podiam redesenhar até dois produtos. As execuções ao vivo desenham dois e redesenham no máximo um, então custam menos, cerca de US$ 0,2 a US$ 0,5.
 
 ## <a id="how-a-run-works"></a>Como funciona uma execução
 
@@ -125,6 +125,8 @@ Acima está a etapa de verificação da execução da sala de estar. O Muse Imag
 | Muse Spark Open | Baseten, Fireworks | tags e descrições de todo o catálogo |
 | `pe-core-b16-224` | pesos abertos, no servidor do app (Modal ou a sua máquina) | Perception Encoder: compara o visual de cada slot com as fotos do catálogo |
 
+Durante uma execução, o Realroom só chama os três primeiros modelos, todos em api.meta.ai, e roda o Perception Encoder no próprio servidor. O Muse Spark Open gerou as tags do catálogo antes de qualquer execução. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) confere o código do agente em `backend/realroom/`: ele falha se os IDs de modelo ali não forem os quatro desta tabela, se o endereço da API não for api.meta.ai, ou se alguma string desse código tiver outra URL ou citar um modelo conhecido que não seja da Meta, como GPT, Claude, Gemini, Flux ou SigLIP.
+
 ## O que você pode conferir
 
 - `before.png` e `after.png` estão em formato sem perdas. No app, o **Check it in your browser** baixa os dois, compara os arquivos pixel a pixel no seu navegador e depois mostra a fração de pixels idênticos.
@@ -135,16 +137,16 @@ Acima está a etapa de verificação da execução da sala de estar. O Muse Imag
 
 ## <a id="run-it"></a>Como executar
 
-Você precisa do Python 3.12 e, para o build da web, do Node 20 ou mais novo. Instale uma única vez:
+Você precisa do Python 3.12 (o PyTorch 2.6.0 não tem wheels para o Python 3.14) e, para o build da web, do Node 22.12 ou mais novo (o 20.19 também funciona). Instale uma única vez:
 
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
 ```
 
-No Windows, troque `.venv/bin/` por `.venv\Scripts\` nesses comandos.
+No Windows, crie o ambiente com `py -3.12 -m venv .venv` e troque `.venv/bin/` por `.venv\Scripts\` nesses comandos.
 
 ### Reproduzir as execuções gravadas (sem chave)
 
@@ -153,6 +155,8 @@ No Windows, troque `.venv/bin/` por `.venv\Scripts\` nesses comandos.
 ```
 
 Abra http://127.0.0.1:8787. Os cômodos de demonstração reproduzem passo a passo as execuções em [`demo-runs/`](../../demo-runs), como no app hospedado. Nenhum modelo é chamado. As fotos de produtos que essas execuções mostram ficam em `demo-runs/_photos`, e a caixa de upload avisa que as execuções ao vivo estão desligadas.
+
+A reprodução não precisa de PyTorch. Se você só quer reproduzir, rode `.venv/bin/pip install -r backend/requirements-test.txt` no lugar das duas linhas de `pip` acima: ele instala todos os pacotes Python que o servidor de reprodução e os testes usam. O build da web continua necessário.
 
 ### Execuções ao vivo com a sua própria chave da Meta Model API
 
@@ -280,4 +284,4 @@ docs/            README images and translations
 - Fontes: Geist e Geist Mono (Vercel) e Instrument Serif, todas sob a SIL Open Font License.
 - Os cômodos de demonstração foram gerados com o Muse Image 1.0.
 
-Feito por [Chanjoong Kim](https://github.com/chanjoongx). Código: MIT, veja [LICENSE](../../LICENSE).
+Feito por [Chanjoong Kim](https://github.com/chanjoongx), estudante de IA na Universidade Kookmin, em Seul. Código: MIT, veja [LICENSE](../../LICENSE).

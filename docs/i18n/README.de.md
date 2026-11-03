@@ -48,7 +48,7 @@
 > [!NOTE]
 > Realroom ist ein Beitrag zum [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon) im Track Indie Developer, zur Aufgabenstellung „Build for Your World“. Der Agent, die Web-App, der Katalogindex und die Demo-Räume sind alle in der Entwicklungsphase vom 27. Oktober bis 4. November 2026 entstanden.
 >
-> Die gehostete App spielt die drei aufgezeichneten Läufe ab und führt den ganzen Agenten live mit einem hochgeladenen Foto aus, bis zu 40-mal am Tag. Auf deinem eigenen Rechner spielt dieselbe App die Läufe ohne Schlüssel ab oder läuft live mit deinem eigenen Schlüssel für die Meta Model API. Beide Wege stehen unter [Ausführen](#run-it).
+> Die gehostete App spielt die drei aufgezeichneten Läufe ab und führt den ganzen Agenten live mit einem hochgeladenen Foto aus, bis zu 40-mal am Tag. Ein Live-Lauf dauert etwa vier bis acht Minuten, und die Seite verfolgt den Lauf, während er arbeitet. Auf deinem eigenen Rechner spielt dieselbe App die Läufe ohne Schlüssel ab oder läuft live mit deinem eigenen Schlüssel für die Meta Model API. Beide Wege stehen unter [Ausführen](#run-it).
 
 <p align="center">
   <picture>
@@ -64,7 +64,7 @@
   <sub>Der Demo-Lauf im Wohnzimmer, in der App abgespielt: Scan, Platzierungsvorlage, Prüfen, dann der Vorher-nachher-Regler.</sub>
 </p>
 
-Realroom ist ein Agent, der auf den Modellen von Meta aufbaut. Du gibst ihm ein Foto deines Zimmers und einen Satz dazu, was du dir wünschst. Er analysiert den Raum, plant, was hinzukommen oder ersetzt werden soll, sucht unter 4.375 echten Produkten nach Stücken, die in den Raum passen, und rendert sie ins Foto. Danach prüft er seine eigene Arbeit. SAM 3.1 findet jedes Produkt im Rendering wieder, Muse Spark 1.3 vergleicht es mit dem Katalogfoto des Produkts, und alles, was nicht gelungen ist, wird neu gezeichnet. Nur die neuen Produkte, ihre Schatten und die freigeräumten Stellen kommen vom Bildmodell. Alles andere wird aus deinem Originalfoto zurückkopiert, und auf der Seite kannst du das in deinem eigenen Browser nachzählen.
+Realroom ist ein Agent, der auf den Modellen von Meta aufbaut. Du gibst ihm ein Foto deines Zimmers und einen Satz dazu, was du dir wünschst. Muse Spark 1.3 analysiert den Raum und plant, was hinzukommen oder ersetzt werden soll, und SAM 3.1 umreißt jedes Objekt. Der Agent sucht unter 4.375 echten Produkten nach Stücken, deren angegebene Maße in den Raum passen, und ordnet sie nach ihren Beschreibungen von Muse Spark Open und nach dem Perception Encoder von Meta. Spark wählt eine Kombination, die zusammenpasst, und Muse Image 1.0 zeichnet sie ins Foto. Danach prüft der Agent seine eigene Arbeit: SAM 3.1 findet jedes Produkt im Rendering wieder, Muse Spark 1.3 vergleicht es in drei getrennten Prüfungen mit seinem Katalogfoto, und ein Produkt, das nicht gelungen ist, wird neu gezeichnet. Nur die neuen Produkte, ihre Schatten und die freigeräumten Stellen kommen aus dem Rendering. Jedes andere Pixel wird aus deinem Originalfoto zurückkopiert, und auf der Seite kannst du das in deinem eigenen Browser nachzählen.
 
 Probier es unter [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run) aus. Die Demo-Räume spielen aufgezeichnete Läufe ab, und das Upload-Feld führt den ganzen Agenten mit deinem eigenen Foto aus.
 
@@ -84,7 +84,7 @@ Die Demo-Räume wurden mit Muse Image 1.0 erzeugt, daher enthält dieses Reposit
 | Leeres Zimmer, Einzugstag | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | Sofa, Teppich, Stehlampe, Couchtisch, Pflanzkübel | 5 von 5, der Teppich und die Stehlampe nach je einer Runde Neuzeichnen | 63,6 % | 384&nbsp;s | $0.58 |
 | Einzimmerwohnung, die erste eigene | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | Bettwäsche, Teppich, Wandbild | 3 von 3, die Bettwäsche nach einer Runde Neuzeichnen | 67,5 % | 477&nbsp;s | $0.40 |
 
-„Übereinstimmung“ zählt ein Produkt, wenn mindestens zwei von drei getrennten Prüfungen seiner endgültigen Pixel durch Muse Spark 1.3 „match“ ergeben. Jede Prüfung legt einen engen Ausschnitt des Produkts neben sein Katalogfoto, und die App listet alle drei Urteile auf. Die Kosten sind Schätzungen nach den veröffentlichten Preisen von Meta, pro Aufruf protokolliert.
+„Übereinstimmung“ zählt ein Produkt, wenn mindestens zwei von drei getrennten Prüfungen seiner endgültigen Pixel durch Muse Spark 1.3 „match“ ergeben. Jede Prüfung legt einen engen Ausschnitt des Produkts neben sein Katalogfoto, und die App listet alle drei Urteile auf. Die Kosten sind Schätzungen nach den veröffentlichten Preisen von Meta, pro Aufruf protokolliert. Die aufgezeichneten Läufe zeichneten drei Kandidaten und konnten bis zu zwei Produkte neu zeichnen. Live-Läufe zeichnen zwei und zeichnen höchstens ein Produkt neu, daher kosten sie weniger, etwa $0.2 bis $0.5.
 
 ## <a id="how-a-run-works"></a>So funktioniert ein Lauf
 
@@ -125,6 +125,8 @@ Oben siehst du den Prüfschritt des Wohnzimmer-Laufs. Muse Image hat drei Kandid
 | Muse Spark Open | Baseten, Fireworks | Tags und Beschreibungen für den ganzen Katalog |
 | `pe-core-b16-224` | offene Gewichte, im Server der App (Modal oder dein Rechner) | Perception Encoder: gleicht die Optik jedes Slots mit den Katalogfotos ab |
 
+Während eines Laufs ruft Realroom nur die ersten drei Modelle auf, alle unter api.meta.ai, und führt den Perception Encoder im eigenen Server aus. Muse Spark Open hat den Katalog schon vor allen Läufen getaggt. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) prüft den Code des Agenten in `backend/realroom/`: Der Test schlägt fehl, wenn die Modell-IDs dort nicht die vier aus dieser Tabelle sind, wenn die API-Adresse nicht api.meta.ai ist oder wenn ein String in diesem Code eine andere URL enthält oder ein gängiges Modell nennt, das nicht von Meta stammt, etwa GPT, Claude, Gemini, Flux oder SigLIP.
+
 ## Was du prüfen kannst
 
 - `before.png` und `after.png` sind verlustfrei. In der App lädt **Check it in your browser** beide herunter, vergleicht sie in deinem Browser Pixel für Pixel und zeigt dann den Anteil, der identisch ist.
@@ -135,16 +137,16 @@ Oben siehst du den Prüfschritt des Wohnzimmer-Laufs. Muse Image hat drei Kandid
 
 ## <a id="run-it"></a>Ausführen
 
-Du brauchst Python 3.12 und für den Web-Build Node 20 oder neuer. Einmalig installieren:
+Du brauchst Python 3.12 (für Python 3.14 gibt es keine Wheels von PyTorch 2.6.0) und für den Web-Build Node 22.12 oder neuer (20.19 geht auch). Einmalig installieren:
 
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
 ```
 
-Unter Windows schreibst du `.venv\Scripts\` dort, wo in diesen Befehlen `.venv/bin/` steht.
+Unter Windows legst du die Umgebung mit `py -3.12 -m venv .venv` an und schreibst `.venv\Scripts\` dort, wo in diesen Befehlen `.venv/bin/` steht.
 
 ### Aufgezeichnete Läufe abspielen (ohne Schlüssel)
 
@@ -153,6 +155,8 @@ Unter Windows schreibst du `.venv\Scripts\` dort, wo in diesen Befehlen `.venv/b
 ```
 
 Öffne http://127.0.0.1:8787. Die Demo-Räume spielen die Läufe in [`demo-runs/`](../../demo-runs) Schritt für Schritt ab, wie in der gehosteten App. Es wird kein Modell aufgerufen. Die Produktfotos, die diese Läufe zeigen, liegen in `demo-runs/_photos`, und das Upload-Feld meldet, dass Live-Läufe ausgeschaltet sind.
+
+Zum Abspielen brauchst du kein PyTorch. Wenn du nur abspielen willst, führe statt der beiden `pip`-Zeilen oben `.venv/bin/pip install -r backend/requirements-test.txt` aus: Das installiert alle Python-Pakete, die der Wiedergabe-Server und die Tests brauchen. Den Web-Build brauchst du trotzdem.
 
 ### Live-Läufe mit deinem eigenen Schlüssel für die Meta Model API
 
@@ -280,4 +284,4 @@ docs/            README images and translations
 - Schriften: Geist und Geist Mono (Vercel) sowie Instrument Serif, alle unter der SIL Open Font License.
 - Die Demo-Räume wurden mit Muse Image 1.0 erzeugt.
 
-Entwickelt von [Chanjoong Kim](https://github.com/chanjoongx). Code: MIT, siehe [LICENSE](../../LICENSE).
+Entwickelt von [Chanjoong Kim](https://github.com/chanjoongx), KI-Student an der Kookmin-Universität in Seoul. Code: MIT, siehe [LICENSE](../../LICENSE).

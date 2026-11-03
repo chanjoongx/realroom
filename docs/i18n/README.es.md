@@ -48,7 +48,7 @@
 > [!NOTE]
 > Realroom participa en el [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon), en la categoría Indie Developer, con el reto "Build for Your World". El agente, la app web, el índice del catálogo y las habitaciones de demostración se hicieron todos durante el periodo de desarrollo, del 27 de octubre al 4 de noviembre de 2026.
 >
-> La app alojada reproduce las tres ejecuciones grabadas y ejecuta el agente completo en vivo sobre una foto subida, hasta 40 veces al día. En tu propia máquina, la misma app reproduce las ejecuciones sin clave, o funciona en vivo con tu propia clave de Meta Model API. Las dos formas se explican en [Cómo ejecutarlo](#run-it).
+> La app alojada reproduce las tres ejecuciones grabadas y ejecuta el agente completo en vivo sobre una foto subida, hasta 40 veces al día. Una ejecución en vivo tarda entre cuatro y ocho minutos aproximadamente, y la página la sigue mientras avanza. En tu propia máquina, la misma app reproduce las ejecuciones sin clave, o funciona en vivo con tu propia clave de Meta Model API. Las dos formas se explican en [Cómo ejecutarlo](#run-it).
 
 <p align="center">
   <picture>
@@ -64,7 +64,7 @@
   <sub>La ejecución de demostración de la sala de estar, reproducida en la app: escaneo, guía de colocación, verificación y, por último, el control deslizante de antes y después.</sub>
 </p>
 
-Realroom es un agente construido con los modelos de Meta. Le das una foto de una habitación y una frase sobre lo que quieres. Analiza la habitación, planifica qué agregar o reemplazar, busca entre 4375 productos reales piezas que quepan en el espacio y las renderiza dentro de la foto. Después revisa su propio trabajo. SAM 3.1 vuelve a localizar cada producto en el render, Muse Spark 1.3 lo compara con la foto del producto en el catálogo y todo lo que salió mal se vuelve a dibujar. Solo los productos nuevos, sus sombras y las zonas que se despejaron salen del modelo de imagen. Todo lo demás se copia de vuelta desde tu foto original, y la página te permite comprobar ese recuento en tu propio navegador.
+Realroom es un agente construido con los modelos de Meta. Le das una foto de una habitación y una frase sobre lo que quieres. Muse Spark 1.3 analiza la habitación y planifica qué agregar o reemplazar, y SAM 3.1 delinea cada objeto. El agente busca entre 4375 productos reales piezas cuyas medidas indicadas en el anuncio quepan en el espacio, y las ordena según sus descripciones de Muse Spark Open y según el Perception Encoder de Meta. Spark elige un conjunto que combine bien, y Muse Image 1.0 lo dibuja dentro de la foto. Después el agente revisa su propio trabajo: SAM 3.1 vuelve a localizar cada producto en el render, Muse Spark 1.3 lo compara con su foto de catálogo en tres comprobaciones independientes y un producto que salió mal se vuelve a dibujar. Solo los productos nuevos, sus sombras y las zonas que se despejaron salen del render. Todos los demás píxeles se copian de vuelta desde tu foto original, y la página te permite comprobar ese recuento en tu propio navegador.
 
 Pruébalo en [chanjoongx--realroom.us-east.modal.run](https://chanjoongx--realroom.us-east.modal.run). Las habitaciones de demostración reproducen ejecuciones grabadas, y el cuadro de subida ejecuta el agente completo sobre tu propia foto.
 
@@ -84,7 +84,7 @@ Las habitaciones de demostración se generaron con Muse Image 1.0, así que este
 | Habitación vacía, día de la mudanza | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofá, alfombra, lámpara de pie, mesa de centro, maceta | 5 de 5, la alfombra y la lámpara de pie tras una ronda de redibujado cada una | 63.6&nbsp;% | 384&nbsp;s | $0.58 |
 | Estudio, primer apartamento | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | ropa de cama, alfombra, cuadro | 3 de 3, la ropa de cama tras una ronda de redibujado | 67.5&nbsp;% | 477&nbsp;s | $0.40 |
 
-"Coincidencia" cuenta un producto cuando al menos dos de tres comprobaciones independientes de Muse Spark 1.3 sobre sus píxeles finales dicen "match". Cada comprobación pone un recorte ajustado del producto junto a su foto de catálogo, y la app muestra los tres veredictos. Los costos son estimaciones basadas en los precios publicados por Meta, registradas por llamada.
+"Coincidencia" cuenta un producto cuando al menos dos de tres comprobaciones independientes de Muse Spark 1.3 sobre sus píxeles finales dicen "match". Cada comprobación pone un recorte ajustado del producto junto a su foto de catálogo, y la app muestra los tres veredictos. Los costos son estimaciones basadas en los precios publicados por Meta, registradas por llamada. Las ejecuciones grabadas dibujaron tres candidatos y podían redibujar hasta dos productos. Las ejecuciones en vivo dibujan dos y redibujan como máximo uno, así que cuestan menos, entre $0.2 y $0.5 aproximadamente.
 
 ## <a id="how-a-run-works"></a>Cómo funciona una ejecución
 
@@ -125,6 +125,8 @@ Arriba se ve el paso de verificación de la ejecución de la sala de estar. Muse
 | Muse Spark Open | Baseten, Fireworks | etiquetas y descripciones de todo el catálogo |
 | `pe-core-b16-224` | pesos abiertos, en el servidor de la app (Modal o tu máquina) | Perception Encoder: compara el aspecto de cada slot con las fotos del catálogo |
 
+Durante una ejecución, Realroom solo llama a los tres primeros modelos, todos en api.meta.ai, y ejecuta el Perception Encoder en su propio servidor. Muse Spark Open etiquetó el catálogo antes de cualquier ejecución. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) revisa el código del agente en `backend/realroom/`: falla si los ID de modelo que hay ahí no son los cuatro de esta tabla, si la dirección de la API no es api.meta.ai, o si alguna cadena de ese código contiene otra URL o nombra un modelo conocido que no sea de Meta, como GPT, Claude, Gemini, Flux o SigLIP.
+
 ## Qué puedes comprobar
 
 - `before.png` y `after.png` se guardan sin pérdida. En la app, **Check it in your browser** descarga los dos archivos y los compara píxel a píxel en tu navegador, y luego muestra qué proporción es idéntica.
@@ -135,16 +137,16 @@ Arriba se ve el paso de verificación de la ejecución de la sala de estar. Muse
 
 ## <a id="run-it"></a>Cómo ejecutarlo
 
-Necesitas Python 3.12 y, para compilar la web, Node 20 o posterior. Instala lo necesario una sola vez:
+Necesitas Python 3.12 (PyTorch 2.6.0 no tiene wheels para Python 3.14) y, para compilar la web, Node 22.12 o posterior (también funciona con 20.19). Instala lo necesario una sola vez:
 
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/pip install -r backend/requirements.txt
 (cd web && npm ci && npm run build)
 ```
 
-En Windows, escribe `.venv\Scripts\` donde estos comandos dicen `.venv/bin/`.
+En Windows, crea el entorno con `py -3.12 -m venv .venv` y escribe `.venv\Scripts\` donde estos comandos dicen `.venv/bin/`.
 
 ### Reproducir las ejecuciones grabadas (sin clave)
 
@@ -153,6 +155,8 @@ En Windows, escribe `.venv\Scripts\` donde estos comandos dicen `.venv/bin/`.
 ```
 
 Abre http://127.0.0.1:8787. Las habitaciones de demostración reproducen paso a paso las ejecuciones de [`demo-runs/`](../../demo-runs), igual que en la app alojada. No se llama a ningún modelo. Las fotos de productos que muestran esas ejecuciones están en `demo-runs/_photos`, y el cuadro de subida indica que las ejecuciones en vivo están desactivadas.
+
+Para reproducir no hace falta PyTorch. Si solo quieres la reproducción, ejecuta `.venv/bin/pip install -r backend/requirements-test.txt` en lugar de las dos líneas de `pip` de arriba: instala todos los paquetes de Python que usan el servidor de reproducción y las pruebas. La compilación de la web sigue siendo necesaria.
 
 ### Ejecuciones en vivo con tu propia clave de Meta Model API
 
@@ -280,4 +284,4 @@ docs/            README images and translations
 - Fuentes: Geist y Geist Mono (Vercel) e Instrument Serif, todas bajo la SIL Open Font License.
 - Las habitaciones de demostración se generaron con Muse Image 1.0.
 
-Creado por [Chanjoong Kim](https://github.com/chanjoongx). Código: MIT, consulta [LICENSE](../../LICENSE).
+Creado por [Chanjoong Kim](https://github.com/chanjoongx), estudiante de IA en la Universidad Kookmin de Seúl. Código: MIT, consulta [LICENSE](../../LICENSE).
