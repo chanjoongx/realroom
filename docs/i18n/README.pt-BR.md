@@ -80,11 +80,11 @@ Os cômodos de demonstração foram gerados com o Muse Image 1.0, então este re
 
 | Cômodo | Pedido | Produtos | Correspondem | Pixels intactos | Tempo | Custo |
 |---|---|---|---|---|---|---|
-| Sala de estar, apartamento de 2005 | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofá, tapete, luminária de chão | 3 de 3, o tapete depois de uma rodada de redesenho | 70,3% | 216&nbsp;s | US$&nbsp;0,24 |
-| Cômodo vazio, dia da mudança | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofá, tapete, luminária de chão, mesa de centro, vaso de planta | 5 de 5, o tapete depois de duas rodadas de redesenho e a mesa de centro depois de uma | 63,3% | 288&nbsp;s | US$&nbsp;0,37 |
-| Studio, primeiro apartamento | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | estrutura de cama, roupa de cama, tapete | 2 de 3: um redesenho do tapete tirou 9, mas a checagem final deu 6 por uma treliça marcada demais | 70,7% | 244&nbsp;s | US$&nbsp;0,30 |
+| Sala de estar, apartamento de 2005 | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofá, tapete, luminária de chão | 3 de 3, a luminária de chão depois de uma rodada de redesenho | 68,7% | 433&nbsp;s | US$&nbsp;0,39 |
+| Cômodo vazio, dia da mudança | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofá, tapete, luminária de chão, mesa de centro, vaso de planta | 5 de 5, o tapete e a luminária de chão depois de uma rodada de redesenho cada um | 63,6% | 384&nbsp;s | US$&nbsp;0,58 |
+| Studio, primeiro apartamento | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | roupa de cama, tapete, quadro | 3 de 3, a roupa de cama depois de uma rodada de redesenho | 67,5% | 477&nbsp;s | US$&nbsp;0,40 |
 
-"Correspondem" conta um produto só quando todas as checagens do Muse Spark 1.3 sobre os pixels finais dele dizem "match". Cada checagem põe um recorte fechado do produto renderizado ao lado da foto dele no catálogo. Os custos são estimativas com base nos preços publicados pela Meta, registradas a cada chamada.
+"Correspondem" conta um produto quando pelo menos duas de três checagens independentes do Muse Spark 1.3 sobre os pixels finais dele dizem "match". Cada checagem põe um recorte fechado do produto ao lado da foto dele no catálogo, e o app lista os três vereditos. Os custos são estimativas com base nos preços publicados pela Meta, registradas a cada chamada.
 
 ## <a id="how-a-run-works"></a>Como funciona uma execução
 
@@ -105,15 +105,15 @@ flowchart LR
 | Busca | índice do catálogo, PE-Core B16 | Para cada slot: os produtos daquele tipo, depois só os que têm dimensões reais dentro da faixa de tamanho do slot, ordenados pela similaridade de texto com a descrição do Muse Spark Open (45%) e pela similaridade texto-imagem do Perception Encoder (55%). 24 por slot. O Perception Encoder roda no próprio servidor do app, então esta etapa não faz nenhuma chamada de API. |
 | Escolha | Muse Spark 1.3 | O Spark vê o cômodo e uma folha numerada de candidatos para cada slot em uma única requisição, e por isso escolhe um conjunto que combina entre si. |
 | Renderização | Muse Image 1.0 | Uma chamada a `/images/edits` com o cômodo, um guia de posicionamento e as fotos reais dos produtos retorna dois ou três candidatos. As ferramentas de busca na web e de busca de imagens do modelo ficam desligadas. |
-| Verificação | SAM 3.1, Muse Spark 1.3 | Cada candidato é alinhado ao original (homografia ECC) e tem as cores ajustadas. O SAM 3.1 volta a localizar cada produto novo, e o Spark compara cada recorte de produto com a foto do catálogo e avalia a cena como um todo. O melhor candidato é mantido. |
-| Correção | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Um produto avaliado como "partial" é recortado junto com o entorno, ampliado e redesenhado com a foto do catálogo como referência, com duas tentativas por rodada e até duas rodadas. Uma tentativa só substitui a versão atual se o Spark der a ela uma nota maior, e as observações do Spark orientam a rodada seguinte. A bagunça que a renderização deixou para trás ganha uma passada própria, conferida com o SAM 3.1. Se algo mudou, o Spark avalia de novo o cômodo pronto, e um produto só conta como correspondente se essa avaliação concordar. |
+| Verificação | SAM 3.1, Muse Spark 1.3 | Cada candidato é alinhado ao original (homografia ECC) e tem as cores ajustadas. O SAM 3.1 volta a localizar cada produto novo, e o Spark compara cada recorte de produto com a foto do catálogo e avalia a cena como um todo. O melhor candidato é mantido. Depois, o Spark confere cada um dos produtos dele mais três vezes, cada checagem em uma requisição separada, com um recorte fechado ao lado da foto do catálogo. O veredito do Spark sobre os mesmos pixels pode mudar de uma requisição para outra, então um produto só conta como correspondente quando pelo menos duas das três checagens dizem "match". |
+| Correção | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Um produto que as checagens classificam como "partial" é recortado junto com o entorno, ampliado e redesenhado com a foto do catálogo como referência, com duas tentativas por rodada e até duas rodadas. Um produto que as checagens não encontram no lugar planejado é procurado primeiro na foto inteira, porque às vezes a renderização o desenha em outro lugar; só se não estiver lá ele é adicionado no lugar planejado, do mesmo jeito. Uma tentativa só substitui a versão atual se o Spark der a ela uma nota maior, e as observações do Spark orientam a rodada seguinte. Um produto redesenhado, e qualquer produto cujos próprios pixels uma etapa posterior tenha alterado, é conferido de novo três vezes na foto pronta. A bagunça que a renderização deixou para trás ganha uma passada própria, conferida com o SAM 3.1. Se algo mudou, o Spark avalia de novo o cômodo pronto. |
 | Composição | nenhum | O resultado tira da renderização apenas as máscaras dos produtos, uma borda fina em volta delas, as sombras de contato e o espaço que os objetos removidos ocupavam. Todos os outros pixels são os originais. |
 
 O app web reproduz cada execução a partir do log de eventos: a análise com todos os contornos, o funil de busca, as folhas de escolha, todos os candidatos de renderização, cada correção com o seu antes e depois, e as camadas finais. O cabeçalho de cada etapa mostra o ID do modelo que ela chamou.
 
 ![A etapa de verificação da execução da sala de estar](../verify.jpg)
 
-Acima está a etapa de verificação da execução da sala de estar. O Muse Image desenhou três candidatos, o Spark deu nota aos três produtos de cada um, e o candidato 2 foi mantido. O tapete dele recebeu nota 5 de 10, então seguiu para a etapa de correção e voltou com 9.
+Acima está a etapa de verificação da execução da sala de estar. O Muse Image desenhou três candidatos, o Spark deu nota aos três produtos de cada um, e o candidato 1 foi mantido. A luminária de chão dele recebeu nota 5 de 10, e três checagens independentes deram nota 6 cada uma, então ela seguiu para a etapa de correção e voltou com 9.
 
 ## <a id="meta-models"></a>Modelos da Meta
 
@@ -129,8 +129,9 @@ Acima está a etapa de verificação da execução da sala de estar. O Muse Imag
 
 - `before.png` e `after.png` estão em formato sem perdas. No app, o **Check it in your browser** baixa os dois, compara os arquivos pixel a pixel no seu navegador e depois mostra a fração de pixels idênticos.
 - `layers.png` pinta cada pixel alterado como produto, área limpa ou sombra. `masks.npz` guarda todas as máscaras de objetos e de produtos.
+- No `run.json`, o veredito de cada produto lista as três checagens finais a partir das quais ele foi contado, ao lado do veredito que a etapa de verificação ou a de correção deu a ele.
 - `ledger.jsonl` lista cada chamada de modelo com o tempo e o custo estimado. A busca do Perception Encoder também está lá, com custo zero, porque roda no próprio servidor do app.
-- `drift.jpg` mostra o quanto a renderização bruta se afastou do original em todo o resto (diferença média de cor dE de 1,7 a 3,7 nas execuções de demonstração). Esses pixels são o motivo da etapa de composição.
+- `drift.jpg` mostra o quanto a renderização bruta se afastou do original em todo o resto (diferença média de cor dE de 1,8 a 2,7 nas execuções de demonstração). Esses pixels são o motivo da etapa de composição.
 
 ## <a id="run-it"></a>Como executar
 
@@ -169,7 +170,7 @@ Abra http://127.0.0.1:8787. Os cômodos de demonstração reproduzem passo a pas
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-`--live` é a única opção que separa a reprodução da execução ao vivo. Com ela, a caixa de upload roda o agente inteiro na sua foto, e a página acompanha a execução enquanto ela acontece. Uma execução custa cerca de US$ 0,2 a US$ 0,4 pelos preços publicados pela Meta, e o `ledger.jsonl` dela lista cada chamada. O servidor local inicia no máximo 10 execuções ao vivo por dia; `--per-day` muda esse limite. Uma execução que passa de 12 minutos ou de US$ 0,60 pula os redesenhos que faltam e termina com o que tem.
+`--live` é a única opção que separa a reprodução da execução ao vivo. Com ela, a caixa de upload roda o agente inteiro na sua foto, e a página acompanha a execução enquanto ela acontece. Uma execução custa cerca de US$ 0,2 a US$ 0,5 pelos preços publicados pela Meta, e o `ledger.jsonl` dela lista cada chamada. O servidor local inicia no máximo 10 execuções ao vivo por dia; `--per-day` muda esse limite. Uma execução que passa de 12 minutos ou de US$ 0,60 pula os redesenhos que faltam e termina com o que tem.
 
 Para rodar o agente em uma foto, sem o app web:
 
@@ -261,7 +262,8 @@ docs/            README images and translations
 
 ## Limitações
 
-- Texturas sutis são difíceis para o modelo de imagem. Um tapete creme com uma trama cruzada discreta saiu marcado demais em algumas renderizações e liso em outras. O loop de correção detecta isso, mas as notas do Spark para os mesmos pixels variam: na execução do studio, um redesenho desse tapete tirou 9 e a checagem final deu 6. Quando as checagens discordam, o resultado mostra o veredito mais baixo.
+- Texturas e cores sutis são difíceis para o modelo de imagem. Tapetes com trama fina costumam sair marcados demais, e a roupa de cama costuma sair mais escura ou mais acinzentada do que na foto do catálogo. O loop de correção redesenha os produtos mais fracos (um por execução no app hospedado, dois por execução gravada), e os vereditos do Spark sobre os mesmos pixels variam de uma requisição para outra, então um produto só conta como correspondente quando pelo menos duas de três checagens independentes dizem "match".
+- Às vezes a renderização põe um produto fora do lugar planejado, ou nem chega a desenhá-lo. Quando as checagens não encontram nada nesse lugar, o Spark procura primeiro o produto na foto inteira, e a etapa de correção só o adiciona se ele não estiver lá.
 - O plano muda entre execuções do mesmo pedido, porque o Spark planeja e escolhe de novo a cada vez.
 - Onde havia um objeto removido, o piso redesenhado pode deixar uma emenda discreta no encontro com o piso original.
 - Os anúncios vêm de um conjunto de dados publicado em 2021, então não há preços e alguns links de produtos já não abrem.

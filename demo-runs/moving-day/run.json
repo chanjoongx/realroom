@@ -4,7 +4,7 @@
  "status": "done",
  "events": [
   {
-   "t": 0.02,
+   "t": 0.03,
    "stage": "scan",
    "title": "Reading the room",
    "detail": "Muse Spark 1.3 lists every object, the fixed structure, size and light",
@@ -12,29 +12,29 @@
    "status": "start"
   },
   {
-   "t": 35.9,
+   "t": 41.83,
    "stage": "scan",
-   "title": "Found 3 objects and 7 fixed elements",
-   "detail": "living room, about 380 x 320 cm (medium confidence). Nearly empty bright living room with large window, wood floor, two boxes and a rolled mat to clear.",
+   "title": "Found 3 objects and 8 fixed elements",
+   "detail": "living room, about 360 x 300 cm (medium confidence). Empty bright room with wood floor and large window, with two moving boxes and a rolled mat.",
    "model": "muse-spark-1.3",
-   "sec": 29.9,
+   "sec": 33.7,
    "status": "done"
   },
   {
-   "t": 35.91,
+   "t": 41.84,
    "stage": "scan",
    "title": "Outlined 3 objects with SAM 3.1",
-   "detail": "2 concept prompts found 3 objects, 0 box-prompt request(s) for the rest; Spark box vs SAM box IoU 0.332",
+   "detail": "2 concept prompts found 3 objects, 0 box-prompt request(s) for the rest; Spark box vs SAM box IoU 0.359",
    "model": "sam-3.1",
-   "sec": 5.6,
-   "usd": 0.03,
+   "sec": 7.7,
+   "usd": 0.0287,
    "status": "done"
   },
   {
-   "t": 35.91,
+   "t": 41.84,
    "stage": "plan",
-   "title": "Calm Light-Filled Lounge Corner",
-   "detail": "Create a calm, light sitting corner for two with a neutral sofa, soft rug and warm lamp light.",
+   "title": "Calm Light Two-Seat Lounge",
+   "detail": "Create a calm light-filled lounge for work breaks with compact seating for two, soft texture underfoot and warm evening light.",
    "model": "muse-spark-1.3",
    "status": "done",
    "slots": [
@@ -66,26 +66,26 @@
    ]
   },
   {
-   "t": 47.31,
+   "t": 42.51,
    "stage": "search",
    "title": "Searched 4,375 real products",
-   "detail": "sofa: 556 > 323 fit > 24; rug: 640 > 382 fit > 24; floor lamp: 76 > 65 fit > 24; coffee table: 83 > 26 fit > 24; planter: 146 > 25 fit > 24",
+   "detail": "sofa: 556 > 242 fit > 24; rug: 640 > 377 fit > 24; floor lamp: 76 > 65 fit > 24; coffee table: 83 > 26 fit > 24; planter: 146 > 36 fit > 24",
    "model": "catalog index + pe-core-b16-224",
-   "sec": 11.39,
+   "sec": 0.66,
    "status": "done"
   },
   {
-   "t": 69.75,
+   "t": 76.84,
    "stage": "pick",
-   "title": "Chose Beige Linen Loveseat Sofa, Cream geometric criss-cross rug, Glass Column Floor Lamp, Round Traditional Coffee Table, Two-Tone Ceramic Planter with Stand",
-   "detail": "All beige, cream, white and light oak with one green plant for a calm light-filled sitting corner for two that stays bright and easy to see.",
+   "title": "Chose Beige Linen Loveseat Sofa, Cream Chevron Patterned Area Rug, Glass Column Floor Lamp, Round Traditional Coffee Table, White Cylindrical Planter with Stand",
+   "detail": "All picks share beige, off-white, light wood and warm white for a calm light lounge; plain bold shapes stay clear and work with the bright window and pale floor.",
    "model": "muse-spark-1.3",
-   "sec": 22.4,
-   "usd": 0.0272,
+   "sec": 34.3,
+   "usd": 0.0276,
    "status": "done"
   },
   {
-   "t": 69.82,
+   "t": 76.91,
    "stage": "render",
    "title": "Drawing 3 candidates",
    "detail": "Muse Image 1.0 gets the room, a placement guide and 5 real product photos",
@@ -93,89 +93,101 @@
    "status": "start"
   },
   {
-   "t": 92.25,
+   "t": 97.46,
    "stage": "render",
-   "title": "3 candidates in 22 s",
+   "title": "3 candidates in 20 s",
    "detail": "",
    "model": "muse-image-1.0",
-   "sec": 22.0,
+   "sec": 20.1,
    "usd": 0.03,
    "status": "done"
   },
   {
-   "t": 143.84,
+   "t": 198.05,
    "stage": "verify",
    "title": "Inspected 15 product renders, kept candidate 2",
-   "detail": "Beige Linen Loveseat Sofa: match 9, Cream geometric criss-cross rug: partial 4, Glass Column Floor Lamp: match 9, Round Traditional Coffee Table: partial 6, Two-Tone Ceramic Planter with Stand: match 9",
+   "detail": "Beige Linen Loveseat Sofa: match 9, Cream Chevron Patterned Area Rug: match 9, Glass Column Floor Lamp: partial 4, Round Traditional Coffee Table: match 9, White Cylindrical Planter with Stand: match 9",
    "model": "muse-spark-1.3 + sam-3.1",
-   "sec": 51.6,
-   "usd": 0.1212,
+   "sec": 100.6,
+   "usd": 0.1184,
    "status": "done",
    "scores": [
-    0.626,
-    0.675,
-    0.3342
+    0.6833,
+    0.753,
+    0.642
    ]
   },
   {
-   "t": 143.85,
-   "stage": "fix",
-   "title": "Redrawing the Cream geometric criss-cross rug",
-   "detail": "pattern far bolder, thicker raised lattice vs faint low-contrast lines in reference; pile looks chunky high-pile shag vs flat low-pile texture in reference",
-   "model": "muse-image-1.0",
-   "status": "start"
-  },
-  {
-   "t": 183.76,
-   "stage": "fix",
-   "title": "Redrawing the Cream geometric criss-cross rug, round 2",
-   "detail": "Pile looks thicker and fluffier than the thin 1.3 cm low-pile reference; Diamond lattice looks larger, bolder and higher-contrast than the fine subtle criss-cross in reference",
-   "model": "muse-image-1.0",
-   "status": "start"
-  },
-  {
-   "t": 220.76,
-   "stage": "fix",
-   "title": "Cream geometric criss-cross rug: partial 4 -> match 9",
-   "detail": "4 redraws in 2 rounds, each judged by Spark",
-   "model": "muse-image-1.0 + sam-3.1 + muse-spark-1.3",
-   "sec": 76.9,
-   "usd": 0.0874,
+   "t": 231.22,
+   "stage": "verify",
+   "title": "Checked each product 3 times on candidate 2",
+   "detail": "Each check is a separate request with a close crop next to the catalog photo, and a product counts as a match when at least 2 of the 3 say match. Beige Linen Loveseat Sofa: match 9, match 9, match 9. Cream Chevron Patterned Area Rug: partial 7, partial 7, match 9. Glass Column Floor Lamp: partial 6, partial 7, partial 7. Round Traditional Coffee Table: match 9, match 9, match 9. White Cylindrical Planter with Stand: partial 7, match 9, match 9.",
+   "model": "muse-spark-1.3",
+   "sec": 33.2,
+   "usd": 0.1582,
    "status": "done"
   },
   {
-   "t": 220.76,
+   "t": 231.24,
    "stage": "fix",
-   "title": "Redrawing the Round Traditional Coffee Table",
-   "detail": "color much too light/pale, missing warm honey-brown tone; finish looks whitewashed matte vs saturated varnished wood in reference",
+   "title": "Redrawing the Cream Chevron Patterned Area Rug",
+   "detail": "Color renders as bright off-white rather than warm cream-beige of reference; Border looks wider and brighter white vs thin cream binding in reference",
    "model": "muse-image-1.0",
    "status": "start"
   },
   {
-   "t": 265.97,
+   "t": 283.61,
    "stage": "fix",
-   "title": "Round Traditional Coffee Table: partial 6 -> match 9",
+   "title": "Cream Chevron Patterned Area Rug: partial 7 -> match 9",
    "detail": "2 redraws in 1 round, each judged by Spark",
    "model": "muse-image-1.0 + sam-3.1 + muse-spark-1.3",
-   "sec": 45.2,
-   "usd": 0.0454,
+   "sec": 52.4,
+   "usd": 0.0435,
    "status": "done"
   },
   {
-   "t": 286.89,
+   "t": 283.62,
+   "stage": "fix",
+   "title": "Redrawing the Glass Column Floor Lamp",
+   "detail": "shade top edge looks wavy and asymmetric, not flat straight drum as in reference; render is low-resolution and blurry, glass column and metal collars lack crisp detail",
+   "model": "muse-image-1.0",
+   "status": "start"
+  },
+  {
+   "t": 329.67,
+   "stage": "fix",
+   "title": "Glass Column Floor Lamp: partial 7 -> match 9",
+   "detail": "2 redraws in 1 round, each judged by Spark",
+   "model": "muse-image-1.0 + sam-3.1 + muse-spark-1.3",
+   "sec": 46.0,
+   "usd": 0.042,
+   "status": "done"
+  },
+  {
+   "t": 362.78,
    "stage": "fix",
    "title": "Judged the finished room again",
-   "detail": "Overall 9.0, photoreal 9.0, cohesion 9.0. Clean removal of boxes and rolled mat, lighting and shadows consistent, all new beige/cream/wood pieces sit plausibly and look like an unedited phone photo.",
+   "detail": "Overall 8, photoreal 8, cohesion 7. Room is cleanly furnished with neutral beige, cream and light wood pieces that sit plausibly; traditional coffee table styling slightly clashes with modern sofa and lamp is awkwardly tucked behind sofa.",
    "model": "muse-spark-1.3",
-   "sec": 17.0,
-   "usd": 0.0231,
+   "sec": 28.8,
+   "usd": 0.0222,
    "status": "done"
   },
   {
-   "t": 287.94,
+   "t": 383.64,
+   "stage": "result",
+   "title": "Checked the Beige Linen Loveseat Sofa and the Cream Chevron Patterned Area Rug and the Glass Column Floor Lamp and the Round Traditional Coffee Table 3 times again on the finished photo",
+   "detail": "Beige Linen Loveseat Sofa: its pixels changed after the first checks, now match 9, match 9, match 9. Cream Chevron Patterned Area Rug: it was redrawn, now match 9.5, match 9, match 9. Glass Column Floor Lamp: it was redrawn, now match 9, match 9, match 9. Round Traditional Coffee Table: its pixels changed after the first checks, now match 9, match 9, match 9.",
+   "model": "muse-spark-1.3",
+   "sec": 19.3,
+   "usd": 0.1023,
+   "status": "done"
+  },
+  {
+   "t": 383.65,
    "stage": "result",
    "title": "5 of 5 products match their catalog photos",
-   "detail": "63.3% of the photo is pixel-identical to the original (new products 27.8%, cleared 0.0%, shadows 8.9%). The image model drifted everywhere else (mean dE 3.74); those pixels were restored.",
+   "detail": "Spark's checks split on the White Cylindrical Planter with Stand (2 of 3 say match, so it counts). 63.6% of the photo is pixel-identical to the original (new products 27.5%, cleared 0.0%, shadows 8.8%). The image model drifted everywhere else (mean dE 2.68); those pixels were restored.",
    "status": "done"
   }
  ],
@@ -189,8 +201,32 @@
  },
  "brief": "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light.",
  "mode": "furnish",
- "elapsed_s": 288.0,
- "cost_usd": 0.3694,
+ "build": {
+  "version": "dev",
+  "record_checks": 3,
+  "prompts": {
+   "scan": "de0294380b32",
+   "scan_refresh": "0d55822bd275",
+   "scan_furnish": "9f6296328d9d",
+   "pick": "e088946aba76",
+   "judge": "aedf6d85858c",
+   "judge_one": "348a8a20a401",
+   "locate": "8b1023f5e727",
+   "render": "a10907dc6c6f",
+   "redraw": "454831a0c00e",
+   "add": "24b52b12f7c0",
+   "clear": "5d5b7e760885"
+  },
+  "schemas": {
+   "scan": "cc5a510f45e8",
+   "pick": "50646ee5d98d",
+   "judge": "62ee6e5bf39a",
+   "judge_one": "797b9df7b87a",
+   "locate": "814affdd0896"
+  }
+ },
+ "elapsed_s": 383.7,
+ "cost_usd": 0.5778,
  "scan": {
   "size": [
    1792,
@@ -202,149 +238,158 @@
    "problem": ""
   },
   "room_type": "living room",
-  "summary": "Nearly empty bright living room with large window, wood floor, two boxes and a rolled mat to clear.",
+  "summary": "Empty bright room with wood floor and large window, with two moving boxes and a rolled mat.",
   "dimensions_cm": {
-   "basis": "cardboard moving boxes about 40 cm cube and window span about 240 cm, typical ceiling 230 cm",
+   "basis": "typical ceiling about 230 cm with scale from moving boxes (~45 cm cube) and window height",
    "ceiling": 230,
    "confidence": "medium",
-   "depth": 320,
-   "width": 380
+   "depth": 300,
+   "width": 360
   },
   "light": {
-   "color_temperature": "daylight",
-   "direction": "from large window on back wall",
-   "quality": "soft"
+   "color_temperature": "cool daylight",
+   "direction": "from back window",
+   "quality": "soft diffuse"
   },
   "fixed": [
    {
     "name": "left wall",
     "box": [
      0,
-     0,
-     633,
-     1231
+     13,
+     640,
+     1216
     ]
    },
    {
     "name": "window wall",
     "box": [
-     624,
-     132,
-     1717,
-     1056
+     629,
+     103,
+     1726,
+     1036
     ]
    },
    {
     "name": "right wall",
     "box": [
-     1697,
+     1695,
      0,
      1791,
-     1341
+     1343
     ]
    },
    {
     "name": "floor",
     "box": [
      32,
-     941,
-     1722,
+     938,
+     1724,
      1343
     ]
    },
    {
     "name": "ceiling",
     "box": [
+     5,
      0,
-     0,
-     1711,
-     309
+     1719,
+     306
     ]
    },
    {
-    "name": "large window with roller blind",
+    "name": "large window",
     "box": [
-     638,
-     134,
-     1676,
-     878
+     633,
+     384,
+     1670,
+     832
+    ]
+   },
+   {
+    "name": "installed roller blind",
+    "box": [
+     636,
+     99,
+     1701,
+     419
     ]
    },
    {
     "name": "ceiling light",
     "box": [
-     620,
+     686,
      0,
-     978,
-     90
+     1079,
+     89
     ]
    }
   ],
   "plan": {
-   "idea": "Create a calm, light sitting corner for two with a neutral sofa, soft rug and warm lamp light.",
+   "idea": "Create a calm light-filled lounge for work breaks with compact seating for two, soft texture underfoot and warm evening light.",
    "palette": [
     "beige",
-    "cream",
-    "oak",
-    "white",
-    "green"
+    "off-white",
+    "light wood",
+    "sage",
+    "warm white"
    ],
-   "style": "calm minimal",
-   "title": "Calm Light-Filled Lounge Corner",
+   "style": "calm minimal Scandinavian",
+   "title": "Calm Light Two-Seat Lounge",
    "slots": [
     {
      "action": "add",
      "color_family": "beige",
      "kind": "sofa",
-     "look": "compact 2-seat beige fabric sofa with low arms and clean modern shape",
-     "placement": "Placed lengthwise against the left wall facing into the room.",
+     "look": "light beige 2-seater fabric sofa with low arms and simple modern shape",
+     "placement": "Centered against left wall with back to wall and facing into room.",
      "replaces": "",
      "size_cm": {
       "d": 80,
       "h": 80,
-      "w": 165
+      "w": 160
      },
      "slot": "s1",
      "target_box": [
-      165,
-      585,
-      354,
-      833
+      115,
+      490,
+      355,
+      825
      ],
-     "why": "Gives comfortable seating for two friends and for work-from-home rest.",
+     "why": "Provides calm seating for two friends without blocking window light.",
      "id": "s1",
      "target_px": [
-      296,
-      786,
-      634,
-      1120
+      206,
+      659,
+      636,
+      1109
      ]
     },
     {
      "action": "add",
-     "color_family": "cream",
+     "color_family": "white",
      "kind": "rug",
-     "look": "large low-pile cream ivory rectangular rug with plain soft texture",
-     "placement": "Laid flat on the floor in the center in front of the sofa.",
+     "look": "plain ivory low-pile rectangular area rug with subtle texture",
+     "placement": "Laid on floor center in front of sofa with long edge parallel to sofa.",
      "replaces": "",
      "size_cm": {
-      "d": 230,
+      "d": 140,
       "h": 2,
-      "w": 160
+      "w": 200
      },
      "slot": "s2",
      "target_box": [
-      204,
-      774,
-      689,
+      95,
+      735,
+      690,
       1000
      ],
-     "why": "Anchors the seating area and adds calm warmth to the wood floor.",
+     "why": "Anchors seating and adds soft calm warmth to wood floor.",
      "id": "s2",
      "target_px": [
-      366,
-      1040,
-      1235,
+      170,
+      988,
+      1236,
       1343
      ]
     },
@@ -352,8 +397,8 @@
      "action": "add",
      "color_family": "white",
      "kind": "floor_lamp",
-     "look": "slim white fabric drum shade floor lamp with light wood pole",
-     "placement": "Stands on the floor in the back left corner beside the sofa end.",
+     "look": "warm white drum shade floor lamp with light wood pole and simple base",
+     "placement": "Stands on floor in rear corner by sofa end near window wall.",
      "replaces": "",
      "size_cm": {
       "d": 30,
@@ -362,26 +407,26 @@
      },
      "slot": "s3",
      "target_box": [
-      304,
-      397,
-      383,
-      736
+      300,
+      360,
+      395,
+      745
      ],
-     "why": "Provides warm soft evening light for reading and relaxing.",
+     "why": "Gives warm soft evening light for wind-down and conversation.",
      "id": "s3",
      "target_px": [
-      545,
-      534,
-      686,
-      989
+      538,
+      484,
+      708,
+      1001
      ]
     },
     {
      "action": "add",
-     "color_family": "oak",
+     "color_family": "beige",
      "kind": "coffee_table",
-     "look": "small oval light oak wood coffee table with simple solid top",
-     "placement": "Centered on the rug in front of the sofa, long side parallel to sofa.",
+     "look": "small light oak oval coffee table with simple solid top",
+     "placement": "Placed on rug in front of sofa center, leaving walkway clear.",
      "replaces": "",
      "size_cm": {
       "d": 50,
@@ -390,60 +435,60 @@
      },
      "slot": "s4",
      "target_box": [
-      283,
-      773,
-      515,
-      939
+      140,
+      785,
+      365,
+      956
      ],
-     "why": "Small table for tea and laptop, keeps seating usable for two.",
+     "why": "Offers small surface for drinks and laptop for two sitters.",
      "id": "s4",
      "target_px": [
-      507,
-      1039,
-      923,
-      1262
+      251,
+      1055,
+      654,
+      1285
      ]
     },
     {
      "action": "add",
      "color_family": "green",
      "kind": "planter",
-     "look": "medium green leafy potted plant in plain beige ceramic pot",
-     "placement": "Stands on the floor on the right side under the window, clear of walkway.",
+     "look": "small green leafy plant in plain off-white ceramic pot",
+     "placement": "Stands on floor at right end of window wall, clear of outlet and walkway.",
      "replaces": "",
      "size_cm": {
       "d": 35,
-      "h": 80,
+      "h": 70,
       "w": 35
      },
      "slot": "s5",
      "target_box": [
-      766,
-      557,
-      883,
-      803
+      790,
+      545,
+      890,
+      735
      ],
-     "why": "Adds calm living touch and softens the bright window corner.",
+     "why": "Adds calm living decor and softens bright window corner.",
      "id": "s5",
      "target_px": [
-      1373,
-      749,
-      1582,
-      1079
+      1416,
+      732,
+      1595,
+      988
      ]
     }
    ]
   },
   "stats": {
-   "spark_sec": 29.9,
-   "sam_sec": 5.6,
+   "spark_sec": 33.7,
+   "sam_sec": 7.7,
    "sam_requests": 2,
    "sam_concepts": 2,
    "sam_box_requests": 0,
    "by_concept": 3,
    "objects": 3,
    "outlined": 3,
-   "mean_iou": 0.332,
+   "mean_iou": 0.359,
    "classes": {
     "keep": 0,
     "replace": 0,
@@ -453,16 +498,16 @@
   "objects": [
    {
     "id": "o1",
-    "name": "cardboard moving box left",
-    "category": "storage",
+    "name": "cardboard moving box front",
+    "category": "moving box",
     "class": "remove",
-    "reason": "moving clutter to clear",
+    "reason": "moving clutter to clear for furnishing",
     "sam_phrase": "cardboard box",
     "spark_box": [
-     367,
-     899,
-     539,
-     1118
+     366,
+     905,
+     541,
+     1124
     ],
     "box": [
      587,
@@ -470,7 +515,7 @@
      787,
      1039
     ],
-    "outline": "M783 874 L770 870 L728 867 L723 865 L706 863 L687 863 L678 865 L673 868 L659 870 L649 874 L618 879 L606 883 L601 887 L588 890 L588 899 L619 901 L629 904 L640 905 L656 909 L664 915 L666 921 L667 949 L666 1023 L667 1033 L669 1036 L673 1038 L688 1037 L690 1035 L725 1021 L733 1016 L783 996 L786 988 L786 929 L784 912 L785 879 Z",
+    "outline": "M783 874 L770 870 L728 867 L723 865 L706 863 L687 863 L678 865 L673 868 L659 870 L649 874 L618 879 L606 883 L601 887 L588 890 L588 899 L619 901 L629 904 L640 905 L656 909 L664 915 L666 921 L667 949 L666 1023 L667 1033 L669 1036 L673 1038 L688 1037 L725 1021 L733 1016 L783 996 L786 988 L786 929 L784 912 L785 879 Z",
     "iou": 0.0,
     "conf": 0.921951174736023,
     "area_frac": 0.0085,
@@ -478,16 +523,16 @@
    },
    {
     "id": "o2",
-    "name": "cardboard moving box right",
-    "category": "storage",
+    "name": "cardboard moving box back",
+    "category": "moving box",
     "class": "remove",
-    "reason": "moving clutter to clear",
+    "reason": "moving clutter to clear for furnishing",
     "sam_phrase": "cardboard box",
     "spark_box": [
      461,
-     862,
-     629,
-     1043
+     863,
+     627,
+     1074
     ],
     "box": [
      463,
@@ -496,23 +541,23 @@
      1087
     ],
     "outline": "M662 916 L655 910 L635 905 L594 904 L587 900 L566 899 L550 902 L522 911 L495 916 L489 919 L466 925 L464 928 L463 945 L464 1057 L466 1061 L472 1064 L531 1078 L553 1085 L564 1086 L576 1082 L627 1058 L658 1046 L662 1043 L664 1038 L663 1012 L665 1003 L665 940 L664 921 Z",
-    "iou": 0.535,
+    "iou": 0.645,
     "conf": 0.9452055096626282,
     "area_frac": 0.0135,
     "how": "concept"
    },
    {
     "id": "o3",
-    "name": "rolled gray mat",
-    "category": "decor",
+    "name": "rolled-up mat",
+    "category": "rug",
     "class": "remove",
-    "reason": "temporary roll to clear",
-    "sam_phrase": "rolled mat",
+    "reason": "temporary roll to clear to lay out rug",
+    "sam_phrase": "rolled rug",
     "spark_box": [
-     627,
-     900,
-     980,
-     999
+     624,
+     894,
+     968,
+     1001
     ],
     "box": [
      787,
@@ -520,59 +565,59 @@
      1026,
      997
     ],
-    "outline": "M787 900 L788 951 L789 955 L795 959 L889 975 L925 983 L937 984 L942 986 L957 988 L973 993 L991 996 L1002 993 L1011 988 L1025 971 L1025 953 L1023 944 L1018 935 L1011 928 L991 923 L982 923 L949 917 L921 914 L847 902 L833 901 L820 898 L805 897 L799 895 L790 895 Z",
-    "iou": 0.461,
-    "conf": 0.9532163739204407,
+    "outline": "M788 897 L787 901 L788 952 L789 955 L794 959 L811 961 L842 968 L884 974 L925 983 L937 984 L990 996 L997 995 L1011 988 L1025 972 L1025 953 L1023 944 L1019 936 L1011 928 L1002 925 L956 919 L929 914 L921 914 L882 907 L860 905 L848 902 L826 900 L820 898 L805 897 L799 895 L790 895 Z",
+    "iou": 0.432,
+    "conf": 0.518796980381012,
     "area_frac": 0.0066,
     "how": "concept"
    }
   ]
  },
  "plan": {
-  "title": "Calm Light-Filled Lounge Corner",
-  "idea": "Create a calm, light sitting corner for two with a neutral sofa, soft rug and warm lamp light.",
-  "style": "calm minimal",
+  "title": "Calm Light Two-Seat Lounge",
+  "idea": "Create a calm light-filled lounge for work breaks with compact seating for two, soft texture underfoot and warm evening light.",
+  "style": "calm minimal Scandinavian",
   "palette": [
    "beige",
-   "cream",
-   "oak",
-   "white",
-   "green"
+   "off-white",
+   "light wood",
+   "sage",
+   "warm white"
   ],
-  "set_comment": "All beige, cream, white and light oak with one green plant for a calm light-filled sitting corner for two that stays bright and easy to see.",
+  "set_comment": "All picks share beige, off-white, light wood and warm white for a calm light lounge; plain bold shapes stay clear and work with the bright window and pale floor.",
   "slots": [
    {
     "action": "add",
     "color_family": "beige",
     "kind": "sofa",
-    "look": "compact 2-seat beige fabric sofa with low arms and clean modern shape",
-    "placement": "Placed lengthwise against the left wall facing into the room.",
+    "look": "light beige 2-seater fabric sofa with low arms and simple modern shape",
+    "placement": "Centered against left wall with back to wall and facing into room.",
     "replaces": "",
     "size_cm": {
      "d": 80,
      "h": 80,
-     "w": 165
+     "w": 160
     },
     "slot": "s1",
     "target_box": [
-     165,
-     585,
-     354,
-     833
+     115,
+     490,
+     355,
+     825
     ],
-    "why": "Gives comfortable seating for two friends and for work-from-home rest.",
+    "why": "Provides calm seating for two friends without blocking window light.",
     "id": "s1",
     "target_px": [
-     296,
-     786,
-     634,
-     1120
+     206,
+     659,
+     636,
+     1109
     ],
     "funnel": {
      "kind": 556,
-     "fits": 323,
+     "fits": 242,
      "size_tolerance": 0.22,
-     "clean": 323,
+     "clean": 242,
      "shortlist": 24,
      "ranked_by": [
       "text",
@@ -580,72 +625,72 @@
      ]
     },
     "shortlist": [
-     "B07B4L56TX",
-     "B07QGSZ31M",
-     "B07HZ7634C",
-     "B0723H8JVJ",
-     "B07B4MD5CG",
-     "B07BWMQQDR",
-     "B07B4MN2R3",
-     "B075X4F5CB",
-     "B07BWLMJJM",
+     "B071J7Q6KB",
+     "B084XMW9JL",
+     "B07MJJX2XW",
+     "B07BWJCPTC",
+     "B084XMKTTC",
      "B07B4CZRYR",
-     "B07B4M4HDS",
+     "B07QHYF1M2",
      "B07B4MFJZT",
-     "B07B4MMV3N",
-     "B07B4GQ7MN",
-     "B07DBDZ56D",
-     "B072635G66",
-     "B07B4L6C47",
-     "B07J2YWSF3",
+     "B07QGSZ31M",
+     "B07B4L56TX",
      "B07BW8P2F7",
-     "B075X43FD2",
-     "B07HZ5RT3Y",
+     "B07DBDZ56D",
+     "B07B4ML4BY",
+     "B07QHYD5ZP",
+     "B0723H8JVJ",
      "B07B4L589M",
-     "B0723H8NLD",
-     "B075X4VMC5"
+     "B07M7MMS6W",
+     "B075X4F5CB",
+     "B07B4MN2R3",
+     "B07BWMQQDR",
+     "B07PBZ9CSS",
+     "B07HZ7634C",
+     "B072FVHRZ5",
+     "B082TCDJCD"
     ],
     "sheet": "sheet_s1.jpg",
     "pick": "B07B4L56TX",
     "alternates": [
-     "B07B4MMV3N",
-     "B07B4CZRYR"
+     "B07B4CZRYR",
+     "B07BW8P2F7"
     ],
-    "reason": "Warm light-beige 2-seater with low boxy arms looks calm and clean against the white walls and matches the pale oak floor.",
-    "pick_number": 1
+    "reason": "Light warm beige fabric with simple low arms, compact for two and blends with bright walls and pale floor.",
+    "pick_number": 10
    },
    {
     "action": "add",
-    "color_family": "cream",
+    "color_family": "white",
     "kind": "rug",
-    "look": "large low-pile cream ivory rectangular rug with plain soft texture",
-    "placement": "Laid flat on the floor in the center in front of the sofa.",
+    "look": "plain ivory low-pile rectangular area rug with subtle texture",
+    "placement": "Laid on floor center in front of sofa with long edge parallel to sofa.",
     "replaces": "",
     "size_cm": {
-     "d": 230,
+     "d": 140,
      "h": 2,
-     "w": 160
+     "w": 200
     },
     "slot": "s2",
     "target_box": [
-     204,
-     774,
-     689,
+     95,
+     735,
+     690,
      1000
     ],
-    "why": "Anchors the seating area and adds calm warmth to the wood floor.",
+    "why": "Anchors seating and adds soft calm warmth to wood floor.",
     "id": "s2",
     "target_px": [
-     366,
-     1040,
-     1235,
+     170,
+     988,
+     1236,
      1343
     ],
     "funnel": {
      "kind": 640,
-     "fits": 382,
+     "fits": 377,
      "size_tolerance": 0.3,
-     "clean": 382,
+     "clean": 377,
      "shortlist": 24,
      "ranked_by": [
       "text",
@@ -654,45 +699,45 @@
     },
     "shortlist": [
      "B07B4WKN9L",
-     "B07TVD39BH",
-     "B07TVD4QNC",
-     "B07TTCHR9T",
      "B07B4WKMYK",
+     "B07TTCHR9T",
+     "B07TVD4QNC",
+     "B07B4SF2F3",
+     "B07B4ZWQ4T",
+     "B07B51WSNJ",
+     "B07B4SF23K",
+     "B07B4ZQXKT",
+     "B075Z8GZ45",
+     "B071ZJ6C4W",
+     "B071ZJ5X4Y",
      "B0735S6D1P",
      "B07B4ZFF2B",
-     "B07B4WH9D2",
-     "B07B4SF2F3",
-     "B07B4SF23K",
-     "B07TZMWH8M",
-     "B07B51WSNJ",
-     "B07TYPLJLX",
-     "B0735W9DGY",
-     "B071W2XLQJ",
-     "B07HSHPHW2",
-     "B075Z8GZ45",
-     "B07B4ZQXKT",
-     "B07QGG4ZLB",
-     "B07Q9CJ73H",
-     "B07B51269T",
-     "B07TVD3P5F",
-     "B07TZMWH7X",
-     "B07TVD3Z6Q"
+     "B07B4WH6NM",
+     "B07B51HJZY",
+     "B07B4ZW7CH",
+     "B07B4WKMB1",
+     "B07B515Q7N",
+     "B072PX31T8",
+     "B071LQJ4XF",
+     "B072JC97G7",
+     "B071SHLFL6",
+     "B07HSHMPYW"
     ],
     "sheet": "sheet_s2.jpg",
-    "pick": "B0735S6D1P",
+    "pick": "B075Z8GZ45",
     "alternates": [
-     "B0735W9DGY",
-     "B07TVD39BH"
+     "B0735S6D1P",
+     "B07B515Q7N"
     ],
-    "reason": "Plain ivory low-pile rug adds softness and light with no busy pattern, tying the sofa to the wood floor.",
-    "pick_number": 6
+    "reason": "Plain ivory low-pile with subtle texture, soft underfoot and keeps the room bright and calm.",
+    "pick_number": 10
    },
    {
     "action": "add",
     "color_family": "white",
     "kind": "floor_lamp",
-    "look": "slim white fabric drum shade floor lamp with light wood pole",
-    "placement": "Stands on the floor in the back left corner beside the sofa end.",
+    "look": "warm white drum shade floor lamp with light wood pole and simple base",
+    "placement": "Stands on floor in rear corner by sofa end near window wall.",
     "replaces": "",
     "size_cm": {
      "d": 30,
@@ -701,18 +746,18 @@
     },
     "slot": "s3",
     "target_box": [
-     304,
-     397,
-     383,
-     736
+     300,
+     360,
+     395,
+     745
     ],
-    "why": "Provides warm soft evening light for reading and relaxing.",
+    "why": "Gives warm soft evening light for wind-down and conversation.",
     "id": "s3",
     "target_px": [
-     545,
-     534,
-     686,
-     989
+     538,
+     484,
+     708,
+     1001
     ],
     "funnel": {
      "kind": 76,
@@ -726,46 +771,46 @@
      ]
     },
     "shortlist": [
+     "B0828FCNML",
+     "B07ML7PPZC",
+     "B0825D873D",
      "B07HKC3S4T",
      "B07HK85S41",
-     "B0824G2GX6",
-     "B0828FCNML",
-     "B0825D873D",
      "B0828FBDV7",
-     "B07ML7PPZC",
+     "B0824G2GX6",
      "B07HKF28GD",
-     "B07HK85S6P",
-     "B07HKF59YX",
      "B07HK5HDPZ",
-     "B07DBCG1NL",
+     "B07HKF59YX",
+     "B0824FB7WR",
      "B07DBH531B",
-     "B073P2WNLJ",
-     "B07DBCMTPB",
-     "B07DBCMTD3",
-     "B07374C6R9",
-     "B07DTLWMN5",
-     "B07DBCMTPC",
-     "B07JNRNTYJ",
      "B082XLWY2S",
+     "B073P2WNLJ",
+     "B07374C6R9",
+     "B0824FRXW8",
      "B0824F7ZLF",
-     "B07B4ZK8BR",
-     "B07DBJJ5Q9"
+     "B07DBCMTPB",
+     "B0824FJCS5",
+     "B07JNRNTYJ",
+     "B07HK85S6P",
+     "B07DTLWMN5",
+     "B07DT153M1",
+     "B07DBCMTPC"
     ],
     "sheet": "sheet_s3.jpg",
     "pick": "B073P2WNLJ",
     "alternates": [
      "B07374C6R9",
-     "B07B4ZK8BR"
+     "B07HKF59YX"
     ],
-    "reason": "Slim full-height lamp with plain white shade shown fully gives soft warm light and suits the bright corner.",
+    "reason": "Simple warm-white drum on a straight pole with round base, gives soft evening light without clutter.",
     "pick_number": 14
    },
    {
     "action": "add",
-    "color_family": "oak",
+    "color_family": "beige",
     "kind": "coffee_table",
-    "look": "small oval light oak wood coffee table with simple solid top",
-    "placement": "Centered on the rug in front of the sofa, long side parallel to sofa.",
+    "look": "small light oak oval coffee table with simple solid top",
+    "placement": "Placed on rug in front of sofa center, leaving walkway clear.",
     "replaces": "",
     "size_cm": {
      "d": 50,
@@ -774,18 +819,18 @@
     },
     "slot": "s4",
     "target_box": [
-     283,
-     773,
-     515,
-     939
+     140,
+     785,
+     365,
+     956
     ],
-    "why": "Small table for tea and laptop, keeps seating usable for two.",
+    "why": "Offers small surface for drinks and laptop for two sitters.",
     "id": "s4",
     "target_px": [
-     507,
-     1039,
-     923,
-     1262
+     251,
+     1055,
+     654,
+     1285
     ],
     "funnel": {
      "kind": 83,
@@ -806,65 +851,65 @@
      "B075ZDWPHC",
      "B07DBFG16Z",
      "B075Z8KXDT",
-     "B07J2B91QQ",
      "B07MHMGJMH",
+     "B07J2B91QQ",
      "B07DBFQFGS",
      "B07B7DFM2G",
-     "B07J29N3R4",
      "B07DB95XL1",
-     "B084T9X9NN",
+     "B07J29N3R4",
      "B074KLRCPW",
+     "B084T9X9NN",
      "B07QC876Z6",
-     "B07J29V51Q",
      "B07DBDR1DM",
-     "B075Z8M2BW",
+     "B07J29V51Q",
      "B07DBF5J5P",
      "B075Z8WD59",
-     "B07RKKHMXX",
+     "B075Z8M2BW",
      "B07HSLKFD5",
+     "B07RKKHMXX",
      "B00GBVDXLU"
     ],
     "sheet": "sheet_s4.jpg",
     "pick": "B07MHMJD43",
     "alternates": [
      "B07QD9BBRW",
-     "B07B7DFM2G"
+     "B07J1YW3YT"
     ],
-    "reason": "Small oval light-oak top with simple solid shape warms the set and echoes the pale floor while staying airy.",
+    "reason": "Small light-oak oval with solid top, echoes the flooring and fits a compact lounge for two.",
     "pick_number": 1
    },
    {
     "action": "add",
     "color_family": "green",
     "kind": "planter",
-    "look": "medium green leafy potted plant in plain beige ceramic pot",
-    "placement": "Stands on the floor on the right side under the window, clear of walkway.",
+    "look": "small green leafy plant in plain off-white ceramic pot",
+    "placement": "Stands on floor at right end of window wall, clear of outlet and walkway.",
     "replaces": "",
     "size_cm": {
      "d": 35,
-     "h": 80,
+     "h": 70,
      "w": 35
     },
     "slot": "s5",
     "target_box": [
-     766,
-     557,
-     883,
-     803
+     790,
+     545,
+     890,
+     735
     ],
-    "why": "Adds calm living touch and softens the bright window corner.",
+    "why": "Adds calm living decor and softens bright window corner.",
     "id": "s5",
     "target_px": [
-     1373,
-     749,
-     1582,
-     1079
+     1416,
+     732,
+     1595,
+     988
     ],
     "funnel": {
      "kind": 146,
-     "fits": 25,
+     "fits": 36,
      "size_tolerance": 0.5,
-     "clean": 25,
+     "clean": 36,
      "shortlist": 24,
      "ranked_by": [
       "text",
@@ -873,38 +918,38 @@
     },
     "shortlist": [
      "B07JM1K8VL",
+     "B07JM6HFW3",
      "B07QB8LPQ6",
      "B075HWR58K",
+     "B075HXQJTQ",
      "B075HX9T8Y",
+     "B07BZR1KVN",
+     "B07QJM1BV2",
+     "B07QB748ZB",
+     "B07CBP4FG7",
+     "B07CF7B5S2",
+     "B07QC6X16K",
+     "B07QHJPQYC",
+     "B07CBP6GYJ",
      "B07QHJPNTL",
      "B07QB73ZCH",
-     "B07QB748ZB",
-     "B07BZR1KVN",
-     "B07QC6X16K",
-     "B07CBP4FG7",
-     "B07BZB3HMH",
-     "B07BZR1KV6",
-     "B07TTTGQKZ",
-     "B07CF75N65",
-     "B07CBNZ6R9",
-     "B0831PZJ8X",
-     "B07QF8RJZN",
-     "B0831PXL85",
-     "B0831P1J17",
+     "B078JK89KM",
+     "B0842H6Q9W",
+     "B07BZB3HN7",
      "B0842H1DPF",
+     "B07BZB3HMH",
      "B0842H2F7C",
-     "B0831PL1FX",
-     "B078JM6FRK",
-     "B089QYVG4P"
+     "B07CF75N65",
+     "B07CBNZ6R9"
     ],
     "sheet": "sheet_s5.jpg",
-    "pick": "B07QC6X16K",
+    "pick": "B07JM1K8VL",
     "alternates": [
-     "B07BZR1KVN",
-     "B07CBP4FG7"
+     "B07JM6HFW3",
+     "B0842H1DPF"
     ],
-    "reason": "Simple cream-and-tan ceramic pot with clear round shape keeps the palette calm and lets green leaves be the accent.",
-    "pick_number": 9
+    "reason": "Plain off-white pot on warm wood legs, simple and bright for a small green plant.",
+    "pick_number": 1
    }
   ]
  },
@@ -943,40 +988,6 @@
    "image": "catalog/img/B07B4L56TX.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
-  "B07B4MMV3N": {
-   "id": "B07B4MMV3N",
-   "kind": "sofa",
-   "title": "Beige Upholstered Two Cushion Sofa",
-   "name": "Stone & Beam Andover Modern Sofa Couch, 78\"W, Dark Tan",
-   "brand": "Stone & Beam",
-   "size_cm": {
-    "w": 198.1,
-    "d": 96.5,
-    "h": 88.9
-   },
-   "size_in": {
-    "w": 78.0,
-    "d": 38.0,
-    "h": 35.0
-   },
-   "color": "beige, oatmeal, dark brown",
-   "materials": [
-    "fabric",
-    "wood",
-    "foam"
-   ],
-   "style": [
-    "modern",
-    "contemporary",
-    "minimal"
-   ],
-   "description": "Low rectangular beige fabric sofa with two back and seat cushions, narrow track arms, and dark tapered wood legs.",
-   "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B07B4MMV3N",
-   "thumb": "catalog/thumb/B07B4MMV3N.webp",
-   "image": "catalog/img/B07B4MMV3N.jpg",
-   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
-  },
   "B07B4CZRYR": {
    "id": "B07B4CZRYR",
    "kind": "sofa",
@@ -1009,6 +1020,71 @@
    "url": "https://www.amazon.com/dp/B07B4CZRYR",
    "thumb": "catalog/thumb/B07B4CZRYR.webp",
    "image": "catalog/img/B07B4CZRYR.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B07BW8P2F7": {
+   "id": "B07BW8P2F7",
+   "kind": "sofa",
+   "title": "Beige Low Back Loveseat",
+   "name": "Rivet Edgewest Low Back Modern Loveseat, 65\"W, Beige",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 165.1,
+    "d": 83.8,
+    "h": 81.3
+   },
+   "size_in": {
+    "w": 65.0,
+    "d": 33.0,
+    "h": 32.0
+   },
+   "color": "beige, cream, black",
+   "materials": [
+    "polyester",
+    "fabric",
+    "metal"
+   ],
+   "style": [
+    "modern",
+    "industrial",
+    "minimal"
+   ],
+   "description": "Low rectangular two-seat loveseat in textured beige fabric with low back, wide arms and dark metal legs.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07BW8P2F7",
+   "thumb": "catalog/thumb/B07BW8P2F7.webp",
+   "image": "catalog/img/B07BW8P2F7.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B075Z8GZ45": {
+   "id": "B075Z8GZ45",
+   "kind": "rug",
+   "title": "Cream Chevron Patterned Area Rug",
+   "name": "Rivet Elevated Chevron Patterned Area Rug, 5' x 7'6\", Cream",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 228.6,
+    "d": 152.4,
+    "h": 1.3
+   },
+   "size_in": {
+    "w": 90.0,
+    "d": 60.0,
+    "h": 0.5
+   },
+   "color": "cream, ivory, beige",
+   "materials": [
+    "polyester"
+   ],
+   "style": [
+    "contemporary",
+    "minimal"
+   ],
+   "description": "Rectangular cream polyester area rug with subtle tonal chevron pattern and thin border trim.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B075Z8GZ45",
+   "thumb": "catalog/thumb/B075Z8GZ45.webp",
+   "image": "catalog/img/B075Z8GZ45.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
   "B0735S6D1P": {
@@ -1045,71 +1121,38 @@
    "image": "catalog/img/B0735S6D1P.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
-  "B0735W9DGY": {
-   "id": "B0735W9DGY",
+  "B07B515Q7N": {
+   "id": "B07B515Q7N",
    "kind": "rug",
-   "title": "Cream geometric wool area rug",
-   "name": "Rivet Geometric Criss-Cross Woven Wool Area Rug, 5 x 8 Foot, Cream",
+   "title": "Striated Jute Area Rug",
+   "name": "Rivet Contemporary Striated Jute Area Rug, 7' 5\" x 5' 3\", Linen",
    "brand": "Rivet",
    "size_cm": {
-    "w": 243.8,
-    "d": 152.4,
-    "h": 1.3
+    "w": 226.1,
+    "d": 160.0,
+    "h": 0.6
    },
    "size_in": {
-    "w": 96.0,
-    "d": 60.0,
-    "h": 0.5
+    "w": 89.0,
+    "d": 63.0,
+    "h": 0.2
    },
-   "color": "cream, off-white, beige",
+   "color": "beige, cream, natural",
    "materials": [
-    "wool",
-    "woven"
+    "jute",
+    "woven",
+    "natural"
    ],
    "style": [
-    "modern",
+    "contemporary",
     "minimal",
-    "geometric"
+    "natural"
    ],
-   "description": "Rectangular cream wool rug with subtle geometric criss-cross texture shown in angled perspective view.",
+   "description": "Rectangular low-pile jute area rug in light beige linen with subtle horizontal striations and lightly textured woven surface.",
    "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B0735W9DGY",
-   "thumb": "catalog/thumb/B0735W9DGY.webp",
-   "image": "catalog/img/B0735W9DGY.jpg",
-   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
-  },
-  "B07TVD39BH": {
-   "id": "B07TVD39BH",
-   "kind": "rug",
-   "title": "Ivory Shag Area Rug",
-   "name": "Amazon Basics, 6'X9' Solid Color Shag Rug, Ivory",
-   "brand": "Amazon Basics",
-   "size_cm": {
-    "w": 274.3,
-    "d": 177.8,
-    "h": 3.0
-   },
-   "size_in": {
-    "w": 108.0,
-    "d": 70.0,
-    "h": 1.2
-   },
-   "color": "ivory, cream, beige",
-   "materials": [
-    "polypropylene",
-    "shag",
-    "pile"
-   ],
-   "style": [
-    "modern",
-    "minimal",
-    "casual"
-   ],
-   "description": "Rectangular ivory shag rug with thick fluffy polypropylene pile and soft uneven texture in vertical orientation.",
-   "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B07TVD39BH",
-   "thumb": "catalog/thumb/B07TVD39BH.webp",
-   "image": "catalog/img/B07TVD39BH.jpg",
+   "url": "https://www.amazon.com/dp/B07B515Q7N",
+   "thumb": "catalog/thumb/B07B515Q7N.webp",
+   "image": "catalog/img/B07B515Q7N.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
   "B073P2WNLJ": {
@@ -1180,37 +1223,37 @@
    "image": "catalog/img/B07374C6R9.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
-  "B07B4ZK8BR": {
-   "id": "B07B4ZK8BR",
+  "B07HKF59YX": {
+   "id": "B07HKF59YX",
    "kind": "floor_lamp",
-   "title": "Floor Lamp with Side Table",
-   "name": "Rivet Mid-Century Modern Floor Lamp with Wireless USB Port Charging Wood Table, 59\"H, Light Bulb Included, Black",
-   "brand": "Rivet",
+   "title": "White Drum Floor Lamp",
+   "name": "Stone & Beam Mid-Century Modern Henley Living Room Standing Floor Lamp with LED Light Bulb, 15 x 15 x 58 Inches, Matte Black and Antique Brass",
+   "brand": "Stone & Beam",
    "size_cm": {
-    "w": 50.8,
-    "d": 50.8,
-    "h": 149.9
+    "w": 45.1,
+    "d": 45.1,
+    "h": 147.3
    },
    "size_in": {
-    "w": 20.0,
-    "d": 20.0,
-    "h": 59.0
+    "w": 17.8,
+    "d": 17.8,
+    "h": 58.0
    },
-   "color": "white, dark brown, black",
+   "color": "white, brass, cream",
    "materials": [
-    "linen",
-    "wood",
+    "fabric",
     "metal"
    ],
    "style": [
+    "mid-century",
     "modern",
-    "mid-century"
+    "minimal"
    ],
-   "description": "Tall slender black metal floor lamp with white drum linen shade, round dark walnut side table, arched handle and dual pull chains.",
+   "description": "Cropped white drum fabric lampshade with brass finial and stem, cylindrical proportions, matte fabric texture on plain background.",
    "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B07B4ZK8BR",
-   "thumb": "catalog/thumb/B07B4ZK8BR.webp",
-   "image": "catalog/img/B07B4ZK8BR.jpg",
+   "url": "https://www.amazon.com/dp/B07HKF59YX",
+   "thumb": "catalog/thumb/B07HKF59YX.webp",
+   "image": "catalog/img/B07HKF59YX.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
   "B07MHMJD43": {
@@ -1281,115 +1324,110 @@
    "image": "catalog/img/B07QD9BBRW.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
-  "B07B7DFM2G": {
-   "id": "B07B7DFM2G",
+  "B07J1YW3YT": {
+   "id": "B07J1YW3YT",
    "kind": "coffee_table",
-   "title": "Octagonal Rustic Wood Coffee Table",
-   "name": "Stone & Beam Aire Rustic Octagonal Fir Wood Coffee Table, 39.5\"W, Black & Natural",
-   "brand": "Stone & Beam",
+   "title": "Lift-Top Storage Coffee Table",
+   "name": "AmazonBasics Lift-Top Storage Coffee Table, Natural",
+   "brand": "AmazonBasics",
    "size_cm": {
-    "w": 100.3,
-    "d": 44.0,
-    "h": 44.0
+    "w": 101.6,
+    "d": 48.3,
+    "h": 45.7
    },
    "size_in": {
-    "w": 39.5,
+    "w": 40.0,
+    "d": 19.0,
+    "h": 18.0
+   },
+   "color": "natural light wood, light beige",
+   "materials": [
+    "wood"
+   ],
+   "style": [
+    "transitional"
+   ],
+   "description": "Rectangular light natural wood lift-top coffee table with tapered legs and lower open shelf divided in two.",
+   "render_risk": "low",
+   "url": "https://www.amazon.com/dp/B07J1YW3YT",
+   "thumb": "catalog/thumb/B07J1YW3YT.webp",
+   "image": "catalog/img/B07J1YW3YT.jpg",
+   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
+  },
+  "B07JM1K8VL": {
+   "id": "B07JM1K8VL",
+   "kind": "planter",
+   "title": "White Cylindrical Planter with Stand",
+   "name": "Rivet Surrey Modern Ceramic Planter Pot with Wood Plant Stand, 19.75\"H, White",
+   "brand": "Rivet",
+   "size_cm": {
+    "w": 43.9,
+    "d": 43.9,
+    "h": 49.2
+   },
+   "size_in": {
+    "w": 17.3,
     "d": 17.3,
-    "h": 17.3
+    "h": 19.4
    },
-   "color": "light wood brown, black, tan",
-   "materials": [
-    "wood",
-    "metal",
-    "fir"
-   ],
-   "style": [
-    "rustic",
-    "industrial",
-    "farmhouse"
-   ],
-   "description": "Octagonal light wood top with raised rim on thin black metal geometric base, low and wide proportions.",
-   "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B07B7DFM2G",
-   "thumb": "catalog/thumb/B07B7DFM2G.webp",
-   "image": "catalog/img/B07B7DFM2G.jpg",
-   "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
-  },
-  "B07QC6X16K": {
-   "id": "B07QC6X16K",
-   "kind": "planter",
-   "title": "Two-Tone Ceramic Planter with Stand",
-   "name": "Rivet Mid-Century Ceramic Planter with Iron Stand, 17\"H, White and Tan",
-   "brand": "Rivet",
-   "size_cm": {
-    "w": 31.0,
-    "d": 31.0,
-    "h": 43.2
-   },
-   "size_in": {
-    "w": 12.2,
-    "d": 12.2,
-    "h": 17.0
-   },
-   "color": "white, tan, black",
+   "color": "off-white, dark walnut",
    "materials": [
     "ceramic",
-    "iron"
+    "wood"
    ],
    "style": [
-    "mid-century",
     "modern",
-    "minimal"
+    "mid-century"
    ],
-   "description": "Cylindrical two-tone ceramic planter with white upper and speckled tan lower half sitting in a thin black iron four-leg stand.",
+   "description": "Tall cylindrical off-white ceramic planter pot supported by a four-legged dark walnut wood stand with vertical dowels.",
    "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B07QC6X16K",
-   "thumb": "catalog/thumb/B07QC6X16K.webp",
-   "image": "catalog/img/B07QC6X16K.jpg",
+   "url": "https://www.amazon.com/dp/B07JM1K8VL",
+   "thumb": "catalog/thumb/B07JM1K8VL.webp",
+   "image": "catalog/img/B07JM1K8VL.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
-  "B07BZR1KVN": {
-   "id": "B07BZR1KVN",
+  "B07JM6HFW3": {
+   "id": "B07JM6HFW3",
    "kind": "planter",
-   "title": "Two-tone ceramic planter with stand",
-   "name": "Rivet Mid-Century Ceramic Planter with Stand, 18.9\"H, White",
+   "title": "Modern Ceramic Planter with Stand",
+   "name": "Rivet Surrey Modern Ceramic Planter Pot with Wood Plant Stand, 13.6\"H, White",
    "brand": "Rivet",
    "size_cm": {
-    "w": 36.2,
-    "d": 36.2,
-    "h": 47.9
+    "w": 27.9,
+    "d": 27.9,
+    "h": 35.6
    },
    "size_in": {
-    "w": 14.3,
-    "d": 14.3,
-    "h": 18.9
+    "w": 11.0,
+    "d": 11.0,
+    "h": 14.0
    },
-   "color": "off-white, beige, black",
+   "color": "white, walnut brown, dark brown",
    "materials": [
     "ceramic",
-    "metal"
+    "wood"
    ],
    "style": [
-    "mid-century",
     "modern",
+    "mid-century",
     "minimal"
    ],
-   "description": "Cylindrical two-tone ceramic planter with speckled off-white top and beige bottom in a thin black metal stand.",
+   "description": "White cylindrical ceramic planter on a four-legged dark walnut wood stand with a simple modern silhouette.",
    "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B07BZR1KVN",
-   "thumb": "catalog/thumb/B07BZR1KVN.webp",
-   "image": "catalog/img/B07BZR1KVN.jpg",
+   "url": "https://www.amazon.com/dp/B07JM6HFW3",
+   "thumb": "catalog/thumb/B07JM6HFW3.webp",
+   "image": "catalog/img/B07JM6HFW3.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   },
-  "B07CBP4FG7": {
-   "id": "B07CBP4FG7",
+  "B0842H1DPF": {
+   "id": "B0842H1DPF",
    "kind": "planter",
-   "title": "Ceramic Planter with Stand",
+   "title": "White Ceramic Planter with Stand",
    "name": "Rivet Mid-Century Ceramic Planter with Stand, 17\"H, White",
    "brand": "Rivet",
    "size_cm": {
-    "w": 30.8,
-    "d": 30.8,
+    "w": 30.7,
+    "d": 30.7,
     "h": 43.2
    },
    "size_in": {
@@ -1397,9 +1435,10 @@
     "d": 12.1,
     "h": 17.0
    },
-   "color": "white, cream, black",
+   "color": "white, black",
    "materials": [
     "ceramic",
+    "iron",
     "metal"
    ],
    "style": [
@@ -1407,11 +1446,11 @@
     "modern",
     "minimal"
    ],
-   "description": "Cylindrical two-tone speckled ceramic planter in white and cream on a thin black four-leg metal stand.",
+   "description": "Glossy white cylindrical ceramic planter sitting on a thin black four-legged metal stand with straight upright supports.",
    "render_risk": "low",
-   "url": "https://www.amazon.com/dp/B07CBP4FG7",
-   "thumb": "catalog/thumb/B07CBP4FG7.webp",
-   "image": "catalog/img/B07CBP4FG7.jpg",
+   "url": "https://www.amazon.com/dp/B0842H1DPF",
+   "thumb": "catalog/thumb/B0842H1DPF.webp",
+   "image": "catalog/img/B0842H1DPF.jpg",
    "source": "Amazon Berkeley Objects (Amazon.com, CC BY 4.0)"
   }
  },
@@ -1419,90 +1458,85 @@
   "candidates": [
    {
     "index": 1,
-    "score": 0.626,
+    "score": 0.6833,
     "judge": {
      "products": [
       {
        "color": "light beige",
-       "fix": "Keep the sofa exactly as is; it already matches.",
+       "fix": "No fix needed, product already matches.",
        "index": 1,
        "issues": [],
-       "material_pattern": "linen-like matte fabric, no pattern",
+       "material_pattern": "linen-look solid weave",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "2-seat loveseat with square track arms and short dark tapered legs",
+       "shape": "two-seat loveseat with square track arms and loose cushions",
        "verdict": "match"
       },
       {
-       "color": "off-white / cream white, lighter and brighter than reference",
-       "fix": "Replace with thin flat-weave cream rug with fine subtle diamond lines.",
+       "color": "cream off-white",
+       "fix": "No fix needed, product already matches.",
        "index": 2,
-       "issues": [
-        "texture is thick high-pile shaggy vs thin flat-weave in reference",
-        "pattern is bold thick raised diamonds vs fine subtle criss-cross lines",
-        "front edge pinched to sharp point with dark outline, not rectangular"
-       ],
-       "material_pattern": "thick shaggy pile with bold raised diamond lattice",
+       "issues": [],
+       "material_pattern": "small chevron weave with plain border",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 5,
-       "shape": "rectangular rug distorted at front corner",
-       "verdict": "partial"
+       "score": 9,
+       "shape": "rectangular flat-weave area rug",
+       "verdict": "match"
       },
       {
-       "color": "white shade with clear/silver column",
-       "fix": "Re-render lamp straight and undistorted with full glass column and square base visible.",
+       "color": "white shade with clear/silver stem",
+       "fix": "Pull lamp fully out from behind sofa and render full glass column and square base with crisp drum shade.",
        "index": 3,
        "issues": [
-        "lamp heavily warped and squeezed behind sofa, shade bent",
-        "glass column wavy and melted into window curtain, metal rod detail lost",
-        "square metal base not visible, height looks too short vs 149.9 cm spec"
+        "Lamp is ~90% hidden behind sofa, base and full glass column not visible for verification",
+        "Shade edge looks warped / melted and blurry, not a crisp drum",
+        "Glass column and square metal base from reference not discernible"
        ],
-       "material_pattern": "fabric shade with glass column, details obscured by warp",
+       "material_pattern": "fabric shade with glass and metal column",
        "placement_ok": true,
        "scale_ok": false,
-       "score": 3,
-       "shape": "drum-shade floor lamp with tall column, proportions squeezed",
+       "score": 4,
+       "shape": "floor lamp with cylindrical drum shade",
        "verdict": "partial"
       },
       {
-       "color": "light natural oak, slightly paler than reference but same hue",
-       "fix": "Keep the table exactly as is; it already matches.",
+       "color": "light natural oak",
+       "fix": "No fix needed, product already matches.",
        "index": 4,
        "issues": [],
-       "material_pattern": "wood grain with smooth top and lower shelf",
+       "material_pattern": "wood grain",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "round top with 4 cabriole legs and full round lower shelf",
+       "shape": "round two-tier coffee table with four cabriole legs",
        "verdict": "match"
       },
       {
-       "color": "glossy white top, tan-brown bottom",
-       "fix": "Keep the planter exactly as is; show it fully without cropping.",
+       "color": "white pot with dark brown-black stand",
+       "fix": "Replace with wider squat cylinder and thicker walnut legs to match reference proportions.",
        "index": 5,
        "issues": [
-        "right edge cropped in view but visible portion matches"
+        "Pot renders taller/narrower than reference wide squat cylinder",
+        "Stand legs look thinner/darker than reference thick walnut legs"
        ],
-       "material_pattern": "glossy ceramic top with matte speckled lower half on thin black metal stand",
+       "material_pattern": "smooth ceramic with wood stand",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 9,
-       "shape": "cylindrical two-tone pot on thin black stand",
-       "verdict": "match"
+       "score": 7,
+       "shape": "cylindrical planter on 4-leg mid-century stand",
+       "verdict": "partial"
       }
      ],
      "scene": {
       "artifacts": [
-       "translucent vertical ghost smear on left wall/floor beside sofa",
-       "floor lamp and curtain behind sofa wavy and melted",
-       "rug front corner pinched to sharp point with dark edge"
+       "soft blur/warp on floor lamp shade behind sofa"
       ],
-      "cohesion": 7,
-      "comment": "Sofa, table and planter match well and palette is cohesive, but rug texture/pattern is overstated and floor lamp is badly warped with a left-wall ghost artifact.",
-      "overall": 6,
-      "photoreal": 6,
+      "cohesion": 8,
+      "comment": "Clean removal of boxes and mat with photorealistic daylight and cohesive beige palette, but floor lamp is largely hidden and distorted and planter proportions are slightly off.",
+      "overall": 7,
+      "photoreal": 8,
       "removals_ok": true,
       "renter_rule_ok": true
      }
@@ -1510,23 +1544,23 @@
     "raw": "cand_1_raw.jpg",
     "comp": "cand_1.jpg",
     "drift": {
-     "static_frac": 0.667,
-     "dE_mean": 4.96,
-     "dE_p95": 27.17,
-     "changed_frac_dE10": 0.1137,
-     "ssim_static": 0.8756
+     "static_frac": 0.616,
+     "dE_mean": 2.58,
+     "dE_p95": 8.41,
+     "changed_frac_dE10": 0.0448,
+     "ssim_static": 0.9316
     },
     "align": {
      "ok": true,
-     "cc": 0.8340897130377088,
-     "max_corner_shift_px": 316.45,
+     "cc": 0.9344982997635694,
+     "max_corner_shift_px": 25.15,
      "flow": {
       "refined": true,
-      "coverage": 0.0855,
-      "static_dE_before": 5.895,
-      "static_dE_after": 4.964,
-      "mean_shift_px": 7.35,
-      "max_shift_px": 37.76
+      "coverage": 0.1112,
+      "static_dE_before": 2.899,
+      "static_dE_after": 2.575,
+      "mean_shift_px": 2.0,
+      "max_shift_px": 31.2
      }
     },
     "seg_how": [
@@ -1534,122 +1568,121 @@
      "concept:area rug",
      "concept:floor lamp",
      "concept:coffee table",
-     "box"
+     "concept:planter pot"
     ],
     "boxes": [
      [
-      331,
-      720,
-      921,
-      1129
+      209,
+      735,
+      888,
+      1183
      ],
      [
-      480,
-      997,
-      1425,
+      349,
+      1018,
+      1360,
       1344
      ],
      [
-      738,
-      527,
-      839,
-      752
+      736,
+      566,
+      840,
+      763
      ],
      [
-      806,
-      882,
-      1143,
-      1154
+      759,
+      914,
+      1114,
+      1210
      ],
      [
-      1368,
-      748,
-      1605,
-      1090
+      1472,
+      899,
+      1621,
+      1106
      ]
     ]
    },
    {
     "index": 2,
-    "score": 0.675,
+    "score": 0.753,
     "judge": {
      "products": [
       {
-       "color": "beige / light greige",
-       "fix": "No fix needed, product already matches.",
+       "color": "light beige / greige",
+       "fix": "No fix needed, keep as is.",
        "index": 1,
        "issues": [],
-       "material_pattern": "plain linen-look weave, no pattern",
+       "material_pattern": "linen-look solid weave, no pattern",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "2-seat loveseat with square track arms, two back and seat cushions on dark tapered legs",
+       "shape": "2-seat loveseat with boxy track arms and dark tapered legs",
        "verdict": "match"
       },
       {
        "color": "cream / off-white",
-       "fix": "Replace with flat low-pile cream rug with faint subtle pattern.",
+       "fix": "No fix needed, keep as is.",
        "index": 2,
-       "issues": [
-        "pattern far bolder, thicker raised lattice vs faint low-contrast lines in reference",
-        "pile looks chunky high-pile shag vs flat low-pile texture in reference",
-        "large star geometric motif not present in reference"
-       ],
-       "material_pattern": "thick high-pile geometric criss-cross lattice",
-       "placement_ok": true,
-       "scale_ok": true,
-       "score": 4,
-       "shape": "rectangular rug",
-       "verdict": "partial"
-      },
-      {
-       "color": "white shade with clear glass and brushed nickel",
-       "fix": "Move lamp fully into view so shade, column and base are visible.",
-       "index": 3,
-       "issues": [
-        "lamp mostly occluded behind sofa, base and full column not visible for verification"
-       ],
-       "material_pattern": "fabric drum shade, glass column, metal base",
+       "issues": [],
+       "material_pattern": "subtle chevron / herringbone weave with plain border",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "drum-shade floor lamp with straight glass column on square base",
+       "shape": "rectangular flat-weave area rug",
        "verdict": "match"
       },
       {
-       "color": "pale bleached natural wood vs warm medium honey oak",
-       "fix": "Re-render table in warm medium honey oak finish to match reference.",
-       "index": 4,
+       "color": "white shade with clear / silver column",
+       "fix": "Re-render lamp fully visible in corner with straight drum shade and glass column on square base.",
+       "index": 3,
        "issues": [
-        "color much too light/pale, missing warm honey-brown tone",
-        "finish looks whitewashed matte vs saturated varnished wood in reference"
+        "lampshade edge is wavy and distorted, not a straight drum as in reference",
+        "column and square metal base are almost entirely hidden behind sofa and blend into window trim",
+        "product cannot be recognized at a glance due to heavy occlusion and warping"
        ],
-       "material_pattern": "wood grain but washed out, grain less pronounced",
+       "material_pattern": "fabric drum shade, glass column with metal trim",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 6,
-       "shape": "round top with 4 curved cabriole legs and full circular lower shelf",
+       "score": 4,
+       "shape": "drum-shade column floor lamp, mostly occluded",
        "verdict": "partial"
       },
       {
-       "color": "glossy white top, matte speckled tan bottom, black stand",
-       "fix": "No fix needed, product already matches.",
-       "index": 5,
+       "color": "medium honey natural wood",
+       "fix": "No fix needed, keep as is.",
+       "index": 4,
        "issues": [],
-       "material_pattern": "glazed ceramic upper, speckled stoneware lower, metal stand",
+       "material_pattern": "wood grain with traditional curved legs and lower shelf",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "cylindrical two-tone pot on thin black metal stand",
+       "shape": "round top coffee table with cabriole legs and full lower shelf",
+       "verdict": "match"
+      },
+      {
+       "color": "matte white pot with dark brown legs",
+       "fix": "No fix needed, keep as is.",
+       "index": 5,
+       "issues": [],
+       "material_pattern": "smooth solid ceramic-look pot with wood dowel stand",
+       "placement_ok": true,
+       "scale_ok": true,
+       "score": 9,
+       "shape": "tall cylindrical pot on four dowel legs with cross supports",
        "verdict": "match"
       }
      ],
      "scene": {
-      "artifacts": [],
+      "artifacts": [
+       "floor lamp shade has wavy distorted lower edge",
+       "area rug shows unnatural crease/fold near coffee table leg",
+       "floor lamp stem merges into window trim and base is missing"
+      ],
       "cohesion": 8,
-      "comment": "Clean believable staging with consistent daylight; downgraded because rug pattern and coffee-table color do not match references and lamp is largely hidden.",
+      "comment": "Clean cohesive neutral staging with faithful sofa, rug, table and planter; floor lamp is poorly rendered and mostly hidden, lowering realism.",
       "overall": 7,
-      "photoreal": 8,
+      "photoreal": 7,
       "removals_ok": true,
       "renter_rule_ok": true
      }
@@ -1657,23 +1690,23 @@
     "raw": "cand_2_raw.jpg",
     "comp": "cand_2.jpg",
     "drift": {
-     "static_frac": 0.667,
-     "dE_mean": 3.74,
-     "dE_p95": 21.37,
-     "changed_frac_dE10": 0.0839,
-     "ssim_static": 0.9103
+     "static_frac": 0.616,
+     "dE_mean": 2.68,
+     "dE_p95": 8.93,
+     "changed_frac_dE10": 0.0453,
+     "ssim_static": 0.9279
     },
     "align": {
      "ok": true,
-     "cc": 0.8600540947239543,
-     "max_corner_shift_px": 63.08,
+     "cc": 0.9450306327975285,
+     "max_corner_shift_px": 21.95,
      "flow": {
       "refined": true,
-      "coverage": 0.1053,
-      "static_dE_before": 4.248,
-      "static_dE_after": 3.741,
-      "mean_shift_px": 3.52,
-      "max_shift_px": 28.94
+      "coverage": 0.1091,
+      "static_dE_before": 2.976,
+      "static_dE_after": 2.677,
+      "mean_shift_px": 2.87,
+      "max_shift_px": 33.83
      }
     },
     "seg_how": [
@@ -1681,147 +1714,144 @@
      "concept:area rug",
      "concept:floor lamp",
      "concept:coffee table",
-     "box"
+     "concept:planter pot"
     ],
     "boxes": [
      [
-      273,
-      734,
-      904,
-      1167
+      250,
+      737,
+      881,
+      1175
      ],
      [
-      377,
+      401,
       1017,
-      1431,
+      1363,
       1344
      ],
      [
       736,
-      553,
-      839,
-      757
+      538,
+      840,
+      770
      ],
      [
-      809,
-      908,
-      1158,
-      1208
+      782,
+      912,
+      1131,
+      1201
      ],
      [
-      1368,
-      747,
-      1609,
-      1091
+      1516,
+      898,
+      1684,
+      1118
      ]
     ]
    },
    {
     "index": 3,
-    "score": 0.3342,
+    "score": 0.642,
     "judge": {
      "products": [
       {
-       "color": "beige / light greige",
-       "fix": "No fix needed, product already matches.",
+       "color": "light beige/oatmeal",
+       "fix": "No fix needed, product already matches reference.",
        "index": 1,
        "issues": [],
-       "material_pattern": "linen-look woven fabric, solid with no pattern",
+       "material_pattern": "linen-look plain weave, no pattern",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "2-seat track-arm loveseat with two back and two seat cushions on dark tapered legs",
+       "shape": "two-seat loveseat with track arms, two back and two seat cushions, tapered dark legs",
        "verdict": "match"
       },
       {
-       "color": "cream / off-white",
-       "fix": "Replace with fine subtle weave and straight rectangular edges.",
+       "color": "cream/off-white",
+       "fix": "No fix needed, product already matches reference.",
        "index": 2,
-       "issues": [
-        "pattern is thick raised diamond lattice with large bold diamonds vs fine subtle texture in reference",
-        "edges are wavy, notched and irregular, not a straight rectangle"
-       ],
-       "material_pattern": "high-pile shaggy diamond lattice, much bolder than reference",
+       "issues": [],
+       "material_pattern": "flat-weave with chevron/herringbone pattern and solid border",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 5,
-       "shape": "rectangular rug",
-       "verdict": "partial"
+       "score": 9,
+       "shape": "rectangular flat area rug",
+       "verdict": "match"
       },
       {
-       "color": "white shade with clear glass and nickel trim",
-       "fix": "Re-render lamp upright with straight glass column and square base fully visible.",
+       "color": "white shade with clear/chrome column",
+       "fix": "Re-render shade as a straight drum cylinder matching the reference.",
        "index": 3,
        "issues": [
-        "lamp is severely warped and melted into window trim",
-        "glass column is wavy and distorted, base and full column not visible behind sofa"
+        "shade lower edge looks warped/curved in crop vs straight drum in reference",
+        "column and square base mostly occluded, cannot verify exact column detail"
        ],
-       "material_pattern": "fabric drum shade with glass column",
+       "material_pattern": "fabric drum shade with glass column and brushed-nickel trim",
        "placement_ok": true,
        "scale_ok": true,
-       "score": 4,
-       "shape": "drum-shade floor lamp with tall glass column",
+       "score": 6,
+       "shape": "drum-shade floor lamp with straight glass column on square base",
        "verdict": "partial"
       },
       {
-       "color": "medium honey natural wood",
-       "fix": "No fix needed, product already matches.",
+       "color": "light honey natural wood",
+       "fix": "No fix needed, product already matches reference.",
        "index": 4,
        "issues": [],
-       "material_pattern": "wood grain, solid",
+       "material_pattern": "solid wood grain with lower shelf and curved legs",
        "placement_ok": true,
        "scale_ok": true,
        "score": 9,
-       "shape": "round two-tier coffee table with curved cabriole legs and lower shelf",
+       "shape": "round top coffee table with four cabriole legs and full lower shelf",
        "verdict": "match"
       },
       {
-       "color": "glossy white top with matte speckled tan bottom, black stand",
-       "fix": "No fix needed, product is recognizable as the same planter.",
+       "color": "white pot with dark brown wood legs",
+       "fix": "Add the white cylindrical planter on its wood stand at the intended floor location.",
        "index": 5,
-       "issues": [],
-       "material_pattern": "glazed ceramic two-tone, solid with speckled lower half",
-       "placement_ok": true,
-       "scale_ok": true,
-       "score": 9,
-       "shape": "cylindrical planter pot on thin metal stand",
-       "verdict": "match"
+       "issues": [
+        "product not visible in edited photo; crop shows only empty wall and outlet"
+       ],
+       "material_pattern": "smooth ceramic pot with solid wood 4-leg stand",
+       "placement_ok": false,
+       "scale_ok": false,
+       "score": 0,
+       "shape": "cylindrical pot on four-legged wood stand",
+       "verdict": "missing"
       }
      ],
      "scene": {
       "artifacts": [
-       "translucent vertical ghost artifact along left wall",
-       "warped / melted window trim behind floor lamp",
-       "wavy irregular rug edges"
+       "slight warping on floor-lamp shade edge"
       ],
-      "cohesion": 7,
-      "comment": "Room is mostly convincing and removals are clean, but floor lamp is badly warped into window, rug pattern is much bolder than reference, and left-edge ghost hurts realism.",
-      "overall": 6,
-      "photoreal": 6,
+      "cohesion": 8,
+      "comment": "Architecture, windows, walls and floor are unchanged and boxes/rolled mat removals are clean. Sofa, rug and coffee table are photorealistic and cohesive, lamp is slightly distorted, and the planter is entirely missing.",
+      "overall": 7,
+      "photoreal": 8,
       "removals_ok": true,
-      "renter_rule_ok": false
+      "renter_rule_ok": true
      }
     },
     "raw": "cand_3_raw.jpg",
     "comp": "cand_3.jpg",
     "drift": {
-     "static_frac": 0.667,
-     "dE_mean": 5.47,
-     "dE_p95": 30.42,
-     "changed_frac_dE10": 0.1248,
-     "ssim_static": 0.8684
+     "static_frac": 0.616,
+     "dE_mean": 3.03,
+     "dE_p95": 12.81,
+     "changed_frac_dE10": 0.0619,
+     "ssim_static": 0.9128
     },
     "align": {
      "ok": true,
-     "cc": 0.8161455312123327,
-     "max_corner_shift_px": 371.03,
+     "cc": 0.9182340194379796,
+     "max_corner_shift_px": 65.98,
      "flow": {
       "refined": true,
-      "coverage": 0.0838,
-      "static_dE_before": 6.491,
-      "static_dE_after": 5.474,
-      "mean_shift_px": 7.41,
-      "max_shift_px": 35.82
+      "coverage": 0.1041,
+      "static_dE_before": 3.52,
+      "static_dE_after": 3.035,
+      "mean_shift_px": 3.36,
+      "max_shift_px": 30.84
      }
     },
     "seg_how": [
@@ -1833,67 +1863,83 @@
     ],
     "boxes": [
      [
-      308,
-      724,
-      910,
-      1128
+      221,
+      719,
+      889,
+      1163
      ],
      [
-      445,
-      995,
-      1416,
+      328,
+      1003,
+      1358,
       1344
      ],
      [
       740,
-      554,
-      836,
-      759
+      537,
+      843,
+      755
      ],
      [
-      810,
-      891,
-      1155,
-      1164
+      757,
+      902,
+      1112,
+      1192
      ],
      [
-      1352,
-      748,
-      1622,
-      1092
+      1403,
+      714,
+      1562,
+      932
      ]
     ]
    }
   ],
   "chosen": 2,
-  "prompt": "Image 1 is a real phone photo of a room to edit. Image 2 is a placement guide: the same photo with numbered translucent boxes showing where each product goes; use it only for position and scale and never draw its boxes or numbers. Images 3 to 7 are the reference photos of products 1 to 5, in order.\n1. Add product 1: Beige Linen Loveseat Sofa (sofa), real size 170.2 x 96.5 x 88.9 cm (width x depth x height). Placed lengthwise against the left wall facing into the room. It belongs inside box 1 of the placement guide. Copy product 1 exactly from its reference photo: Compact boxy two-seat loveseat in light beige linen with square arms, two loose back and seat cushions, and short tapered dark wood legs. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n2. Add product 2: Cream geometric criss-cross rug (rug), real size 182.9 x 121.9 x 1.3 cm (width x depth x height). Laid flat on the floor in the center in front of the sofa. It belongs inside box 2 of the placement guide. Copy product 2 exactly from its reference photo: Rectangular low-pile area rug in cream with subtle raised criss-cross geometric weave and soft woven wool texture. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n3. Add product 3: Glass Column Floor Lamp (floor lamp), real size 33 x 33 x 149.9 cm (width x depth x height). Stands on the floor in the back left corner beside the sofa end. It belongs inside box 3 of the placement guide. Copy product 3 exactly from its reference photo: Tall slender floor lamp with white drum linen shade, clear glass column on brushed nickel square base and metal stem. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n4. Add product 4: Round Traditional Coffee Table (coffee table), real size 96.5 x 96.5 x 48.3 cm (width x depth x height). Centered on the rug in front of the sofa, long side parallel to sofa. It belongs inside box 4 of the placement guide. Copy product 4 exactly from its reference photo: Round honey pine coffee table with thick wood top, four curved cabriole legs, and lower round shelf. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n5. Add product 5: Two-Tone Ceramic Planter with Stand (planter), real size 31 x 31 x 43.2 cm (width x depth x height). Stands on the floor on the right side under the window, clear of walkway. It belongs inside box 5 of the placement guide. Copy product 5 exactly from its reference photo: Cylindrical two-tone ceramic planter with white upper and speckled tan lower half sitting in a thin black iron four-leg stand. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\nRemove: cardboard moving box left; cardboard moving box right; rolled gray mat. Show the floor and wall that were behind them, continuing the surrounding texture, so it looks like they were never there.\nHard rules: keep the exact same camera position, framing, lens distortion and perspective. Keep the walls, wallpaper, floor, ceiling, ceiling light, windows, blinds or curtains, doors and every object that is not listed exactly as they are. Keep the existing light direction, color temperature and exposure; new products receive the same light and cast soft, physically plausible contact shadows. The result must look like an unedited phone photo of the same room, not a render. Do not add anything else: no extra decor, no text, no numbers, no colored boxes or outlines."
+  "prompt": "Image 1 is a real phone photo of a room to edit. Image 2 is a placement guide: the same photo with numbered translucent boxes showing where each product goes; use it only for position and scale and never draw its boxes or numbers. Images 3 to 7 are the reference photos of products 1 to 5, in order.\n1. Add product 1: Beige Linen Loveseat Sofa (sofa), real size 170.2 x 96.5 x 88.9 cm (width x depth x height). Centered against left wall with back to wall and facing into room. It belongs inside box 1 of the placement guide. Copy product 1 exactly from its reference photo: Compact boxy two-seat loveseat in light beige linen with square arms, two loose back and seat cushions, and short tapered dark wood legs. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n2. Add product 2: Cream Chevron Patterned Area Rug (rug), real size 228.6 x 152.4 x 1.3 cm (width x depth x height). Laid on floor center in front of sofa with long edge parallel to sofa. It belongs inside box 2 of the placement guide. Copy product 2 exactly from its reference photo: Rectangular cream polyester area rug with subtle tonal chevron pattern and thin border trim. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n3. Add product 3: Glass Column Floor Lamp (floor lamp), real size 33 x 33 x 149.9 cm (width x depth x height). Stands on floor in rear corner by sofa end near window wall. It belongs inside box 3 of the placement guide. Copy product 3 exactly from its reference photo: Tall slender floor lamp with white drum linen shade, clear glass column on brushed nickel square base and metal stem. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n4. Add product 4: Round Traditional Coffee Table (coffee table), real size 96.5 x 96.5 x 48.3 cm (width x depth x height). Placed on rug in front of sofa center, leaving walkway clear. It belongs inside box 4 of the placement guide. Copy product 4 exactly from its reference photo: Round honey pine coffee table with thick wood top, four curved cabriole legs, and lower round shelf. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\n5. Add product 5: White Cylindrical Planter with Stand (planter), real size 43.9 x 43.9 x 49.2 cm (width x depth x height). Stands on floor at right end of window wall, clear of outlet and walkway. It belongs inside box 5 of the placement guide. Copy product 5 exactly from its reference photo: Tall cylindrical off-white ceramic planter pot supported by a four-legged dark walnut wood stand with vertical dowels. Same shape, proportions, color, material, texture, pattern and details, scaled to its real size relative to the room.\nRemove: cardboard moving box front; cardboard moving box back; rolled-up mat. Show the floor and wall that were behind them, continuing the surrounding texture, so it looks like they were never there.\nHard rules: keep the exact same camera position, framing, lens distortion and perspective. Keep the walls, wallpaper, floor, ceiling, ceiling light, windows, blinds or curtains, doors and every object that is not listed exactly as they are. Keep the existing light direction, color temperature and exposure; new products receive the same light and cast soft, physically plausible contact shadows. The result must look like an unedited phone photo of the same room, not a render. Do not add anything else: no extra decor, no text, no numbers, no colored boxes or outlines."
  },
  "fixes": [
   {
    "slot": "s2",
-   "product": "B0735S6D1P",
+   "product": "B075Z8GZ45",
    "before": {
-    "color": "cream / off-white",
-    "fix": "Replace with flat low-pile cream rug with faint subtle pattern.",
-    "index": 2,
-    "issues": [
-     "pattern far bolder, thicker raised lattice vs faint low-contrast lines in reference",
-     "pile looks chunky high-pile shag vs flat low-pile texture in reference",
-     "large star geometric motif not present in reference"
-    ],
-    "material_pattern": "thick high-pile geometric criss-cross lattice",
-    "placement_ok": true,
+    "shape": "rectangular",
+    "color": "off-white cream, whiter and cooler than reference warm cream-beige",
+    "material_pattern": "low-pile flatweave with chevron zigzag pattern and solid border",
     "scale_ok": true,
-    "score": 4,
-    "shape": "rectangular rug",
-    "verdict": "partial"
+    "placement_ok": true,
+    "issues": [
+     "Color renders as bright off-white rather than warm cream-beige of reference",
+     "Border looks wider and brighter white vs thin cream binding in reference",
+     "Edges are wavy with visible wrinkle/fold near table leg instead of flat straight edges",
+     "Chevron looks slightly larger scale and lower contrast than dense fine chevron in reference"
+    ],
+    "fix": "Re-render rug in warm cream-beige with thin matching binding lying perfectly flat.",
+    "verdict": "partial",
+    "score": 7.0,
+    "checks": [
+     {
+      "verdict": "partial",
+      "score": 7
+     },
+     {
+      "verdict": "partial",
+      "score": 7
+     },
+     {
+      "verdict": "match",
+      "score": 9
+     }
+    ],
+    "of": 3,
+    "index": 2
    },
    "after": {
     "color": "cream off-white",
     "fix": "No fix needed.",
     "index": 2,
     "issues": [],
-    "material_pattern": "low-pile textured weave with subtle geometric diamond criss-cross",
+    "material_pattern": "flat-weave with fine chevron herringbone pattern and thin border",
     "placement_ok": true,
     "scale_ok": true,
     "score": 9,
@@ -1904,75 +1950,9 @@
    "accepted": true,
    "region": [
     0,
-    679,
+    723,
     1792,
     1344
-   ],
-   "rounds": 2,
-   "tries": [
-    {
-     "round": 1,
-     "verdict": "partial",
-     "score": 7
-    },
-    {
-     "round": 1,
-     "verdict": "partial",
-     "score": 6.5
-    },
-    {
-     "round": 2,
-     "verdict": "match",
-     "score": 9
-    },
-    {
-     "round": 2,
-     "verdict": "match",
-     "score": 9
-    }
-   ],
-   "images": [
-    "fix_s2_before.jpg",
-    "fix_s2_after.jpg"
-   ]
-  },
-  {
-   "slot": "s4",
-   "product": "B07MHMJD43",
-   "before": {
-    "color": "pale bleached natural wood vs warm medium honey oak",
-    "fix": "Re-render table in warm medium honey oak finish to match reference.",
-    "index": 4,
-    "issues": [
-     "color much too light/pale, missing warm honey-brown tone",
-     "finish looks whitewashed matte vs saturated varnished wood in reference"
-    ],
-    "material_pattern": "wood grain but washed out, grain less pronounced",
-    "placement_ok": true,
-    "scale_ok": true,
-    "score": 6,
-    "shape": "round top with 4 curved cabriole legs and full circular lower shelf",
-    "verdict": "partial"
-   },
-   "after": {
-    "color": "light honey-brown natural wood",
-    "fix": "No fix needed, accurate match.",
-    "index": 4,
-    "issues": [],
-    "material_pattern": "solid wood with subtle straight grain",
-    "placement_ok": true,
-    "scale_ok": true,
-    "score": 9,
-    "shape": "round coffee table with thick apron, four curved cabriole legs and full round lower shelf",
-    "verdict": "match",
-    "fixed": true
-   },
-   "accepted": true,
-   "region": [
-    651,
-    773,
-    1315,
-    1343
    ],
    "rounds": 1,
    "tries": [
@@ -1988,8 +1968,84 @@
     }
    ],
    "images": [
-    "fix_s4_before.jpg",
-    "fix_s4_after.jpg"
+    "fix_s2_before.jpg",
+    "fix_s2_after.jpg"
+   ]
+  },
+  {
+   "slot": "s3",
+   "product": "B073P2WNLJ",
+   "before": {
+    "shape": "tall drum-shade floor lamp with slim glass column, but shade is warped not a clean cylinder",
+    "color": "white shade with clear glass column and nickel-tone metal, matches reference",
+    "material_pattern": "fabric-look shade with transparent glass column and metal accents, consistent but blurred",
+    "scale_ok": true,
+    "placement_ok": true,
+    "issues": [
+     "shade top edge looks wavy and asymmetric, not flat straight drum as in reference",
+     "render is low-resolution and blurry, glass column and metal collars lack crisp detail",
+     "lower column and square base are cropped/occluded by sofa so full proportions not verifiable"
+    ],
+    "fix": "Re-render the shade as a crisp flat-top straight cylindrical drum.",
+    "verdict": "partial",
+    "score": 7.0,
+    "checks": [
+     {
+      "verdict": "partial",
+      "score": 6
+     },
+     {
+      "verdict": "partial",
+      "score": 7
+     },
+     {
+      "verdict": "partial",
+      "score": 7
+     }
+    ],
+    "of": 3,
+    "index": 3
+   },
+   "after": {
+    "color": "white drum shade with clear glass column and silver-toned metal trim",
+    "fix": "Reframe to show the entire lamp including base in sharp focus.",
+    "index": 3,
+    "issues": [
+     "left edge of shade is cropped out of frame",
+     "square base is hidden behind sofa so cannot be verified",
+     "crop is low-resolution and soft focus"
+    ],
+    "material_pattern": "matte fabric shade, transparent glass column, brushed metal accents",
+    "placement_ok": true,
+    "scale_ok": true,
+    "score": 9,
+    "shape": "tall column floor lamp with cylindrical drum shade",
+    "verdict": "match",
+    "fixed": true
+   },
+   "accepted": true,
+   "region": [
+    628,
+    433,
+    948,
+    874
+   ],
+   "rounds": 1,
+   "tries": [
+    {
+     "round": 1,
+     "verdict": "match",
+     "score": 9
+    },
+    {
+     "round": 1,
+     "verdict": "match",
+     "score": 9
+    }
+   ],
+   "images": [
+    "fix_s3_before.jpg",
+    "fix_s3_after.jpg"
    ]
   }
  ],
@@ -2002,50 +2058,107 @@
    "before": "before.png",
    "after": "after.png"
   },
-  "edit_outline": "M140 912 L140 1208 L162 1221 L166 1248 L211 1241 L226 1251 L340 1229 L482 1184 L384 1235 L364 1265 L470 1343 L1323 1343 L1439 1069 L1427 1048 L1159 1004 L1167 952 L1146 929 L1105 910 L1016 897 L918 898 L905 779 L823 753 L822 740 L838 734 L821 663 L851 618 L848 551 L832 542 L817 549 L783 539 L772 547 L732 543 L693 560 L680 577 L683 621 L726 664 L766 634 L767 747 L756 727 L727 723 L358 761 L327 774 L320 790 L227 829 Z M1502 903 L1497 907 L1493 916 L1489 919 L1486 925 L1480 929 L1473 940 L1464 944 L1452 957 L1450 967 L1445 973 L1446 980 L1444 983 L1444 989 L1446 992 L1446 998 L1440 1005 L1440 1012 L1465 1053 L1471 1057 L1471 1063 L1477 1070 L1480 1078 L1483 1080 L1489 1094 L1495 1100 L1500 1101 L1539 1097 L1617 1112 L1623 1123 L1626 1125 L1639 1125 L1646 1117 L1647 1084 L1645 1075 L1645 986 L1641 980 L1635 978 L1627 969 L1628 954 L1633 951 L1637 942 L1641 939 L1645 932 L1644 922 L1635 913 L1616 908 L1605 910 L1599 916 L1588 915 L1582 904 L1568 900 L1554 900 L1538 897 Z M1354 736 L1353 760 L1355 767 L1361 775 L1371 779 L1398 780 L1409 785 L1407 789 L1403 785 L1398 784 L1390 787 L1387 792 L1387 798 L1392 804 L1379 804 L1371 807 L1368 812 L1368 819 L1371 824 L1387 828 L1424 830 L1428 838 L1436 841 L1444 838 L1448 832 L1537 838 L1553 837 L1559 830 L1559 824 L1556 819 L1546 815 L1552 807 L1551 798 L1546 793 L1523 791 L1521 789 L1531 786 L1595 789 L1603 787 L1610 779 L1610 772 L1607 767 L1600 762 L1597 755 L1589 752 L1536 751 L1524 754 L1510 750 L1418 746 L1409 742 L1398 745 L1391 736 L1386 735 L1380 737 L1375 729 L1367 726 L1359 729 Z",
+  "edit_outline": "M1378 1059 L1352 1044 L1133 1004 L1142 953 L1098 919 L964 888 L894 886 L882 778 L811 750 L810 631 L831 623 L849 594 L849 524 L820 512 L729 523 L724 544 L688 558 L678 587 L722 668 L766 615 L768 759 L738 762 L723 730 L683 726 L334 761 L304 774 L296 791 L196 832 L69 947 L66 1225 L75 1238 L120 1253 L127 1271 L171 1280 L474 1190 L577 1140 L393 1236 L382 1262 L520 1343 L1264 1343 L1325 1221 Z M1520 895 L1515 903 L1515 956 L1508 959 L1504 965 L1504 1022 L1506 1036 L1497 1040 L1494 1045 L1494 1051 L1497 1056 L1507 1060 L1507 1079 L1511 1086 L1516 1090 L1523 1092 L1534 1091 L1536 1089 L1542 1091 L1564 1108 L1564 1117 L1568 1124 L1581 1129 L1591 1128 L1595 1125 L1599 1117 L1658 1114 L1661 1119 L1667 1123 L1679 1124 L1687 1121 L1692 1114 L1693 1077 L1695 1073 L1694 990 L1690 983 L1682 979 L1684 915 L1680 908 L1675 904 L1660 898 L1613 890 L1567 887 L1542 888 L1527 891 Z",
   "products": [
    {
     "slot": "s1",
     "product": "B07B4L56TX",
     "box": [
-     273,
-     734,
-     904,
-     1167
+     250,
+     737,
+     881,
+     1175
     ],
-    "outline": "M893 786 L806 764 L762 763 L756 758 L752 739 L743 734 L661 739 L592 748 L581 753 L564 750 L506 753 L385 767 L351 775 L335 786 L340 810 L338 828 L295 826 L278 831 L273 838 L284 1042 L306 1060 L313 1090 L320 1098 L332 1091 L338 1069 L419 1097 L476 1121 L480 1126 L480 1159 L487 1166 L496 1165 L503 1159 L506 1117 L511 1107 L811 982 L805 955 L816 937 L854 918 L899 910 L903 896 L902 846 Z",
+    "outline": "M869 786 L834 776 L730 772 L722 744 L715 739 L696 737 L645 739 L558 751 L498 751 L361 767 L326 776 L311 786 L317 811 L314 828 L267 827 L254 832 L250 839 L262 1046 L269 1056 L287 1066 L296 1100 L306 1099 L316 1079 L322 1077 L443 1122 L460 1132 L468 1172 L480 1173 L488 1167 L493 1115 L786 993 L778 965 L788 946 L820 928 L874 916 L879 910 L880 872 Z",
     "crop": "crop_s1.jpg",
     "verdict": {
-     "color": "beige / light greige",
-     "fix": "No fix needed, product already matches.",
+     "shape": "2-seat loveseat with square track arms, two back and two seat cushions, dark tapered legs",
+     "color": "light beige linen, appears slightly cooler grey-beige in room light",
+     "material_pattern": "solid linen-look upholstery",
+     "scale_ok": true,
+     "placement_ok": true,
+     "issues": [
+      "Seat cushions show extra wrinkling vs taut smooth reference",
+      "Tone looks slightly cooler/greyer than warm beige reference due to lighting"
+     ],
+     "fix": "Warm color slightly and smooth seat cushions to match taut reference.",
+     "verdict": "match",
+     "score": 9.0,
+     "checks": [
+      {
+       "verdict": "match",
+       "score": 9
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      }
+     ],
+     "of": 3,
+     "index": 1
+    },
+    "render_verdict": {
+     "color": "light beige / greige",
+     "fix": "No fix needed, keep as is.",
      "index": 1,
      "issues": [],
-     "material_pattern": "plain linen-look weave, no pattern",
+     "material_pattern": "linen-look solid weave, no pattern",
      "placement_ok": true,
      "scale_ok": true,
      "score": 9,
-     "shape": "2-seat loveseat with square track arms, two back and seat cushions on dark tapered legs",
+     "shape": "2-seat loveseat with boxy track arms and dark tapered legs",
      "verdict": "match"
     },
     "fixed": false
    },
    {
     "slot": "s2",
-    "product": "B0735S6D1P",
+    "product": "B075Z8GZ45",
     "box": [
-     383,
+     401,
      1015,
-     1429,
-     1344
+     1364,
+     1343
     ],
-    "outline": "M1428 1066 L1413 1056 L1158 1015 L1135 1040 L1127 1067 L1133 1101 L1158 1122 L1147 1143 L1141 1182 L1126 1179 L1126 1144 L1111 1130 L1024 1150 L922 1145 L904 1171 L900 1207 L887 1209 L881 1201 L882 1167 L873 1157 L882 1134 L846 1113 L840 1102 L834 1057 L857 1036 L854 1026 L844 1024 L392 1243 L383 1255 L552 1343 L1299 1341 Z",
+    "outline": "M1363 1064 L1334 1054 L1114 1015 L1086 1064 L1094 1092 L1091 1106 L1111 1124 L1100 1144 L1096 1182 L1082 1180 L1079 1145 L1063 1129 L981 1151 L886 1141 L873 1162 L871 1198 L860 1203 L852 1198 L852 1164 L842 1152 L850 1131 L830 1115 L823 1101 L825 1060 L840 1046 L834 1034 L401 1251 L575 1341 L1247 1341 L1266 1311 L1331 1165 Z",
     "crop": "crop_s2.jpg",
     "verdict": {
+     "shape": "rectangular",
+     "color": "cream",
+     "material_pattern": "flatweave with small cream chevron pattern and solid border",
+     "scale_ok": true,
+     "placement_ok": true,
+     "issues": [],
+     "fix": "No fix needed.",
+     "verdict": "match",
+     "score": 9.0,
+     "checks": [
+      {
+       "verdict": "match",
+       "score": 9.5
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      }
+     ],
+     "of": 3,
+     "index": 2
+    },
+    "render_verdict": {
      "color": "cream off-white",
      "fix": "No fix needed.",
      "index": 2,
      "issues": [],
-     "material_pattern": "low-pile textured weave with subtle geometric diamond criss-cross",
+     "material_pattern": "flat-weave with fine chevron herringbone pattern and thin border",
      "placement_ok": true,
      "scale_ok": true,
      "score": 9,
@@ -2060,75 +2173,160 @@
     "product": "B073P2WNLJ",
     "box": [
      736,
-     553,
+     525,
      839,
-     757
+     772
     ],
-    "outline": "M737 553 L736 555 L736 587 L738 615 L741 617 L749 618 L769 618 L778 620 L782 623 L777 630 L777 634 L780 640 L780 646 L784 650 L783 662 L785 669 L781 677 L784 685 L781 688 L788 696 L789 707 L787 710 L785 710 L781 705 L780 725 L781 734 L783 738 L782 746 L784 754 L787 756 L791 753 L793 742 L799 738 L804 730 L801 709 L802 680 L800 670 L801 641 L799 623 L814 619 L832 618 L837 615 L838 613 L837 568 L834 566 L807 565 L779 561 L751 553 Z",
+    "outline": "M743 529 L737 531 L736 535 L738 593 L751 595 L781 594 L783 596 L783 604 L781 607 L777 608 L780 770 L800 771 L799 608 L794 607 L791 604 L791 596 L793 594 L838 591 L837 528 L822 525 L790 525 Z",
     "crop": "crop_s3.jpg",
     "verdict": {
-     "color": "white shade with clear glass and brushed nickel",
-     "fix": "Move lamp fully into view so shade, column and base are visible.",
+     "shape": "tall drum-shade floor lamp on slender cylindrical glass column with square base",
+     "color": "white shade with clear transparent column and brushed nickel silver accents",
+     "material_pattern": "white fabric drum shade, clear glass column with central metal rod, brushed nickel metal, solid with no pattern",
+     "scale_ok": true,
+     "placement_ok": true,
+     "issues": [],
+     "fix": "No fix needed, retain current rendering.",
+     "verdict": "match",
+     "score": 9.0,
+     "checks": [
+      {
+       "verdict": "match",
+       "score": 9
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      }
+     ],
+     "of": 3,
+     "index": 3
+    },
+    "render_verdict": {
+     "color": "white drum shade with clear glass column and silver-toned metal trim",
+     "fix": "Reframe to show the entire lamp including base in sharp focus.",
      "index": 3,
      "issues": [
-      "lamp mostly occluded behind sofa, base and full column not visible for verification"
+      "left edge of shade is cropped out of frame",
+      "square base is hidden behind sofa so cannot be verified",
+      "crop is low-resolution and soft focus"
      ],
-     "material_pattern": "fabric drum shade, glass column, metal base",
+     "material_pattern": "matte fabric shade, transparent glass column, brushed metal accents",
      "placement_ok": true,
      "scale_ok": true,
      "score": 9,
-     "shape": "drum-shade floor lamp with straight glass column on square base",
-     "verdict": "match"
-    },
-    "fixed": false
-   },
-   {
-    "slot": "s4",
-    "product": "B07MHMJD43",
-    "box": [
-     808,
-     909,
-     1158,
-     1205
-    ],
-    "outline": "M812 946 L808 955 L809 963 L819 979 L819 989 L823 998 L835 1009 L856 1019 L862 1025 L858 1048 L841 1053 L837 1062 L846 1072 L842 1092 L848 1108 L863 1120 L888 1132 L877 1148 L877 1158 L886 1165 L886 1204 L896 1202 L899 1169 L908 1158 L917 1138 L964 1146 L1015 1147 L1072 1138 L1113 1120 L1130 1142 L1130 1177 L1139 1178 L1142 1141 L1151 1131 L1153 1122 L1129 1103 L1123 1083 L1123 1065 L1132 1037 L1148 1018 L1146 985 L1155 973 L1157 965 L1155 954 L1143 941 L1115 926 L1080 917 L1017 910 L961 909 L878 917 L838 929 Z",
-    "crop": "crop_s4.jpg",
-    "verdict": {
-     "color": "light honey-brown natural wood",
-     "fix": "No fix needed, accurate match.",
-     "index": 4,
-     "issues": [],
-     "material_pattern": "solid wood with subtle straight grain",
-     "placement_ok": true,
-     "scale_ok": true,
-     "score": 9,
-     "shape": "round coffee table with thick apron, four curved cabriole legs and full round lower shelf",
+     "shape": "tall column floor lamp with cylindrical drum shade",
      "verdict": "match",
      "fixed": true
     },
     "fixed": true
    },
    {
-    "slot": "s5",
-    "product": "B07QC6X16K",
+    "slot": "s4",
+    "product": "B07MHMJD43",
     "box": [
-     1368,
-     747,
-     1609,
-     1091
+     782,
+     912,
+     1131,
+     1201
     ],
-    "outline": "M1508 913 L1505 916 L1504 929 L1505 968 L1503 968 L1502 936 L1500 939 L1500 934 L1496 936 L1497 938 L1495 940 L1492 934 L1488 937 L1492 939 L1483 944 L1482 947 L1485 949 L1483 951 L1479 949 L1477 953 L1474 952 L1469 955 L1472 960 L1469 961 L1473 969 L1477 969 L1471 973 L1473 975 L1472 979 L1466 982 L1464 975 L1464 984 L1461 987 L1457 987 L1464 987 L1459 992 L1461 991 L1463 993 L1459 996 L1457 994 L1464 1003 L1461 1006 L1462 1004 L1471 1010 L1466 1011 L1451 1008 L1454 1010 L1452 1011 L1456 1014 L1455 1016 L1460 1019 L1459 1022 L1462 1023 L1460 1024 L1470 1040 L1487 1044 L1479 1045 L1472 1043 L1473 1045 L1479 1046 L1479 1049 L1480 1047 L1498 1050 L1495 1065 L1497 1069 L1495 1071 L1498 1076 L1496 1079 L1498 1080 L1498 1086 L1502 1090 L1505 1090 L1504 1083 L1507 1082 L1505 1078 L1509 1067 L1517 1070 L1510 1071 L1509 1073 L1510 1080 L1513 1082 L1515 1089 L1517 1086 L1527 1088 L1603 1080 L1608 1075 L1608 1067 L1595 1005 L1592 1002 L1594 1000 L1575 915 L1564 913 L1568 911 L1523 910 Z M1368 753 L1368 760 L1369 761 L1368 762 L1369 763 L1369 767 L1371 768 L1373 768 L1376 766 L1382 766 L1383 769 L1404 769 L1407 773 L1409 773 L1411 770 L1432 770 L1433 771 L1448 771 L1449 772 L1507 774 L1508 775 L1515 775 L1516 777 L1520 777 L1521 778 L1522 777 L1525 777 L1526 775 L1532 775 L1533 776 L1532 775 L1532 772 L1527 770 L1530 768 L1528 765 L1525 765 L1521 767 L1520 765 L1517 764 L1518 763 L1509 763 L1503 761 L1500 761 L1499 762 L1485 762 L1484 761 L1485 760 L1495 760 L1481 760 L1480 759 L1414 757 L1411 756 L1409 753 L1408 753 L1407 756 L1398 756 L1397 755 L1389 756 L1387 754 L1387 748 L1383 751 L1379 747 L1372 747 L1369 750 Z M1402 887 L1402 891 L1403 892 L1402 893 L1402 894 L1403 895 L1403 896 L1402 897 L1402 898 L1403 899 L1403 900 L1402 901 L1402 927 L1403 928 L1403 930 L1405 930 L1406 931 L1411 931 L1412 932 L1422 932 L1423 933 L1426 933 L1427 934 L1428 934 L1429 933 L1430 933 L1431 932 L1432 932 L1433 931 L1434 932 L1434 934 L1435 934 L1435 925 L1436 924 L1435 923 L1435 889 L1434 889 L1434 890 L1433 891 L1431 889 L1430 889 L1429 888 L1425 888 L1424 889 L1422 889 L1421 890 L1419 888 L1418 888 L1417 887 L1412 887 L1411 886 L1408 886 L1407 887 L1405 887 L1404 888 L1403 887 Z",
-    "crop": "crop_s5.jpg",
+    "outline": "M1126 951 L1113 940 L1074 925 L1027 916 L973 912 L915 914 L875 919 L818 933 L787 951 L782 960 L782 971 L792 987 L795 1002 L811 1017 L836 1026 L843 1033 L842 1051 L829 1059 L832 1072 L826 1087 L826 1099 L832 1112 L854 1127 L845 1150 L854 1163 L856 1197 L859 1200 L866 1197 L868 1163 L886 1137 L914 1143 L975 1148 L1016 1141 L1061 1124 L1067 1124 L1082 1142 L1085 1178 L1092 1180 L1095 1176 L1097 1143 L1106 1133 L1107 1125 L1087 1108 L1082 1063 L1090 1041 L1106 1024 L1109 1012 L1118 999 L1121 981 L1130 964 Z",
+    "crop": "crop_s4.jpg",
     "verdict": {
-     "color": "glossy white top, matte speckled tan bottom, black stand",
-     "fix": "No fix needed, product already matches.",
-     "index": 5,
+     "shape": "round top with apron, four curved cabriole legs with block detail and turned feet, full round lower shelf",
+     "color": "light honey-brown natural wood",
+     "material_pattern": "smooth solid wood with subtle linear grain",
+     "scale_ok": true,
+     "placement_ok": true,
      "issues": [],
-     "material_pattern": "glazed ceramic upper, speckled stoneware lower, metal stand",
+     "fix": "No fix needed.",
+     "verdict": "match",
+     "score": 9.0,
+     "checks": [
+      {
+       "verdict": "match",
+       "score": 9
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      }
+     ],
+     "of": 3,
+     "index": 4
+    },
+    "render_verdict": {
+     "color": "medium honey natural wood",
+     "fix": "No fix needed, keep as is.",
+     "index": 4,
+     "issues": [],
+     "material_pattern": "wood grain with traditional curved legs and lower shelf",
      "placement_ok": true,
      "scale_ok": true,
      "score": 9,
-     "shape": "cylindrical two-tone pot on thin black metal stand",
+     "shape": "round top coffee table with cabriole legs and full lower shelf",
+     "verdict": "match"
+    },
+    "fixed": false
+   },
+   {
+    "slot": "s5",
+    "product": "B07JM1K8VL",
+    "box": [
+     1516,
+     898,
+     1684,
+     1118
+    ],
+    "outline": "M1527 907 L1527 964 L1519 967 L1516 972 L1519 1076 L1527 1080 L1529 1077 L1530 1048 L1534 1044 L1542 1044 L1564 1052 L1573 1053 L1577 1060 L1575 1109 L1577 1115 L1584 1117 L1587 1113 L1588 1078 L1599 1062 L1605 1062 L1608 1065 L1610 1074 L1614 1077 L1617 1075 L1618 1066 L1621 1063 L1640 1064 L1664 1070 L1669 1073 L1671 1079 L1670 1110 L1678 1112 L1681 1108 L1683 1073 L1683 1004 L1679 991 L1672 989 L1670 986 L1673 921 L1671 916 L1651 907 L1609 901 L1563 898 L1538 901 Z",
+    "crop": "crop_s5.jpg",
+    "verdict": {
+     "shape": "tall straight-sided cylindrical pot on four vertical stand legs",
+     "color": "white/off-white pot with dark brown legs",
+     "material_pattern": "smooth ceramic pot with wooden dowel stand, no pattern",
+     "scale_ok": true,
+     "placement_ok": true,
+     "issues": [
+      "Low-resolution crop is slightly soft but shape, color and stand design remain recognizable as the same product"
+     ],
+     "fix": "Brighten slightly to restore true white and warm walnut leg tone.",
+     "verdict": "match",
+     "score": 9.0,
+     "checks": [
+      {
+       "verdict": "partial",
+       "score": 7
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      },
+      {
+       "verdict": "match",
+       "score": 9
+      }
+     ],
+     "of": 3,
+     "index": 5
+    },
+    "render_verdict": {
+     "color": "matte white pot with dark brown legs",
+     "fix": "No fix needed, keep as is.",
+     "index": 5,
+     "issues": [],
+     "material_pattern": "smooth solid ceramic-look pot with wood dowel stand",
+     "placement_ok": true,
+     "scale_ok": true,
+     "score": 9,
+     "shape": "tall cylindrical pot on four dowel legs with cross supports",
      "verdict": "match"
     },
     "fixed": false
@@ -2137,18 +2335,18 @@
   "removed": [
    {
     "id": "o1",
-    "name": "cardboard moving box left",
+    "name": "cardboard moving box front",
     "box": [
      587,
      863,
      787,
      1039
     ],
-    "outline": "M783 874 L770 870 L728 867 L723 865 L706 863 L687 863 L678 865 L673 868 L659 870 L649 874 L618 879 L606 883 L601 887 L588 890 L588 899 L619 901 L629 904 L640 905 L656 909 L664 915 L666 921 L667 949 L666 1023 L667 1033 L669 1036 L673 1038 L688 1037 L690 1035 L725 1021 L733 1016 L783 996 L786 988 L786 929 L784 912 L785 879 Z"
+    "outline": "M783 874 L770 870 L728 867 L723 865 L706 863 L687 863 L678 865 L673 868 L659 870 L649 874 L618 879 L606 883 L601 887 L588 890 L588 899 L619 901 L629 904 L640 905 L656 909 L664 915 L666 921 L667 949 L666 1023 L667 1033 L669 1036 L673 1038 L688 1037 L725 1021 L733 1016 L783 996 L786 988 L786 929 L784 912 L785 879 Z"
    },
    {
     "id": "o2",
-    "name": "cardboard moving box right",
+    "name": "cardboard moving box back",
     "box": [
      463,
      899,
@@ -2159,110 +2357,122 @@
    },
    {
     "id": "o3",
-    "name": "rolled gray mat",
+    "name": "rolled-up mat",
     "box": [
      787,
      895,
      1026,
      997
     ],
-    "outline": "M787 900 L788 951 L789 955 L795 959 L889 975 L925 983 L937 984 L942 986 L957 988 L973 993 L991 996 L1002 993 L1011 988 L1025 971 L1025 953 L1023 944 L1018 935 L1011 928 L991 923 L982 923 L949 917 L921 914 L847 902 L833 901 L820 898 L805 897 L799 895 L790 895 Z"
+    "outline": "M788 897 L787 901 L788 952 L789 955 L794 959 L811 961 L842 968 L884 974 L925 983 L937 984 L990 996 L997 995 L1011 988 L1025 972 L1025 953 L1023 944 L1019 936 L1011 928 L1002 925 L956 919 L929 914 L921 914 L882 907 L860 905 L848 902 L826 900 L820 898 L805 897 L799 895 L790 895 Z"
    }
   ],
   "proof": {
-   "untouched_pct": 63.27,
-   "edited_pct": 36.73,
+   "untouched_pct": 63.59,
+   "edited_pct": 36.41,
    "layers_pct": {
-    "products": 27.79,
-    "cleared": 0.04,
-    "shadows": 8.89
+    "products": 27.52,
+    "cleared": 0.03,
+    "shadows": 8.85
    },
-   "model_drift_dE": 3.74,
-   "model_drift_changed_pct": 8.39,
-   "ssim_static": 0.9103,
-   "alignment_shift_px": 63.08
+   "model_drift_dE": 2.68,
+   "model_drift_changed_pct": 4.53,
+   "ssim_static": 0.9279,
+   "alignment_shift_px": 21.95
   },
   "scene": {
    "artifacts": [],
-   "cohesion": 9.0,
-   "comment": "Clean removal of boxes and rolled mat, lighting and shadows consistent, all new beige/cream/wood pieces sit plausibly and look like an unedited phone photo.",
-   "overall": 9.0,
-   "photoreal": 9.0,
+   "cohesion": 7,
+   "comment": "Room is cleanly furnished with neutral beige, cream and light wood pieces that sit plausibly; traditional coffee table styling slightly clashes with modern sofa and lamp is awkwardly tucked behind sofa.",
+   "overall": 8,
+   "photoreal": 8,
    "removals_ok": true,
    "renter_rule_ok": true
   },
   "scene_first_render": {
-   "artifacts": [],
+   "artifacts": [
+    "floor lamp shade has wavy distorted lower edge",
+    "area rug shows unnatural crease/fold near coffee table leg",
+    "floor lamp stem merges into window trim and base is missing"
+   ],
    "cohesion": 8,
-   "comment": "Clean believable staging with consistent daylight; downgraded because rug pattern and coffee-table color do not match references and lamp is largely hidden.",
+   "comment": "Clean cohesive neutral staging with faithful sofa, rug, table and planter; floor lamp is poorly rendered and mostly hidden, lowering realism.",
    "overall": 7,
-   "photoreal": 8,
+   "photoreal": 7,
    "removals_ok": true,
    "renter_rule_ok": true
   },
   "final_check_products": [
    {
     "color": "light beige",
-    "fix": "No fix needed.",
+    "fix": "No fix needed, product is accurate.",
     "index": 1,
     "issues": [],
-    "material_pattern": "solid linen-look woven fabric",
+    "material_pattern": "linen-like solid weave with no pattern",
     "placement_ok": true,
     "scale_ok": true,
-    "score": 9.5,
-    "shape": "two-cushion loveseat with straight track arms and short dark wood legs",
+    "score": 9,
+    "shape": "two-seat loveseat with square arms and dark tapered legs",
     "verdict": "match"
    },
    {
-    "color": "cream off-white",
-    "fix": "No fix needed.",
+    "color": "cream off-white with light beige chevron",
+    "fix": "No fix needed, product is accurate.",
     "index": 2,
     "issues": [],
-    "material_pattern": "subtle geometric diamond criss-cross textured weave",
+    "material_pattern": "flat weave with chevron pattern and solid border",
     "placement_ok": true,
     "scale_ok": true,
-    "score": 9.0,
-    "shape": "rectangular flat-weave area rug",
+    "score": 9,
+    "shape": "rectangular flat area rug",
     "verdict": "match"
    },
    {
     "color": "white shade with clear glass and brushed nickel",
-    "fix": "Move lamp forward so full column and base are visible.",
+    "fix": "Move lamp fully clear of sofa so base and column are visible.",
     "index": 3,
     "issues": [
-     "lamp is heavily occluded behind sofa, only shade and top of column visible so base cannot be verified"
+     "lower column and square base are hidden behind sofa so full product cannot be verified"
     ],
-    "material_pattern": "fabric drum shade with glass column",
+    "material_pattern": "fabric drum shade with clear glass column and metal trim",
     "placement_ok": true,
     "scale_ok": true,
-    "score": 9.0,
-    "shape": "drum-shade floor lamp with tall glass column on square base",
-    "verdict": "match"
+    "score": 8,
+    "shape": "drum-shade floor lamp with tall glass column",
+    "verdict": "partial"
    },
    {
-    "color": "medium honey oak",
-    "fix": "No fix needed.",
+    "color": "light honey natural wood",
+    "fix": "No fix needed, product is accurate.",
     "index": 4,
     "issues": [],
-    "material_pattern": "solid wood grain with lower shelf",
+    "material_pattern": "solid wood grain with no pattern",
     "placement_ok": true,
     "scale_ok": true,
-    "score": 10.0,
-    "shape": "round top coffee table with 4 cabriole legs and circular lower tier",
+    "score": 9,
+    "shape": "round top coffee table with four curved cabriole legs and lower circular shelf",
     "verdict": "match"
    },
    {
-    "color": "glossy white over matte tan",
-    "fix": "No fix needed.",
+    "color": "matte white pot with dark brown legs",
+    "fix": "No fix needed, product is accurate.",
     "index": 5,
     "issues": [],
-    "material_pattern": "two-tone ceramic pot with speckled tan lower half on thin black metal stand",
+    "material_pattern": "smooth solid ceramic with solid wood stand",
     "placement_ok": true,
     "scale_ok": true,
-    "score": 9.5,
-    "shape": "cylindrical planter on legged stand",
+    "score": 9,
+    "shape": "cylindrical planter on four-legged stand",
     "verdict": "match"
    }
-  ]
+  ],
+  "provenance": {
+   "digital_source_type": "http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia",
+   "metadata": "XMP",
+   "files": [
+    "after.jpg",
+    "after.png"
+   ]
+  }
  }
 }

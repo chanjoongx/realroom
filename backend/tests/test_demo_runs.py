@@ -87,7 +87,10 @@ RANK = {"match": 4, "partial": 3, "mismatch": 2, "missing": 1}
 
 
 def record_verdict(own: dict, final: dict | None) -> dict:
-    """The worse of a product's own verdict and the final check of the finished room, the rule the app shows."""
+    """The verdict the app shows and counts. Runs since 11-03 carry it: the majority of separate checks of the
+    final pixels (`checks`). Older runs: the worse of the product's own verdict and the final check."""
+    if isinstance(own.get("checks"), list):
+        return own
     seen = [v for v in (own, final) if v]
     return min(seen, key=lambda v: (RANK.get(v.get("verdict"), 0), v.get("score") or 0)) if seen else {}
 
@@ -99,8 +102,20 @@ def matched(run: dict) -> int:
                if record_verdict(p.get("verdict") or {}, finals.get(k + 1)).get("verdict") == "match")
 
 
+@pytest.mark.parametrize("run_id", DEMO_IDS)
+def test_record_checks_are_a_majority_of_their_looks(run_id):
+    """Every product of a run with record checks: match exactly when more than half of the looks say match."""
+    for p in _run(run_id)["result"]["products"]:
+        v = p.get("verdict") or {}
+        if not isinstance(v.get("checks"), list):
+            continue
+        n = v.get("of") or len(v["checks"])
+        votes = sum(1 for c in v["checks"] if c.get("verdict") == "match")
+        assert (v.get("verdict") == "match") == (votes >= n // 2 + 1), (run_id, p["slot"], v)
+
+
 def test_readme_matched_column():
-    """A product counts as matched only when every check of its final pixels says match (studio: the rug is partial)."""
+    """The README's Matched column agrees with the verdicts the app counts (a majority of three separate checks)."""
     readme = (DEMO_RUNS.parent / "README.md").read_text(encoding="utf-8").splitlines()
     rows = {"living": "Living room, 2005 apartment", "moving-day": "Empty room, move-in day",
             "studio": "Studio, first apartment"}
@@ -111,4 +126,4 @@ def test_readme_matched_column():
         line = next(x for x in readme if x.startswith(f"| {label} |"))
         cells = [c.strip() for c in line.strip("|").split("|")]
         assert cells[3].startswith(f"{counts[run_id]} of {len(run['result']['products'])}"), (run_id, cells[3])
-    assert counts == {"living": 3, "moving-day": 5, "studio": 2}
+    assert counts == {"living": 3, "moving-day": 5, "studio": 3}

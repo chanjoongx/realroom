@@ -80,11 +80,11 @@ Die Demo-Räume wurden mit Muse Image 1.0 erzeugt, daher enthält dieses Reposit
 
 | Raum | Vorgabe | Produkte | Übereinstimmung | Unveränderte Pixel | Dauer | Kosten |
 |---|---|---|---|---|---|---|
-| Wohnzimmer, Wohnung von 2005 | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | Sofa, Teppich, Stehlampe | 3 von 3, der Teppich nach einer Runde Neuzeichnen | 70,3 % | 216&nbsp;s | $0.24 |
-| Leeres Zimmer, Einzugstag | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | Sofa, Teppich, Stehlampe, Couchtisch, Pflanzkübel | 5 von 5, der Teppich nach zwei Runden Neuzeichnen und der Couchtisch nach einer | 63,3 % | 288&nbsp;s | $0.37 |
-| Einzimmerwohnung, die erste eigene | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | Bettgestell, Bettwäsche, Teppich | 2 von 3: eine Neuzeichnung des Teppichs bekam 9, die Schlussprüfung aber 6, weil das Gittermuster zu kräftig ausfiel | 70,7 % | 244&nbsp;s | $0.30 |
+| Wohnzimmer, Wohnung von 2005 | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | Sofa, Teppich, Stehlampe | 3 von 3, die Stehlampe nach einer Runde Neuzeichnen | 68,7 % | 433&nbsp;s | $0.39 |
+| Leeres Zimmer, Einzugstag | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | Sofa, Teppich, Stehlampe, Couchtisch, Pflanzkübel | 5 von 5, der Teppich und die Stehlampe nach je einer Runde Neuzeichnen | 63,6 % | 384&nbsp;s | $0.58 |
+| Einzimmerwohnung, die erste eigene | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | Bettwäsche, Teppich, Wandbild | 3 von 3, die Bettwäsche nach einer Runde Neuzeichnen | 67,5 % | 477&nbsp;s | $0.40 |
 
-„Übereinstimmung“ zählt ein Produkt nur, wenn jede Prüfung seiner endgültigen Pixel durch Muse Spark 1.3 „match“ ergibt. Jede Prüfung legt einen engen Ausschnitt des gerenderten Produkts neben sein Katalogfoto. Die Kosten sind Schätzungen nach den veröffentlichten Preisen von Meta, pro Aufruf protokolliert.
+„Übereinstimmung“ zählt ein Produkt, wenn mindestens zwei von drei getrennten Prüfungen seiner endgültigen Pixel durch Muse Spark 1.3 „match“ ergeben. Jede Prüfung legt einen engen Ausschnitt des Produkts neben sein Katalogfoto, und die App listet alle drei Urteile auf. Die Kosten sind Schätzungen nach den veröffentlichten Preisen von Meta, pro Aufruf protokolliert.
 
 ## <a id="how-a-run-works"></a>So funktioniert ein Lauf
 
@@ -105,15 +105,15 @@ flowchart LR
 | Suchen | Katalogindex, PE-Core B16 | Für jeden Slot: Produkte dieser Art, davon nur die, deren echte Maße in den Größenbereich des Slots passen, sortiert nach Textähnlichkeit zur Beschreibung von Muse Spark Open (45 %) und Text-zu-Bild-Ähnlichkeit per Perception Encoder (55 %). 24 pro Slot. Der Perception Encoder läuft im eigenen Server der App, daher macht dieser Schritt keinen API-Aufruf. |
 | Auswählen | Muse Spark 1.3 | Spark sieht in einer einzigen Anfrage den Raum und für jeden Slot ein nummeriertes Blatt mit Kandidaten und wählt deshalb eine Kombination, die zusammenpasst. |
 | Rendern | Muse Image 1.0 | Ein Aufruf von `/images/edits` mit dem Raum, einer Platzierungsvorlage und den echten Produktfotos liefert zwei oder drei Kandidaten. Die Tools des Modells für Web- und Bildsuche sind abgeschaltet. |
-| Prüfen | SAM 3.1, Muse Spark 1.3 | Jeder Kandidat wird am Original ausgerichtet (ECC-Homographie) und farblich angeglichen. SAM 3.1 findet jedes neue Produkt wieder, und Spark bewertet jeden Produktausschnitt im Vergleich zu seinem Katalogfoto und dazu die Szene als Ganzes. Der beste Kandidat wird behalten. |
-| Korrigieren | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Ein Produkt mit dem Urteil „partial“ wird samt Umgebung ausgeschnitten und anhand seines Katalogfotos größer neu gezeichnet, mit zwei Versuchen pro Runde und bis zu zwei Runden. Ein Versuch ersetzt die aktuelle Version nur, wenn Spark ihn höher bewertet, und die Anmerkungen von Spark steuern die nächste Runde. Kram, den das Rendering übrig gelassen hat, bekommt einen eigenen Durchgang, geprüft mit SAM 3.1. Hat sich etwas geändert, bewertet Spark den fertigen Raum noch einmal, und ein Produkt zählt nur dann als Übereinstimmung, wenn auch diese Bewertung zustimmt. |
+| Prüfen | SAM 3.1, Muse Spark 1.3 | Jeder Kandidat wird am Original ausgerichtet (ECC-Homographie) und farblich angeglichen. SAM 3.1 findet jedes neue Produkt wieder, und Spark bewertet jeden Produktausschnitt im Vergleich zu seinem Katalogfoto und dazu die Szene als Ganzes. Der beste Kandidat wird behalten. Danach prüft Spark jedes seiner Produkte noch dreimal, jede Prüfung als eigene Anfrage mit einem engen Ausschnitt neben dem Katalogfoto. Sparks Urteil über dieselben Pixel kann sich von Anfrage zu Anfrage ändern, deshalb zählt ein Produkt nur dann als Übereinstimmung, wenn mindestens zwei der drei „match“ ergeben. |
+| Korrigieren | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | Ein Produkt, das die Prüfungen als „partial“ einstufen, wird samt Umgebung ausgeschnitten und anhand seines Katalogfotos größer neu gezeichnet, mit zwei Versuchen pro Runde und bis zu zwei Runden. Ein Produkt, das die Prüfungen an seiner geplanten Stelle nicht finden, wird zuerst im ganzen Foto gesucht, weil das Rendering es manchmal woanders zeichnet; erst wenn es auch dort fehlt, wird es auf dieselbe Weise an seiner geplanten Stelle eingefügt. Ein Versuch ersetzt die aktuelle Version nur, wenn Spark ihn höher bewertet, und die Anmerkungen von Spark steuern die nächste Runde. Ein neu gezeichnetes Produkt wird, ebenso wie jedes Produkt, dessen eigene Pixel ein späterer Schritt verändert hat, auf dem fertigen Foto erneut dreimal geprüft. Kram, den das Rendering übrig gelassen hat, bekommt einen eigenen Durchgang, geprüft mit SAM 3.1. Hat sich etwas geändert, bewertet Spark den fertigen Raum noch einmal. |
 | Zusammensetzen | keine | Das Ergebnis übernimmt aus dem Rendering nur die Produktmasken, einen schmalen Rand darum, Kontaktschatten und die Stellflächen entfernter Objekte. Alle übrigen Pixel stammen aus dem Original. |
 
 Die Web-App spielt jeden Lauf aus seinem Event-Log ab: den Scan mit allen Umrissen, den Suchtrichter, die Auswahlblätter, alle Render-Kandidaten, jede Korrektur mit ihrem Vorher und Nachher und die finalen Ebenen. Die Kopfzeile jedes Schritts zeigt die ID des Modells, das er aufgerufen hat.
 
 ![Der Prüfschritt des Wohnzimmer-Laufs](../verify.jpg)
 
-Oben siehst du den Prüfschritt des Wohnzimmer-Laufs. Muse Image hat drei Kandidaten gezeichnet, Spark hat in jedem alle drei Produkte bewertet, und Kandidat 2 wurde behalten. Sein Teppich erhielt 5 von 10, kam deshalb in den Korrekturschritt und kehrte mit 9 zurück.
+Oben siehst du den Prüfschritt des Wohnzimmer-Laufs. Muse Image hat drei Kandidaten gezeichnet, Spark hat in jedem alle drei Produkte bewertet, und Kandidat 1 wurde behalten. Seine Stehlampe erhielt 5 von 10, und drei getrennte Prüfungen gaben ihr jeweils 6, deshalb kam sie in den Korrekturschritt und kehrte mit 9 zurück.
 
 ## <a id="meta-models"></a>Meta-Modelle
 
@@ -129,8 +129,9 @@ Oben siehst du den Prüfschritt des Wohnzimmer-Laufs. Muse Image hat drei Kandid
 
 - `before.png` und `after.png` sind verlustfrei. In der App lädt **Check it in your browser** beide herunter, vergleicht sie in deinem Browser Pixel für Pixel und zeigt dann den Anteil, der identisch ist.
 - `layers.png` färbt jedes geänderte Pixel als Produkt, freigeräumte Fläche oder Schatten ein. `masks.npz` enthält jede Objekt- und Produktmaske.
+- In `run.json` nennt das Urteil jedes Produkts die drei Schlussprüfungen, nach denen es gezählt wurde, und daneben das Urteil, das ihm der Prüf- oder Korrekturschritt gegeben hat.
 - `ledger.jsonl` listet jeden Modellaufruf mit Zeit und geschätzten Kosten auf. Die Suche mit dem Perception Encoder steht auch darin, ohne Kosten, weil sie im eigenen Server der App läuft.
-- `drift.jpg` zeigt, wie weit das rohe Rendering überall sonst vom Original abgewichen ist (mittlere Farbabweichung dE 1,7 bis 3,7 bei den Demo-Läufen). Wegen dieser Pixel gibt es den Schritt Zusammensetzen.
+- `drift.jpg` zeigt, wie weit das rohe Rendering überall sonst vom Original abgewichen ist (mittlere Farbabweichung dE 1,8 bis 2,7 bei den Demo-Läufen). Wegen dieser Pixel gibt es den Schritt Zusammensetzen.
 
 ## <a id="run-it"></a>Ausführen
 
@@ -169,7 +170,7 @@ Unter Windows schreibst du `.venv\Scripts\` dort, wo in diesen Befehlen `.venv/b
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-`--live` ist der einzige Schalter zwischen Wiedergabe und Live-Betrieb. Damit führt das Upload-Feld den ganzen Agenten mit deinem Foto aus, und die Seite verfolgt den Lauf, während er arbeitet. Ein Lauf kostet zu den veröffentlichten Preisen von Meta etwa $0.2 bis $0.4, und seine `ledger.jsonl` listet jeden Aufruf auf. Der lokale Server startet höchstens 10 Live-Läufe pro Tag; `--per-day` ändert das. Ein Lauf, der 12 Minuten oder $0.60 überschreitet, lässt die restlichen Neuzeichnungen aus und endet mit dem, was er hat.
+`--live` ist der einzige Schalter zwischen Wiedergabe und Live-Betrieb. Damit führt das Upload-Feld den ganzen Agenten mit deinem Foto aus, und die Seite verfolgt den Lauf, während er arbeitet. Ein Lauf kostet zu den veröffentlichten Preisen von Meta etwa $0.2 bis $0.5, und seine `ledger.jsonl` listet jeden Aufruf auf. Der lokale Server startet höchstens 10 Live-Läufe pro Tag; `--per-day` ändert das. Ein Lauf, der 12 Minuten oder $0.60 überschreitet, lässt die restlichen Neuzeichnungen aus und endet mit dem, was er hat.
 
 So führst du den Agenten ohne Web-App mit einem einzelnen Foto aus:
 
@@ -261,7 +262,8 @@ docs/            README images and translations
 
 ## Grenzen
 
-- Feine Texturen fallen dem Bildmodell schwer. Ein cremefarbener Teppich mit zartem, gewebtem Kreuzmuster kam in manchen Renderings zu kräftig heraus und in anderen ganz ohne Muster. Die Korrekturschleife fängt das ab, doch Sparks Bewertungen derselben Pixel schwanken: Im Studio-Lauf bekam eine Neuzeichnung dieses Teppichs 9 und die Schlussprüfung 6. Wenn sich Prüfungen widersprechen, zeigt das Ergebnis das niedrigere Urteil.
+- Feine Texturen und Farben fallen dem Bildmodell schwer. Teppiche mit feiner Webstruktur kommen oft zu kräftig heraus, und Bettwäsche fällt oft dunkler oder grauer aus als auf ihrem Katalogfoto. Die Korrekturschleife zeichnet die schwächsten Produkte neu (eines pro gehostetem Lauf, zwei pro aufgezeichnetem Lauf), und Sparks Urteile über dieselben Pixel schwanken von Anfrage zu Anfrage, deshalb zählt ein Produkt nur dann als Übereinstimmung, wenn mindestens zwei von drei getrennten Prüfungen „match“ ergeben.
+- Das Rendering setzt ein Produkt manchmal abseits seiner geplanten Stelle oder lässt es weg. Finden die Prüfungen an dieser Stelle nichts, sucht Spark das Produkt zuerst im ganzen Foto, und der Korrekturschritt fügt es nur ein, wenn es dort fehlt.
 - Der Plan unterscheidet sich zwischen Läufen mit derselben Vorgabe, weil Spark jedes Mal neu plant und auswählt.
 - Wo ein entferntes Objekt stand, kann der neu gezeichnete Boden mit einer feinen Naht an den Originalboden stoßen.
 - Die Listings stammen aus einem 2021 veröffentlichten Datensatz, daher gibt es keine Preise, und manche Produktlinks lassen sich nicht mehr öffnen.

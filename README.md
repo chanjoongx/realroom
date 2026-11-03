@@ -78,11 +78,11 @@ The demo rooms were generated with Muse Image 1.0, so this repository holds no p
 
 | Room | Brief | Products | Matched | Untouched pixels | Time | Cost |
 |---|---|---|---|---|---|---|
-| Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, rug, floor lamp | 3 of 3, the rug after one round of redraws | 70.3% | 216&nbsp;s | $0.24 |
-| Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofa, rug, floor lamp, coffee table, planter | 5 of 5, the rug after two rounds of redraws and the coffee table after one | 63.3% | 288&nbsp;s | $0.37 |
-| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | bed frame, bedding, rug | 2 of 3: a redraw of the rug scored 9, but the final check gave it 6 for a lattice that came out too bold | 70.7% | 244&nbsp;s | $0.30 |
+| Living room, 2005 apartment | "The old dark sofa makes the room feel gloomy. Make it brighter and cozier without painting or touching the floor." | sofa, rug, floor lamp | 3 of 3, the floor lamp after one round of redraws | 68.7% | 433&nbsp;s | $0.39 |
+| Empty room, move-in day | "Move-in day. I work from home and want a calm living room where two friends can sit: something to sit on, a rug, a small table and warm evening light." | sofa, rug, floor lamp, coffee table, planter | 5 of 5, the rug and the floor lamp after one round of redraws each | 63.6% | 384&nbsp;s | $0.58 |
+| Studio, first apartment | "...I still sleep on a mattress on the floor and the moving boxes are everywhere. Make it feel like a calm, grown-up bedroom without painting." | bedding, rug, wall art | 3 of 3, the bedding after one round of redraws | 67.5% | 477&nbsp;s | $0.40 |
 
-"Matched" counts a product only when every Muse Spark 1.3 check of its final pixels says match. Each check puts a close crop of the rendered product next to its catalog photo. Costs are estimates from Meta's published prices, logged per call.
+"Matched" counts a product when at least two of three separate Muse Spark 1.3 checks of its final pixels say match. Each check puts a close crop of the product next to its catalog photo, and the app lists all three verdicts. Costs are estimates from Meta's published prices, logged per call.
 
 ## How a run works
 
@@ -103,15 +103,15 @@ flowchart LR
 | Search | catalog index, PE-Core B16 | For each slot: products of that kind, then only those whose real dimensions fit the slot's size range, ranked by text similarity to the Muse Spark Open description (45%) and Perception Encoder text-to-image similarity (55%). 24 per slot. The Perception Encoder runs in the app's own server, so this step makes no API call. |
 | Pick | Muse Spark 1.3 | Spark sees the room and a numbered sheet of candidates for every slot in a single request, so it chooses a set that works together. |
 | Render | Muse Image 1.0 | One `/images/edits` call with the room, a placement guide and the real product photos returns two or three candidates. The model's web and image search tools are switched off. |
-| Verify | SAM 3.1, Muse Spark 1.3 | Each candidate is aligned to the original (ECC homography) and color-matched. SAM 3.1 finds every new product again, and Spark judges each product crop against its catalog photo and the scene as a whole. The best candidate is kept. |
-| Fix | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | A product judged partial is cut out with its surroundings and redrawn larger against its catalog photo, two tries per round and up to two rounds. A try replaces the current version only if Spark scores it higher, and Spark's notes steer the next round. Clutter the render left behind gets its own pass, checked with SAM 3.1. If anything changed, Spark judges the finished room again, and a product counts as matched only if this check agrees. |
+| Verify | SAM 3.1, Muse Spark 1.3 | Each candidate is aligned to the original (ECC homography) and color-matched. SAM 3.1 finds every new product again, and Spark judges each product crop against its catalog photo and the scene as a whole. The best candidate is kept. Then Spark checks each of its products three more times, each check a separate request with a close crop next to the catalog photo. Spark's verdict on the same pixels can change from one request to the next, so a product counts as matched only when at least two of the three say match. |
+| Fix | Muse Image 1.0, SAM 3.1, Muse Spark 1.3 | A product the checks call partial is cut out with its surroundings and redrawn larger against its catalog photo, two tries per round and up to two rounds. A product the checks cannot find at its planned spot is first looked for in the whole photo, because the render sometimes draws one somewhere else; only if it is not there is it added at its planned spot, the same way. A try replaces the current version only if Spark scores it higher, and Spark's notes steer the next round. A redrawn product, and any product whose own pixels a later step changed, is checked three times again on the finished photo. Clutter the render left behind gets its own pass, checked with SAM 3.1. If anything changed, Spark judges the finished room again. |
 | Composite | none | The result takes from the render only the product masks, a thin fringe around them, contact shadows and the footprints of removed objects. Every other pixel is the original. |
 
 The web app replays each run from its event log: the scan with every outline, the search funnel, the pick sheets, all render candidates, each fix with its before and after, and the final layers. Each step's header shows the ID of the model it called.
 
 ![The verify step of the living-room run](docs/verify.jpg)
 
-Above is the verify step of the living-room run. Muse Image drew three candidates, Spark scored all three products in each, and candidate 2 was kept. Its rug scored 5 of 10, so it went on to the fix step and came back at 9.
+Above is the verify step of the living-room run. Muse Image drew three candidates, Spark scored all three products in each, and candidate 1 was kept. Its floor lamp scored 5 of 10, and three separate checks gave it 6 each, so it went on to the fix step and came back at 9.
 
 ## Meta models
 
@@ -127,8 +127,9 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 
 - `before.png` and `after.png` are lossless. In the app, the **Check it in your browser** button downloads both, compares them pixel by pixel and shows the share that is identical.
 - `layers.png` colors every changed pixel as product, cleared or shadow. `masks.npz` holds every object and product mask.
+- In `run.json`, each product's verdict lists the three final checks it was counted from, next to the verdict the verify or fix step gave it.
 - `ledger.jsonl` lists every model call with its time and estimated cost. The Perception Encoder search is in it too, at no cost, because it runs in the app's own server.
-- `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.7 to 3.7 on the demo runs). Those pixels are the reason for the composite step.
+- `drift.jpg` shows how far the raw render drifted from the original everywhere else (mean color difference dE 1.8 to 2.7 on the demo runs). Those pixels are the reason for the composite step.
 
 ## Run it
 
@@ -167,7 +168,7 @@ Open http://127.0.0.1:8787. The demo rooms replay the runs in [`demo-runs/`](dem
    .venv/bin/python backend/scripts/serve_local.py --live
    ```
 
-`--live` is the only switch between replay and live. With it, the upload box runs the whole agent on your photo and the page follows the run while it works. One run costs about $0.2 to $0.4 at Meta's published prices, and its `ledger.jsonl` lists every call. The local server starts at most 10 live runs a day; `--per-day` changes that. A run that passes 12 minutes or $0.60 skips the redraws it has left and finishes with what it has.
+`--live` is the only switch between replay and live. With it, the upload box runs the whole agent on your photo and the page follows the run while it works. One run costs about $0.2 to $0.5 at Meta's published prices, and its `ledger.jsonl` lists every call. The local server starts at most 10 live runs a day; `--per-day` changes that. A run that passes 12 minutes or $0.60 skips the redraws it has left and finishes with what it has.
 
 To run the agent on one photo without the web app:
 
@@ -259,7 +260,8 @@ docs/            README images and translations
 
 ## Limits
 
-- Subtle textures are hard for the image model. A cream rug with a faint criss-cross weave came out too bold in some renders and plain in others. The fix loop catches this, but Spark's scores for the same pixels vary: in the studio run a redraw of that rug scored 9 and the final check scored it 6. When checks disagree, the result reports the lower verdict.
+- Subtle textures and colors are hard for the image model. Rugs with a fine weave often come out too bold, and bedding often comes out darker or grayer than its catalog photo. The fix loop redraws the weakest products (one per hosted run, two per recorded run), and Spark's verdicts on the same pixels vary from one request to the next, so a product counts as matched only when at least two of three separate checks say match.
+- The render sometimes puts a product away from its planned spot, or leaves it out. When the checks find nothing at the spot, Spark looks for the product in the whole photo first, and the fix step adds it only if it is not there.
 - The plan changes between runs of the same brief, because Spark plans and picks again each time.
 - Where a removed object stood, the redrawn floor can meet the original floor along a faint seam.
 - The listings come from a dataset published in 2021, so there are no prices and some product links no longer open.

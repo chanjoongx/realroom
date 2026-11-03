@@ -1,32 +1,47 @@
-{"kind": "spark", "tag": "scan:read", "model": "muse-spark-1.3", "sec": 24.0, "in_tok": 3197, "out_tok": 5718, "usd": 0.0283, "at": "2026-11-02 17:28:06"}
-{"kind": "sam", "tag": "scan:sam:remote control", "sec": 9.09, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:16"}
-{"kind": "sam", "tag": "scan:sam:folded blanket", "sec": 8.92, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:16"}
-{"kind": "sam", "tag": "scan:sam:flat tv", "sec": 8.83, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:18"}
-{"kind": "sam", "tag": "scan:sam:coffee table", "sec": 8.93, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:19"}
-{"kind": "sam", "tag": "scan:sam:potted plant", "sec": 9.59, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:20"}
-{"kind": "sam", "tag": "scan:sam:tissue box", "sec": 6.87, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:24"}
-{"kind": "sam", "tag": "scan:sam:sheer curtain", "sec": 12.9, "n_masks": 2, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:24"}
-{"kind": "sam", "tag": "scan:sam:wall clock", "sec": 5.83, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:25"}
-{"kind": "sam", "tag": "scan:sam:tv stand", "sec": 7.92, "n_masks": 2, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:27"}
-{"kind": "sam", "tag": "scan:sam:sofa", "sec": 10.09, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:28:28"}
-{"kind": "pe_core", "tag": "search", "model": "pe-core-b16-224", "sec": 12.4, "n": 3, "usd": 0.0, "at": "2026-11-02 17:28:41"}
-{"kind": "spark", "tag": "pick:spark", "model": "muse-spark-1.3", "sec": 24.08, "in_tok": 6722, "out_tok": 4332, "usd": 0.02681, "at": "2026-11-02 17:29:06"}
-{"kind": "image_edit", "tag": "render", "sec": 28.94, "n": 3, "inputs": 5, "reasoning": "high", "usd": 0.03, "usage": {"input_tokens": 79729, "output_tokens": 4637, "total_tokens": 84366}, "at": "2026-11-02 17:29:35"}
-{"kind": "sam", "tag": "verify:c3:p3:floor lamp", "sec": 4.65, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:29:49"}
-{"kind": "sam", "tag": "verify:c1:p3:floor lamp", "sec": 5.14, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:29:49"}
-{"kind": "sam", "tag": "verify:c1:p2:area rug", "sec": 10.94, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:29:56"}
-{"kind": "sam", "tag": "verify:c3:p2:area rug", "sec": 11.25, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:29:58"}
-{"kind": "sam", "tag": "verify:c3:p1:sofa couch", "sec": 11.55, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:29:59"}
-{"kind": "sam", "tag": "verify:c1:p1:sofa couch", "sec": 12.75, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:29:59"}
-{"kind": "sam", "tag": "verify:c2:p3:floor lamp", "sec": 3.69, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:30:05"}
-{"kind": "sam", "tag": "verify:c2:p2:area rug", "sec": 7.76, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:30:10"}
-{"kind": "sam", "tag": "verify:c2:p1:sofa couch", "sec": 7.65, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:30:10"}
-{"kind": "spark", "tag": "verify:c2:judge", "model": "muse-spark-1.3", "sec": 11.53, "in_tok": 6615, "out_tok": 1938, "usd": 0.01651, "at": "2026-11-02 17:30:24"}
-{"kind": "spark", "tag": "verify:c3:judge", "model": "muse-spark-1.3", "sec": 16.19, "in_tok": 6612, "out_tok": 2508, "usd": 0.01892, "at": "2026-11-02 17:30:27"}
-{"kind": "spark", "tag": "verify:c1:judge", "model": "muse-spark-1.3", "sec": 16.31, "in_tok": 6557, "out_tok": 2653, "usd": 0.01947, "at": "2026-11-02 17:30:27"}
-{"kind": "image_edit", "tag": "fix:p2r1:redraw", "sec": 20.43, "n": 2, "inputs": 2, "reasoning": "high", "usd": 0.02, "usage": {"input_tokens": 48277, "output_tokens": 2810, "total_tokens": 51087}, "at": "2026-11-02 17:30:48"}
-{"kind": "sam", "tag": "fix:p2r1:reseg2:area rug", "sec": 3.96, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:30:54"}
-{"kind": "sam", "tag": "fix:p2r1:reseg1:area rug", "sec": 4.49, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-02 17:30:55"}
-{"kind": "spark", "tag": "fix:p2r1:judge1", "model": "muse-spark-1.3", "sec": 7.9, "in_tok": 1201, "out_tok": 1244, "usd": 0.00679, "at": "2026-11-02 17:31:04"}
-{"kind": "spark", "tag": "fix:p2r1:judge1", "model": "muse-spark-1.3", "sec": 8.95, "in_tok": 1165, "out_tok": 1480, "usd": 0.00775, "at": "2026-11-02 17:31:05"}
-{"kind": "spark", "tag": "final:judge", "model": "muse-spark-1.3", "sec": 12.05, "in_tok": 6615, "out_tok": 2181, "usd": 0.01754, "at": "2026-11-02 17:31:17"}
+{"kind": "spark", "tag": "scan:read", "model": "muse-spark-1.3", "sec": 46.81, "in_tok": 3310, "out_tok": 5878, "usd": 0.02912, "at": "2026-11-04 00:02:03"}
+{"kind": "sam", "tag": "scan:sam:remote control", "sec": 13.27, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:26"}
+{"kind": "sam", "tag": "scan:sam:flat tv", "sec": 12.15, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:28"}
+{"kind": "sam", "tag": "scan:sam:folded blanket", "sec": 15.83, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:29"}
+{"kind": "sam", "tag": "scan:sam:coffee table", "sec": 19.88, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:36"}
+{"kind": "sam", "tag": "scan:sam:potted plant", "sec": 22.09, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:41"}
+{"kind": "sam", "tag": "scan:sam:tissue box", "sec": 14.28, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:43"}
+{"kind": "sam", "tag": "scan:sam:wall clock", "sec": 11.45, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:48"}
+{"kind": "sam", "tag": "scan:sam:tv stand", "sec": 16.74, "n_masks": 2, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:50"}
+{"kind": "sam", "tag": "scan:sam:sofa", "sec": 18.91, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:52"}
+{"kind": "sam", "tag": "scan:sam:sheer curtain", "sec": 30.46, "n_masks": 2, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:02:53"}
+{"kind": "pe_core", "tag": "search", "model": "pe-core-b16-224", "sec": 1.63, "n": 3, "usd": 0.0, "at": "2026-11-04 00:02:55"}
+{"kind": "spark", "tag": "pick:spark", "model": "muse-spark-1.3", "sec": 28.13, "in_tok": 6723, "out_tok": 2925, "usd": 0.02083, "at": "2026-11-04 00:03:24"}
+{"kind": "image_edit", "tag": "render", "sec": 23.43, "n": 3, "inputs": 5, "reasoning": "high", "usd": 0.03, "usage": {"input_tokens": 65335, "output_tokens": 3183, "total_tokens": 68518}, "at": "2026-11-04 00:03:54"}
+{"kind": "sam", "tag": "verify:c2:p3:floor lamp", "sec": 7.79, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:04:42"}
+{"kind": "sam", "tag": "verify:c1:p3:floor lamp", "sec": 10.18, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:04:46"}
+{"kind": "sam", "tag": "verify:c3:p3:floor lamp", "sec": 12.41, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:04:48"}
+{"kind": "sam", "tag": "verify:c2:p2:area rug", "sec": 12.72, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:04:59"}
+{"kind": "sam", "tag": "verify:c2:p1:sofa", "sec": 12.99, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:05:01"}
+{"kind": "sam", "tag": "verify:c1:p2:area rug", "sec": 20.05, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:05:08"}
+{"kind": "sam", "tag": "verify:c3:p2:area rug", "sec": 21.93, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:05:12"}
+{"kind": "sam", "tag": "verify:c1:p1:sofa", "sec": 22.81, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:05:13"}
+{"kind": "sam", "tag": "verify:c3:p1:sofa", "sec": 23.44, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:05:15"}
+{"kind": "spark", "tag": "verify:c1:judge", "model": "muse-spark-1.3", "sec": 24.01, "in_tok": 6684, "out_tok": 2409, "usd": 0.01859, "at": "2026-11-04 00:06:35"}
+{"kind": "spark", "tag": "verify:c2:judge", "model": "muse-spark-1.3", "sec": 23.91, "in_tok": 6641, "out_tok": 2429, "usd": 0.01862, "at": "2026-11-04 00:06:35"}
+{"kind": "spark", "tag": "verify:c3:judge", "model": "muse-spark-1.3", "sec": 24.91, "in_tok": 6650, "out_tok": 2639, "usd": 0.01953, "at": "2026-11-04 00:06:36"}
+{"kind": "spark", "tag": "check:p2c2:judge1", "model": "muse-spark-1.3", "sec": 12.93, "in_tok": 1200, "out_tok": 1430, "usd": 0.00758, "at": "2026-11-04 00:06:58"}
+{"kind": "spark", "tag": "check:p2c3:judge1", "model": "muse-spark-1.3", "sec": 14.95, "in_tok": 1200, "out_tok": 1773, "usd": 0.00904, "at": "2026-11-04 00:07:00"}
+{"kind": "spark", "tag": "check:p1c1:judge1", "model": "muse-spark-1.3", "sec": 15.59, "in_tok": 1400, "out_tok": 1591, "usd": 0.00851, "at": "2026-11-04 00:07:01"}
+{"kind": "spark", "tag": "check:p2c1:judge1", "model": "muse-spark-1.3", "sec": 16.42, "in_tok": 1200, "out_tok": 1725, "usd": 0.00883, "at": "2026-11-04 00:07:02"}
+{"kind": "spark", "tag": "check:p3c3:judge1", "model": "muse-spark-1.3", "sec": 17.59, "in_tok": 1083, "out_tok": 1823, "usd": 0.0091, "at": "2026-11-04 00:07:03"}
+{"kind": "spark", "tag": "check:p3c2:judge1", "model": "muse-spark-1.3", "sec": 18.1, "in_tok": 1083, "out_tok": 1835, "usd": 0.00915, "at": "2026-11-04 00:07:03"}
+{"kind": "spark", "tag": "check:p1c2:judge1", "model": "muse-spark-1.3", "sec": 18.79, "in_tok": 1400, "out_tok": 2009, "usd": 0.01029, "at": "2026-11-04 00:07:04"}
+{"kind": "spark", "tag": "check:p3c1:judge1", "model": "muse-spark-1.3", "sec": 19.42, "in_tok": 1083, "out_tok": 1983, "usd": 0.00978, "at": "2026-11-04 00:07:05"}
+{"kind": "spark", "tag": "check:p1c3:judge1", "model": "muse-spark-1.3", "sec": 20.75, "in_tok": 1400, "out_tok": 2154, "usd": 0.0109, "at": "2026-11-04 00:07:06"}
+{"kind": "image_edit", "tag": "fix:p3r1:redraw", "sec": 13.92, "n": 2, "inputs": 2, "reasoning": "high", "usd": 0.02, "usage": {"input_tokens": 27642, "output_tokens": 1696, "total_tokens": 29338}, "at": "2026-11-04 00:07:20"}
+{"kind": "sam", "tag": "fix:p3r1:reseg2:floor lamp", "sec": 1.66, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:07:23"}
+{"kind": "sam", "tag": "fix:p3r1:reseg1:floor lamp", "sec": 1.5, "n_masks": 1, "usd": 0.0025, "outcome": "completed", "diagnostics": [], "at": "2026-11-04 00:07:25"}
+{"kind": "spark", "tag": "fix:p3r1:judge1", "model": "muse-spark-1.3", "sec": 11.82, "in_tok": 1113, "out_tok": 1366, "usd": 0.0072, "at": "2026-11-04 00:07:37"}
+{"kind": "spark", "tag": "fix:p3r1:judge1", "model": "muse-spark-1.3", "sec": 16.8, "in_tok": 1106, "out_tok": 1847, "usd": 0.00923, "at": "2026-11-04 00:07:42"}
+{"kind": "spark", "tag": "final:judge", "model": "muse-spark-1.3", "sec": 24.42, "in_tok": 6714, "out_tok": 2617, "usd": 0.01951, "at": "2026-11-04 00:08:07"}
+{"kind": "spark", "tag": "record:p3c3:judge1", "model": "muse-spark-1.3", "sec": 12.36, "in_tok": 1113, "out_tok": 1481, "usd": 0.00769, "at": "2026-11-04 00:08:19"}
+{"kind": "spark", "tag": "record:p3c1:judge1", "model": "muse-spark-1.3", "sec": 13.84, "in_tok": 1113, "out_tok": 1586, "usd": 0.00813, "at": "2026-11-04 00:08:21"}
+{"kind": "spark", "tag": "record:p3c2:judge1", "model": "muse-spark-1.3", "sec": 15.47, "in_tok": 1113, "out_tok": 1605, "usd": 0.00821, "at": "2026-11-04 00:08:23"}
+{"kind": "spark", "tag": "record:p1c3:judge1", "model": "muse-spark-1.3", "sec": 19.02, "in_tok": 1400, "out_tok": 2209, "usd": 0.01114, "at": "2026-11-04 00:08:26"}
+{"kind": "spark", "tag": "record:p1c1:judge1", "model": "muse-spark-1.3", "sec": 21.04, "in_tok": 1400, "out_tok": 2474, "usd": 0.01226, "at": "2026-11-04 00:08:28"}
+{"kind": "spark", "tag": "record:p1c2:judge1", "model": "muse-spark-1.3", "sec": 21.41, "in_tok": 1400, "out_tok": 2386, "usd": 0.01189, "at": "2026-11-04 00:08:28"}
