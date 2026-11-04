@@ -105,7 +105,7 @@ def main() -> None:
                      photo_dirs=[photos, runs / "_photos"], is_active=lambda run_id: run_id in active,
                      # only this machine's own names: a web page that rebinds its DNS to 127.0.0.1 cannot
                      # start runs on your key or read your uploads
-                     allowed_hosts=["127.0.0.1", "localhost"])
+                     allowed_hosts=["127.0.0.1", "localhost"], warm_variants=True)
     print(f"Realroom on http://127.0.0.1:{args.port}  (runs {runs}, live {'on' if launcher else 'off'})", flush=True)
     uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
 

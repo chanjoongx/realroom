@@ -35,6 +35,9 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse, Response
 from starlette.datastructures import UploadFile
 
+from collections import OrderedDict
+
+from . import imgutil
 from .atomic import write_atomic
 
 # Path parts are checked with fullmatch, so a trailing newline never passes.
@@ -44,6 +47,11 @@ PID = re.compile(r"[A-Z0-9]{10}")
 MEDIA = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
 # the built web page's files that are sent gzipped to a browser that accepts it
 TEXT_ASSETS = {".js": "text/javascript", ".css": "text/css"}
+# Smaller WebP copies of a run's photos (/runs/<id>/<name>?w=960). The page lists them in srcset, so a
+# phone downloads about a sixth of the bytes. Only these widths exist, so nobody can make the server
+# resize at sizes of their choosing; the lossless files behind the pixel check are fetched without ?w.
+VARIANT_WIDTHS = (640, 960, 1280)
+VARIANT_CACHE = 160  # copies kept in memory, about 70 KB each
 
 # Uploads. Only these decoders ever see a visitor's bytes, and the pixel count is read from the file
 # header before anything is decoded (Pillow itself only warns from 89 MP and refuses from 179 MP).
@@ -421,7 +429,7 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
                refresh: Callable[[], None] | None = None,
                photo_dirs: list[pathlib.Path] | None = None,
                is_active: Callable[[str], bool] | None = None,
-               allowed_hosts: list[str] | None = None) -> FastAPI:
+               allowed_hosts: list[str] | None = None, warm_variants: bool = False) -> FastAPI:
     """is_active(run_id) says whether a worker in this process is still running that run. With it, a
     run.json left "running" for STALE_RUN_S seconds by a worker that is gone is marked as stopped.
     allowed_hosts, when given, refuses any other Host header (a local server uses it against DNS rebinding)."""
@@ -576,8 +584,27 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
             raise
         return {"id": run_id}
 
+    variants: OrderedDict[tuple, bytes] = OrderedDict()
+    variants_lock = threading.Lock()
+
+    def variant(p: pathlib.Path, w: int) -> bytes:
+        # keyed by the file's size and time too, so a re-recorded demo run never shows an old copy
+        st = p.stat()
+        key = (str(p), st.st_mtime_ns, st.st_size, w)
+        with variants_lock:
+            body = variants.get(key)
+            if body is not None:
+                variants.move_to_end(key)
+                return body
+        body = imgutil.webp_copy(p.read_bytes(), w)
+        with variants_lock:
+            variants[key] = body
+            while len(variants) > VARIANT_CACHE:
+                variants.popitem(last=False)
+        return body
+
     @app.get("/runs/{run_id}/{name}")
-    def run_file(run_id: str, name: str):
+    def run_file(run_id: str, name: str, w: str | None = None):
         if not RUN_ID.fullmatch(run_id) or not FILE_NAME.fullmatch(name):
             raise HTTPException(404)
         p = runs_dir / run_id / name
@@ -586,7 +613,26 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
                 refresh()
             if not p.exists():
                 raise HTTPException(404)
+        if w is not None:
+            if p.suffix not in (".jpg", ".png") or not w.isdigit() or int(w) not in VARIANT_WIDTHS:
+                raise HTTPException(404)
+            return Response(variant(p, int(w)), media_type="image/webp")
         return FileResponse(p, media_type=MEDIA[p.suffix])
+
+    if warm_variants and demos_file is not None:
+        def warm() -> None:
+            # the photos on the home page, made once at start so the first visitor does not wait for them
+            try:
+                for d in list_demos():
+                    for name in (d["before"], d["after"]):
+                        for w in VARIANT_WIDTHS:
+                            p = runs_dir / d["id"] / name
+                            if p.suffix in (".jpg", ".png") and p.exists():
+                                variant(p, w)
+            except Exception as exc:  # noqa: BLE001  (a cold cache only costs the first visitor time)
+                log(f"warming the photo copies failed: {type(exc).__name__}")
+
+        threading.Thread(target=warm, daemon=True).start()
 
     @app.get("/catalog/{which}/{name}")
     def catalog_file(which: str, name: str):

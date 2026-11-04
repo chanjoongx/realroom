@@ -239,6 +239,21 @@ def has_xmp(data: bytes) -> bool:
     return False
 
 
+def webp_copy(data: bytes, max_w: int, quality: int = 80) -> bytes:
+    """A WebP copy of a JPEG or PNG at most max_w pixels wide (never enlarged), for showing on a page.
+    An XMP packet in the source, such as the AI-edited mark on a result, is carried over."""
+    with Image.open(io.BytesIO(data)) as src:
+        src.load()
+        xmp = src.info.get("xmp") or src.info.get("XML:com.adobe.xmp")
+        im = src if src.mode in ("RGB", "RGBA") else src.convert("RGBA" if src.has_transparency_data else "RGB")
+        if im.width > max_w:
+            im = im.resize((max_w, max(1, round(im.height * max_w / im.width))), Image.Resampling.LANCZOS)
+        buf = io.BytesIO()
+        extra = {"xmp": xmp.encode("utf-8") if isinstance(xmp, str) else xmp} if xmp else {}
+        im.save(buf, "WEBP", quality=quality, method=4, **extra)
+    return buf.getvalue()
+
+
 def _pixels(data: bytes) -> tuple:
     with Image.open(io.BytesIO(data)) as im:
         return im.mode, im.size, np.asarray(im).copy()

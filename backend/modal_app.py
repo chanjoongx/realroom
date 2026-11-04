@@ -201,7 +201,7 @@ def web():
                     state_file=runs / "_quota.json", on_change=lambda: commit("a usage counter change"))
     log(f"web container up, version {VERSION}")
     return create_app(runs, pathlib.Path("/cat"), pathlib.Path("/web"), limits, launch,
-                      demos_file=runs / "demos.json", is_active=is_active)
+                      demos_file=runs / "demos.json", is_active=is_active, warm_variants=True)
 
 
 @app.function(image=modal.Image.debian_slim(python_version="3.12").pip_install("requests==2.34.2"),

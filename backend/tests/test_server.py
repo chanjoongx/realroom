@@ -622,6 +622,46 @@ def test_live_run_files_stay_private_on_range_requests_and_in_any_case(tmp_path)
     assert r.headers["cache-control"] == "private, no-store"
 
 
+def test_run_photos_have_smaller_webp_copies_at_the_listed_widths(replay_client):
+    from PIL import Image
+
+    full = replay_client.get("/runs/living/before.jpg")
+    for w in server.VARIANT_WIDTHS:
+        r = replay_client.get(f"/runs/living/before.jpg?w={w}")
+        assert r.status_code == 200 and r.headers["content-type"] == "image/webp"
+        assert r.headers["cache-control"] == "public, max-age=86400"
+        with Image.open(io.BytesIO(r.content)) as im:
+            assert im.format == "WEBP" and im.width == w
+        assert len(r.content) < len(full.content) / 3
+
+
+@pytest.mark.parametrize("query", ["?w=641", "?w=0", "?w=abc", "?w=-640", "?w=640.0", "?w=", "?w=99999"])
+def test_only_the_listed_widths_are_made(replay_client, query):
+    assert replay_client.get("/runs/living/before.jpg" + query).status_code == 404
+
+
+def test_the_ai_edited_mark_is_kept_in_the_copy(replay_client):
+    from PIL import Image
+
+    r = replay_client.get("/runs/living/after.jpg?w=640")
+    with Image.open(io.BytesIO(r.content)) as im:
+        xmp = im.info.get("xmp") or b""
+    assert "DigitalSourceType" in (xmp.decode("utf-8") if isinstance(xmp, bytes) else xmp)
+
+
+def test_a_live_run_copy_is_private_and_goes_with_its_file(tmp_path):
+    rid = "u11021530" + "ab" * 12
+    d = tmp_path / "runs" / rid
+    d.mkdir(parents=True)
+    (d / "before.jpg").write_bytes(jpeg_bytes(1792, 1344))
+    c = TestClient(create_app(tmp_path / "runs", CATALOG_INDEX, None, Limits()))
+    r = c.get(f"/runs/{rid}/before.jpg?w=960")
+    assert r.status_code == 200 and r.headers["cache-control"] == "private, no-store"
+    assert r.headers["cross-origin-resource-policy"] == "same-origin"
+    (d / "before.jpg").unlink()  # deleted after 18 hours: the copy in memory is never served again
+    assert c.get(f"/runs/{rid}/before.jpg?w=960").status_code == 404
+
+
 def test_the_jpeg_comment_of_an_upload_is_dropped():
     from PIL import Image
 
