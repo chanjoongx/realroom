@@ -3,8 +3,10 @@ import react from "@vitejs/plugin-react";
 
 const api = process.env.REALROOM_API ?? "http://127.0.0.1:8787";
 
-/** Preloads the two Instrument Serif files the hero heading uses, by their hashed names in the build,
- *  so the heading paints in its own font instead of shifting the page when it arrives. */
+/** Preloads the font files the first screen uses, by their hashed names in the build: the two Instrument
+ *  Serif files of the hero heading and the Geist and Geist Mono weights of the text around it. Otherwise
+ *  the browser finds them only after the script has drawn the page, and the first paint waits for them
+ *  or the text shifts when they arrive. */
 function preloadDisplayFonts(): Plugin {
   return {
     name: "preload-display-fonts",
@@ -12,7 +14,7 @@ function preloadDisplayFonts(): Plugin {
       order: "post",
       handler(_html, ctx) {
         return Object.keys(ctx.bundle ?? {})
-          .filter((f) => /instrument-serif-latin-400-(normal|italic)-[\w-]+\.woff2$/.test(f))
+          .filter((f) => /(instrument-serif-latin-400-(normal|italic)|geist(-mono)?-latin-(400|500)-normal)-[\w-]+\.woff2$/.test(f))
           .sort()
           .map((f) => ({
             tag: "link",
