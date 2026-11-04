@@ -127,6 +127,15 @@ Web アプリは、各実行をイベントログから再生します。輪郭�
 
 実行中に Realroom が呼び出すのはこの表の最初の3つのモデルだけで、どれも api.meta.ai にあります。Perception Encoder はアプリ自身のサーバーで動かします。Muse Spark Open は、実行より前にカタログのタグ付けに使いました。[`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) は `backend/realroom/` のエージェントのコードを検査します。そこにあるモデル ID がこの表の4つと違うとき、API のアドレスが api.meta.ai でないとき、またはそのコードの文字列に別の URL や、GPT、Claude、Gemini、Flux、SigLIP など広く使われている Meta 以外のモデルの名前が含まれるときに、テストは失敗します。
 
+## 各部分のつながり
+
+1. ページは写真と文章とモードを、FastAPI サーバー（[`backend/realroom/server.py`](../../backend/realroom/server.py)）の `POST /api/runs` に送ります。サーバーは上限を確認し、メタデータを除いた写真を新しい実行フォルダーに保存してから、バックグラウンドのスレッドでエージェント（[`pipeline.py`](../../backend/realroom/pipeline.py)）を開始します。
+2. エージェントは [`meta.py`](../../backend/realroom/meta.py) を通して、api.meta.ai の Muse Spark 1.3、SAM 3.1、Muse Image 1.0 を呼び出します。[`catalog.py`](../../backend/realroom/catalog.py) のカタログ検索は、同じプロセスの中で Perception Encoder を動かします。
+3. 各ステップの開始時と終了時に、エージェントは `run.json` にイベントを追加し、そのステップの画像を実行フォルダーに保存します。モデルの呼び出しはすべて、時刻と推定費用とともに `ledger.jsonl` に記録されます。
+4. 実行中、ページは1.5秒ごとに `GET /api/runs/<id>` を読み、イベントが届くたびにそのステップを `/runs/<id>/` の画像とともに描きます。デモの部屋は完了した実行フォルダーで、ページはそのイベントを再生します。
+
+Meta Model API のキーはサーバーの中だけにあります。手元のマシンでは git が無視する `.env` に、Modal では `MODEL_API_KEY` だけを入れたシークレット `realroom-model` に置きます。ブラウザーがキーを受け取ることはなく、リポジトリにもキーはありません。
+
 ## 自分で確かめられること
 
 - `before.png` と `after.png` は可逆圧縮の画像です。アプリの **Check it in your browser** ボタンは、両方をダウンロードしてピクセルごとに比較し、一致する割合を表示します。

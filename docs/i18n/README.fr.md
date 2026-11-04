@@ -127,6 +127,15 @@ Ci-dessus, l'étape de vérification de l'exécution sur le salon. Muse Image a 
 
 Pendant une exécution, Realroom n'appelle que les trois premiers modèles, tous sur api.meta.ai, et fait tourner le Perception Encoder sur son propre serveur. Muse Spark Open a étiqueté le catalogue avant toute exécution. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) vérifie le code de l'agent dans `backend/realroom/` : le test échoue si les identifiants de modèle qui s'y trouvent ne sont pas les quatre de ce tableau, si l'adresse de l'API n'est pas api.meta.ai, ou si une chaîne de ce code contient une autre URL ou nomme un modèle courant qui n'est pas de Meta, comme GPT, Claude, Gemini, Flux ou SigLIP.
 
+## Comment les éléments s'assemblent
+
+1. La page envoie la photo, la phrase et le mode à `POST /api/runs` sur le serveur FastAPI ([`backend/realroom/server.py`](../../backend/realroom/server.py)). Le serveur vérifie les limites, enregistre la photo sans ses métadonnées dans un nouveau dossier d'exécution et lance l'agent ([`pipeline.py`](../../backend/realroom/pipeline.py)) dans un thread en arrière-plan.
+2. L'agent appelle Muse Spark 1.3, SAM 3.1 et Muse Image 1.0 sur api.meta.ai via [`meta.py`](../../backend/realroom/meta.py). La recherche dans le catalogue, dans [`catalog.py`](../../backend/realroom/catalog.py), fait tourner le Perception Encoder dans le même processus.
+3. Chaque fois qu'une étape commence ou se termine, l'agent ajoute un événement à `run.json` et enregistre les images de l'étape dans le dossier d'exécution. Chaque appel de modèle est consigné dans `ledger.jsonl` avec son heure et son coût estimé.
+4. Tant que l'exécution est en cours, la page lit `GET /api/runs/<id>` toutes les 1,5 seconde et dessine chaque étape dès que son événement arrive, avec les images de `/runs/<id>/`. Une pièce de démo est un dossier d'exécution terminé, et la page en rejoue les événements.
+
+La clé de Meta Model API reste sur le serveur. Sur votre machine, elle se trouve dans `.env`, que git ignore. Sur Modal, elle se trouve dans le secret `realroom-model`, qui ne contient que `MODEL_API_KEY`. Le navigateur ne reçoit jamais la clé, et le dépôt n'en contient aucune.
+
 ## Ce que vous pouvez vérifier
 
 - `before.png` et `after.png` sont enregistrés sans perte. Dans l'application, **Check it in your browser** télécharge les deux fichiers et les compare pixel par pixel dans votre navigateur, puis affiche la part de pixels identiques.

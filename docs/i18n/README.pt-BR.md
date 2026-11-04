@@ -127,6 +127,15 @@ Acima está a etapa de verificação da execução da sala de estar. O Muse Imag
 
 Durante uma execução, o Realroom só chama os três primeiros modelos, todos em api.meta.ai, e roda o Perception Encoder no próprio servidor. O Muse Spark Open gerou as tags do catálogo antes de qualquer execução. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) confere o código do agente em `backend/realroom/`: ele falha se os IDs de modelo ali não forem os quatro desta tabela, se o endereço da API não for api.meta.ai, ou se alguma string desse código tiver outra URL ou citar um modelo conhecido que não seja da Meta, como GPT, Claude, Gemini, Flux ou SigLIP.
 
+## Como as partes se conectam
+
+1. A página envia a foto, a frase e o modo para `POST /api/runs` no servidor FastAPI ([`backend/realroom/server.py`](../../backend/realroom/server.py)). O servidor confere os limites, salva a foto sem os metadados em uma pasta de execução nova e inicia o agente ([`pipeline.py`](../../backend/realroom/pipeline.py)) em uma thread em segundo plano.
+2. O agente chama o Muse Spark 1.3, o SAM 3.1 e o Muse Image 1.0 em api.meta.ai por meio do [`meta.py`](../../backend/realroom/meta.py). A busca no catálogo, em [`catalog.py`](../../backend/realroom/catalog.py), roda o Perception Encoder no mesmo processo.
+3. Sempre que uma etapa começa ou termina, o agente acrescenta um evento ao `run.json` e salva as imagens da etapa na pasta da execução. Toda chamada de modelo entra no `ledger.jsonl` com o horário e o custo estimado.
+4. Enquanto a execução está em andamento, a página lê `GET /api/runs/<id>` a cada 1,5 segundo e desenha cada etapa assim que o evento dela chega, com as imagens de `/runs/<id>/`. Um cômodo de demonstração é uma pasta de execução já concluída, e a página reproduz os eventos dela.
+
+A chave da Meta Model API fica no servidor. Na sua máquina, ela está no `.env`, que o git ignora. No Modal, está no secret `realroom-model`, que guarda apenas a `MODEL_API_KEY`. O navegador nunca recebe a chave, e o repositório não guarda nenhuma.
+
 ## O que você pode conferir
 
 - `before.png` e `after.png` estão em formato sem perdas. No app, o **Check it in your browser** baixa os dois, compara os arquivos pixel a pixel no seu navegador e depois mostra a fração de pixels idênticos.

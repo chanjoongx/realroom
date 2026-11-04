@@ -127,6 +127,15 @@ Oben siehst du den Prüfschritt des Wohnzimmer-Laufs. Muse Image hat drei Kandid
 
 Während eines Laufs ruft Realroom nur die ersten drei Modelle auf, alle unter api.meta.ai, und führt den Perception Encoder im eigenen Server aus. Muse Spark Open hat den Katalog schon vor allen Läufen getaggt. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) prüft den Code des Agenten in `backend/realroom/`: Der Test schlägt fehl, wenn die Modell-IDs dort nicht die vier aus dieser Tabelle sind, wenn die API-Adresse nicht api.meta.ai ist oder wenn ein String in diesem Code eine andere URL enthält oder ein gängiges Modell nennt, das nicht von Meta stammt, etwa GPT, Claude, Gemini, Flux oder SigLIP.
 
+## Wie die Teile zusammenspielen
+
+1. Die Seite schickt das Foto, den Satz und den Modus an `POST /api/runs` auf dem FastAPI-Server ([`backend/realroom/server.py`](../../backend/realroom/server.py)). Der Server prüft die Limits, speichert das Foto ohne seine Metadaten in einem neuen Ordner für den Lauf und startet den Agenten ([`pipeline.py`](../../backend/realroom/pipeline.py)) in einem Hintergrund-Thread.
+2. Der Agent ruft Muse Spark 1.3, SAM 3.1 und Muse Image 1.0 unter api.meta.ai über [`meta.py`](../../backend/realroom/meta.py) auf. Die Katalogsuche in [`catalog.py`](../../backend/realroom/catalog.py) führt den Perception Encoder im selben Prozess aus.
+3. Wenn ein Schritt beginnt oder endet, hängt der Agent ein Ereignis an `run.json` an und speichert die Bilder des Schritts im Ordner des Laufs. Jeder Modellaufruf landet mit Uhrzeit und geschätzten Kosten in `ledger.jsonl`.
+4. Solange der Lauf aktiv ist, liest die Seite alle 1,5 Sekunden `GET /api/runs/<id>` und zeichnet jeden Schritt, sobald sein Ereignis eintrifft, mit den Bildern aus `/runs/<id>/`. Ein Demo-Raum ist der fertige Ordner eines Laufs, und die Seite spielt seine Ereignisse ab.
+
+Der Schlüssel für die Meta Model API bleibt auf dem Server. Auf deinem Rechner liegt er in `.env`, das git ignoriert. Auf Modal liegt er im Secret `realroom-model`, das nur `MODEL_API_KEY` enthält. Der Browser bekommt den Schlüssel nie, und im Repository liegt keiner.
+
 ## Was du prüfen kannst
 
 - `before.png` und `after.png` sind verlustfrei. In der App lädt **Check it in your browser** beide herunter, vergleicht sie in deinem Browser Pixel für Pixel und zeigt dann den Anteil, der identisch ist.

@@ -127,6 +127,15 @@ Arriba se ve el paso de verificación de la ejecución de la sala de estar. Muse
 
 Durante una ejecución, Realroom solo llama a los tres primeros modelos, todos en api.meta.ai, y ejecuta el Perception Encoder en su propio servidor. Muse Spark Open etiquetó el catálogo antes de cualquier ejecución. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py) revisa el código del agente en `backend/realroom/`: falla si los ID de modelo que hay ahí no son los cuatro de esta tabla, si la dirección de la API no es api.meta.ai, o si alguna cadena de ese código contiene otra URL o nombra un modelo conocido que no sea de Meta, como GPT, Claude, Gemini, Flux o SigLIP.
 
+## Cómo se conectan las piezas
+
+1. La página envía la foto, la frase y el modo a `POST /api/runs` en el servidor FastAPI ([`backend/realroom/server.py`](../../backend/realroom/server.py)). El servidor revisa los límites, guarda la foto sin sus metadatos en una carpeta de ejecución nueva e inicia el agente ([`pipeline.py`](../../backend/realroom/pipeline.py)) en un hilo en segundo plano.
+2. El agente llama a Muse Spark 1.3, SAM 3.1 y Muse Image 1.0 en api.meta.ai a través de [`meta.py`](../../backend/realroom/meta.py). La búsqueda en el catálogo, en [`catalog.py`](../../backend/realroom/catalog.py), ejecuta el Perception Encoder en el mismo proceso.
+3. Cada vez que un paso empieza o termina, el agente agrega un evento a `run.json` y guarda las imágenes del paso en la carpeta de la ejecución. Cada llamada a un modelo queda en `ledger.jsonl` con su hora y su costo estimado.
+4. Mientras la ejecución está en marcha, la página lee `GET /api/runs/<id>` cada 1.5 segundos y dibuja cada paso en cuanto llega su evento, con las imágenes de `/runs/<id>/`. Una habitación de demostración es una carpeta de ejecución terminada, y la página reproduce sus eventos.
+
+La clave de Meta Model API se queda en el servidor. En tu máquina está en `.env`, que git ignora. En Modal está en el secreto `realroom-model`, que solo contiene `MODEL_API_KEY`. El navegador nunca recibe la clave, y el repositorio no guarda ninguna.
+
 ## Qué puedes comprobar
 
 - `before.png` y `after.png` se guardan sin pérdida. En la app, **Check it in your browser** descarga los dos archivos y los compara píxel a píxel en tu navegador, y luego muestra qué proporción es idéntica.

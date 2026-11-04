@@ -125,6 +125,15 @@ Above is the verify step of the living-room run. Muse Image drew three candidate
 
 When it runs, Realroom calls only the first three models, all at api.meta.ai, and runs the Perception Encoder in its own server. Muse Spark Open tagged the catalog before any run. [`backend/tests/test_meta_only.py`](backend/tests/test_meta_only.py) checks the agent's code in `backend/realroom/`: it fails if the model IDs there are not the four in this table, if the API address is not api.meta.ai, or if any string in that code holds another URL or names a common non-Meta model such as GPT, Claude, Gemini, Flux or SigLIP.
 
+## How the parts connect
+
+1. The page sends the photo, the sentence and the mode to `POST /api/runs` on the FastAPI server ([`backend/realroom/server.py`](backend/realroom/server.py)). The server checks the limits, saves the photo without its metadata in a new run folder and starts the agent ([`pipeline.py`](backend/realroom/pipeline.py)) in a background thread.
+2. The agent calls Muse Spark 1.3, SAM 3.1 and Muse Image 1.0 at api.meta.ai through [`meta.py`](backend/realroom/meta.py). The catalog search in [`catalog.py`](backend/realroom/catalog.py) runs the Perception Encoder in the same process.
+3. As each step starts and ends, the agent adds an event to `run.json` and saves the step's images in the run folder. Every model call goes into `ledger.jsonl` with its time and estimated cost.
+4. While the run is going, the page reads `GET /api/runs/<id>` every 1.5 seconds and draws each step as its event arrives, with the images from `/runs/<id>/`. A demo room is a finished run folder, and the page replays its events.
+
+The Meta Model API key stays on the server. On your machine it is in `.env`, which git ignores. On Modal it is in the secret `realroom-model`, which holds `MODEL_API_KEY` and nothing else. The browser never receives the key, and the repository holds none.
+
 ## What you can check
 
 - `before.png` and `after.png` are lossless. In the app, the **Check it in your browser** button downloads both, compares them pixel by pixel and shows the share that is identical.

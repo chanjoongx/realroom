@@ -127,6 +127,15 @@ flowchart LR
 
 실행 중에 Realroom이 호출하는 모델은 이 표의 앞 세 모델뿐이고 모두 api.meta.ai에 있습니다. Perception Encoder는 앱 서버 안에서 직접 돌립니다. Muse Spark Open은 카탈로그를 만들 때 미리 태그를 달았습니다. [`backend/tests/test_meta_only.py`](../../backend/tests/test_meta_only.py)는 `backend/realroom/`의 에이전트 코드를 검사합니다. 그 코드의 모델 ID가 이 표의 네 개와 다르거나 API 주소가 api.meta.ai가 아니면 테스트가 실패합니다. 코드 안의 문자열에 다른 URL이 있거나 GPT, Claude, Gemini, Flux, SigLIP처럼 널리 쓰이는 Meta 밖 모델의 이름이 있어도 실패합니다.
 
+## 구성 요소 연결
+
+1. 페이지는 사진과 문장, 모드를 FastAPI 서버([`backend/realroom/server.py`](../../backend/realroom/server.py))의 `POST /api/runs`로 보냅니다. 서버는 한도를 확인하고 메타데이터를 뺀 사진을 새 실행 폴더에 저장한 뒤 백그라운드 스레드에서 에이전트([`pipeline.py`](../../backend/realroom/pipeline.py))를 시작합니다.
+2. 에이전트는 [`meta.py`](../../backend/realroom/meta.py)를 거쳐 api.meta.ai의 Muse Spark 1.3, SAM 3.1, Muse Image 1.0을 호출합니다. [`catalog.py`](../../backend/realroom/catalog.py)의 카탈로그 검색은 같은 프로세스 안에서 Perception Encoder를 돌립니다.
+3. 단계가 시작하고 끝날 때마다 에이전트는 `run.json`에 이벤트를 더하고 그 단계의 그림을 실행 폴더에 저장합니다. 모든 모델 호출은 호출 시각과 추정 비용이 함께 `ledger.jsonl`에 남습니다.
+4. 실행이 진행되는 동안 페이지는 1.5초마다 `GET /api/runs/<id>`를 읽고 이벤트가 도착하는 대로 그 단계를 `/runs/<id>/`의 그림과 함께 그립니다. 데모 방은 끝난 실행 폴더이고 페이지는 그 이벤트를 재생합니다.
+
+Meta Model API 키는 서버에만 있습니다. 내 컴퓨터에서는 git이 무시하는 `.env`에, Modal에서는 `MODEL_API_KEY` 하나만 담은 비밀 `realroom-model`에 둡니다. 브라우저는 키를 받지 않으며 저장소에는 키가 없습니다.
+
 ## 확인할 수 있는 것
 
 - `before.png`와 `after.png`는 무손실입니다. 앱의 **Check it in your browser**는 두 파일을 내려받아 브라우저에서 픽셀 단위로 비교한 뒤 똑같은 픽셀의 비율을 보여 줍니다.
