@@ -1,15 +1,23 @@
-import { MotionConfig } from "motion/react";
+import { lazy, Suspense } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Home } from "./pages/Home";
-import { Studio } from "./pages/Studio";
 import { usePath } from "./lib/router";
+
+/** The run viewer is its own chunk: the home page loads without it, and Home fetches it once idle. */
+const StudioRoute = lazy(() => import("./pages/StudioRoute"));
 
 export function App() {
   const path = usePath();
   const m = path.match(/^\/r\/([A-Za-z0-9_-]+)\/?$/);
   return (
-    <MotionConfig reducedMotion="user">
-      <ErrorBoundary key={path}>{m ? <Studio key={m[1]} id={m[1]} /> : <Home />}</ErrorBoundary>
-    </MotionConfig>
+    <ErrorBoundary key={path}>
+      {m ? (
+        <Suspense fallback={null}>
+          <StudioRoute id={m[1]} />
+        </Suspense>
+      ) : (
+        <Home />
+      )}
+    </ErrorBoundary>
   );
 }

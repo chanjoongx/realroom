@@ -3,6 +3,27 @@ import type { AppConfig, Demo, Run } from "./types";
 const BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
 
 export const runFile = (id: string, name: string) => `${BASE}/runs/${encodeURIComponent(id)}/${name}`;
+
+/** The widths of the smaller WebP copies the server makes of a run's photos (VARIANT_WIDTHS in server.py). */
+const VARIANT_WIDTHS = [640, 960, 1280];
+/** The widest photo a run holds: uploads are sent at most this wide, and the demo rooms are this wide. */
+const FULL_W = 1792;
+
+/** srcset for a run photo (/runs/<id>/<name>.jpg or .png): the server's WebP copies up to maxW, and the
+ *  file itself when maxW allows it, so a phone downloads about a sixth of the bytes. Other URLs get none.
+ *  The lossless files behind the pixel check are always fetched whole, by their plain URL. */
+export function photoSrcSet(url: string | undefined, maxW = FULL_W): string | undefined {
+  if (!url || !/\/runs\/[^/?#]+\/[^/?#]+\.(jpg|png)$/.test(url)) return undefined;
+  const set = VARIANT_WIDTHS.filter((w) => w <= maxW).map((w) => `${url}?w=${w} ${w}w`);
+  if (maxW >= FULL_W) set.push(`${url} ${FULL_W}w`);
+  return set.join(", ");
+}
+
+/** The plain src to pair with photoSrcSet(url, maxW): the widest copy it lists. */
+export function photoSrc(url: string, maxW = FULL_W): string {
+  const w = VARIANT_WIDTHS.filter((v) => v <= maxW).pop();
+  return maxW >= FULL_W || w === undefined || !photoSrcSet(url) ? url : `${url}?w=${w}`;
+}
 export const thumbUrl = (pid: string) => `${BASE}/catalog/thumb/${pid}.webp`;
 export const imageUrl = (pid: string) => `${BASE}/catalog/img/${pid}.jpg`;
 

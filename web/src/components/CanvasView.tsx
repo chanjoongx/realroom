@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Activity, Columns2, Layers } from "lucide-react";
-import { runFile } from "../api";
+import { photoSrcSet, runFile } from "../api";
 import { undash } from "../lib/format";
 import { STAGE_NAME } from "../lib/stages";
 import { recordProducts } from "../lib/verdicts";
 import type { Box, FixRecord, Run, RunEvent, StageId } from "../types";
 import { Compare } from "./Compare";
 import { ProductMarks, ScanOverlay, SlotBoxes } from "./Overlays";
-import { Photo } from "./Photo";
+import { CANVAS_SIZES, HALF_CANVAS_SIZES, Photo } from "./Photo";
 
 type ResultMode = "compare" | "proof" | "drift";
 
@@ -164,10 +164,13 @@ export function CanvasView({
       <div className={`fix-canvas${stacked ? " stacked" : ""}`}>
         {run.fixes!.map((fx) => {
           const why = fx.kind === "clear" ? "" : fixReason(fx);
+          const first = runFile(run.id, fx.images[0]);
+          const second = runFile(run.id, fx.images[1]);
+          const sizes = stacked ? CANVAS_SIZES : HALF_CANVAS_SIZES;
           return (
             <div key={fx.slot} className="fix-canvas-row">
               <figure>
-                <img src={runFile(run.id, fx.images[0])} alt="First render" />
+                <img src={first} srcSet={photoSrcSet(first)} sizes={sizes} alt="First render" />
                 <figcaption className="mono">
                   {fx.kind === "clear"
                     ? `first render · ${(fx.names ?? []).join(", ")} left`
@@ -176,7 +179,7 @@ export function CanvasView({
                 {why && <p className="fix-why">Spark: {why}</p>}
               </figure>
               <figure>
-                <img src={runFile(run.id, fx.images[1])} alt={fx.kind === "clear" ? "Cleared" : "Redrawn"} />
+                <img src={second} srcSet={photoSrcSet(second)} sizes={sizes} alt={fx.kind === "clear" ? "Cleared" : "Redrawn"} />
                 <figcaption className="mono">
                   {fx.kind === "clear" ? "cleared · checked with SAM 3.1" : `redrawn · ${fx.after.verdict} ${fx.after.score}`}
                 </figcaption>
@@ -213,7 +216,15 @@ export function CanvasView({
         )}
         {mode === "proof" && (
           <Photo src={after} w={w} h={h} alt={`${room}, the result with the changed areas colored`}>
-            {res.layers && <img className="photo-img layer-img" src={runFile(run.id, res.layers)} alt="" />}
+            {res.layers && (
+              <img
+                className="photo-img layer-img"
+                src={runFile(run.id, res.layers)}
+                srcSet={photoSrcSet(runFile(run.id, res.layers))}
+                sizes={CANVAS_SIZES}
+                alt=""
+              />
+            )}
             <LayerLegend run={run} />
           </Photo>
         )}

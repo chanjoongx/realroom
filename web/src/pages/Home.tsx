@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowRight, ImageUp, LoaderCircle } from "lucide-react";
-import { getConfig, getDemos, netMessage, runFile, startRun } from "../api";
+import { getConfig, getDemos, netMessage, photoSrc, photoSrcSet, runFile, startRun } from "../api";
 import { Compare } from "../components/Compare";
 import { Logo } from "../components/Logo";
 import { ModelChips } from "../components/ModelChip";
@@ -13,6 +13,12 @@ import type { AppConfig, Demo } from "../types";
 const GITHUB = "https://github.com/chanjoongx/realroom";
 /** the size of the catalog in the repo, shown until the server's config answers */
 const CATALOG_SIZE = 4375;
+/** how wide the hero photo and the demo room cards are drawn (app.css: one column up to 1120px, the
+ *  cards two columns up to 1120px and one up to 820px), for picking a photo copy from srcset */
+const HERO_SIZES = "(max-width: 1120px) 100vw, 600px";
+const CARD_SIZES = "(max-width: 820px) 100vw, (max-width: 1120px) 50vw, 400px";
+/** a card is a small preview, so it never needs more than this */
+const CARD_MAX_W = 960;
 
 type Load<T> = { state: "loading" } | { state: "ok"; data: T } | { state: "error" };
 
@@ -44,6 +50,17 @@ export function Home() {
   const [cfg, retryCfg] = useLoad<AppConfig>(getConfig);
   useEffect(() => {
     document.title = "Realroom";
+  }, []);
+  useEffect(() => {
+    // fetch the run viewer's code once the page is idle, so opening a demo run does not wait for it
+    const go = () => void import("./StudioRoute");
+    const idle = window.requestIdleCallback as typeof window.requestIdleCallback | undefined; // Safari has none
+    if (idle) {
+      const id = idle(go, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(go, 2500);
+    return () => clearTimeout(t);
   }, []);
   const rooms = demos.state === "ok" ? demos.data : [];
   const hero = rooms[0];
@@ -115,6 +132,7 @@ export function Home() {
                     alts={[`${hero.title}, an AI-generated demo room, before`, `${hero.title} after Realroom added real products`]}
                     priority
                     rest={32}
+                    sizes={HERO_SIZES}
                   />
                 </Photo>
                 <span className="hero-cap mono faint">{hero.title} · AI-generated demo room · drag to compare</span>
@@ -138,8 +156,21 @@ export function Home() {
             {rooms.map((d) => (
               <button key={d.id} className="room-card" onClick={() => navigate(`/r/${d.id}`)}>
                 <span className="room-img">
-                  <img src={runFile(d.id, d.before)} alt="" className="ri-before" loading="lazy" decoding="async" />
-                  <img src={runFile(d.id, d.after)} alt="" className="ri-after" loading="lazy" decoding="async" />
+                  {[d.before, d.after].map((name, i) => {
+                    const url = runFile(d.id, name);
+                    return (
+                      <img
+                        key={name}
+                        src={photoSrc(url, CARD_MAX_W)}
+                        srcSet={photoSrcSet(url, CARD_MAX_W)}
+                        sizes={CARD_SIZES}
+                        alt=""
+                        className={i ? "ri-after" : "ri-before"}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    );
+                  })}
                   <span className="room-kicker mono">{d.kicker}</span>
                   <span className="room-before mono" aria-hidden="true">Before</span>
                 </span>

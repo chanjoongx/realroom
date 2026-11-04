@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ArrowRight, Check, CircleHelp, CornerDownRight, TriangleAlert } from "lucide-react";
-import { imageUrl, runFile, thumbUrl } from "../api";
+import { imageUrl, photoSrc, runFile, thumbUrl } from "../api";
 import { kindLabel, pct, secs, sizeCm, sizeIn, titleCase, undash, usd } from "../lib/format";
 import { isMatch, recordProducts, verdictLabel } from "../lib/verdicts";
 import type { FixRecord, Product, Run, RunEvent, SceneObject, Slot, StageId, Verdict } from "../types";
@@ -364,11 +364,11 @@ export function RenderPanel({ run, events }: PanelProps) {
       <Section title="Inputs">
         <div className="input-strip">
           <span className="in-img">
-            <img src={runFile(run.id, run.room.before)} alt="Room photo" />
+            <img src={photoSrc(runFile(run.id, run.room.before), 640)} alt="Room photo" />
             <span className="in-cap mono">photo</span>
           </span>
           <span className="in-img">
-            <img src={runFile(run.id, "guide.jpg")} alt="Placement guide" />
+            <img src={photoSrc(runFile(run.id, "guide.jpg"), 640)} alt="Placement guide" />
             <span className="in-cap mono">guide</span>
           </span>
           {slots.map((s, i) =>
@@ -597,11 +597,11 @@ export function FixPanel({ run, events, stopped }: PanelProps) {
           <Section key={f.slot} title={`Clutter: ${(f.names ?? []).join(", ")}`}>
             <div className="fix-pair">
               <figure>
-                <img src={runFile(run.id, f.images[0])} alt="Before clearing" />
+                <img src={photoSrc(runFile(run.id, f.images[0]), 640)} alt="Before clearing" />
                 <figcaption className="mono">first render</figcaption>
               </figure>
               <figure>
-                <img src={runFile(run.id, f.images[1])} alt="After clearing" />
+                <img src={photoSrc(runFile(run.id, f.images[1]), 640)} alt="After clearing" />
                 <figcaption className="mono">cleared</figcaption>
               </figure>
             </div>
@@ -620,11 +620,11 @@ export function FixPanel({ run, events, stopped }: PanelProps) {
         <Section key={f.slot} title={prods[f.product ?? ""]?.title ?? f.product ?? ""}>
           <div className="fix-pair">
             <figure>
-              <img src={runFile(run.id, f.images[0])} alt="Before the redraw" />
+              <img src={photoSrc(runFile(run.id, f.images[0]), 640)} alt="Before the redraw" />
               <figcaption className="mono">first render</figcaption>
             </figure>
             <figure>
-              <img src={runFile(run.id, f.images[1])} alt="After the redraw" />
+              <img src={photoSrc(runFile(run.id, f.images[1]), 640)} alt="After the redraw" />
               <figcaption className="mono">redrawn</figcaption>
             </figure>
           </div>

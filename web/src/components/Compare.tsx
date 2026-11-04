@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { photoSrcSet } from "../api";
 import { reducedMotion } from "../lib/stages";
+import { CANVAS_SIZES } from "./Photo";
 
 /** Before/after wipe. The handle sweeps in once on mount (unless the viewer asks for reduced
  *  motion) and settles at `rest`, then follows the pointer or the keys. */
@@ -12,6 +14,7 @@ export function Compare({
   alts = ["Original photo", "Edited photo"],
   priority = false,
   rest = 50,
+  sizes = CANVAS_SIZES,
 }: {
   before: string;
   after: string;
@@ -23,6 +26,8 @@ export function Compare({
   priority?: boolean;
   /** where the handle settles, in percent from the left edge */
   rest?: number;
+  /** how wide the photos are drawn, for picking a copy from srcset */
+  sizes?: string;
 }) {
   const sweep = intro && !reducedMotion();
   const [x, setX] = useState(sweep ? 97 : rest);
@@ -119,9 +124,9 @@ export function Compare({
       }}
       onPointerCancel={() => (dragging.current = false)}
     >
-      <img className="photo-img" src={before} alt={alts[0]} draggable={false} fetchPriority={priority ? "high" : undefined} />
+      <img className="photo-img" src={before} srcSet={photoSrcSet(before)} sizes={sizes} alt={alts[0]} draggable={false} fetchPriority={priority ? "high" : undefined} />
       <div className="compare-after" style={{ clipPath: `inset(0 0 0 ${x}%)` }}>
-        <img className="photo-img" src={after} alt={alts[1]} draggable={false} fetchPriority={priority ? "high" : undefined} />
+        <img className="photo-img" src={after} srcSet={photoSrcSet(after)} sizes={sizes} alt={alts[1]} draggable={false} fetchPriority={priority ? "high" : undefined} />
         {afterLayer}
       </div>
       {/* a full-width track moved with a transform, so the sweep never shifts layout */}
