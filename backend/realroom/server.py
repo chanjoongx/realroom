@@ -51,7 +51,9 @@ TEXT_ASSETS = {".js": "text/javascript", ".css": "text/css"}
 # phone downloads about a sixth of the bytes. Only these widths exist, so nobody can make the server
 # resize at sizes of their choosing; the lossless files behind the pixel check are fetched without ?w.
 VARIANT_WIDTHS = (640, 960, 1280)
-VARIANT_CACHE = 160  # copies kept in memory, about 70 KB each
+# Copies kept in memory, about 70 KB each. Every demo photo at all three widths fits, so asking for them
+# in turn cannot make the server re-encode a photo on every request.
+VARIANT_CACHE = 512
 
 # Uploads. Only these decoders ever see a visitor's bytes, and the pixel count is read from the file
 # header before anything is decoded (Pillow itself only warns from 89 MP and refuses from 179 MP).
@@ -544,7 +546,7 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
         length = request.headers.get("content-length")
         if length is None:
             raise HTTPException(411, "The upload needs a Content-Length header.")
-        if not length.isdigit():
+        if not (length.isascii() and length.isdigit()):  # "²" is a digit to isdigit() but not to int()
             raise HTTPException(400, "The Content-Length header is not a number.")
         if int(length) > cap + MULTIPART_SLACK:
             raise HTTPException(413, f"The photo is larger than {limits.max_upload_mb} MB.")
@@ -570,6 +572,10 @@ def create_app(runs_dir: pathlib.Path, catalog_dir: pathlib.Path, web_dir: pathl
                 await form.close()
         if len(raw) > cap:
             raise HTTPException(413, f"The photo is larger than {limits.max_upload_mb} MB.")
+        # Refused at once rather than queued: a photo that fails to decode costs its sender nothing, so a
+        # queue of them could hold every connection of the single container.
+        if decode_slots.locked():  # no await between this check and taking the slot
+            raise HTTPException(503, "Realroom is checking other photos right now. Please try again in a minute.")
         async with decode_slots:
             jpeg = await run_in_threadpool(_normalize_photo, raw)
         # Nothing is awaited from here to the launcher: take() and launcher() run back to back on the
@@ -713,12 +719,15 @@ def purge_expired(runs_dir: pathlib.Path, max_age_h: float, keep: set[str] | fro
 
 
 _UNREADABLE = "This file is not a photo Realroom can read (use JPEG, PNG or WebP)."
+_TOO_SMALL = "The photo is too small. Use one at least 640 pixels wide."
+_TOO_THIN = "The photo is too narrow or too wide. A normal landscape or portrait photo works best."
 _DECODE_ERRORS = (OSError, ValueError, SyntaxError, EOFError, IndexError, struct.error)
 
 
 def _normalize_photo(raw: bytes) -> bytes:
     """Decode, apply EXIF rotation, drop metadata, cap the size at 1792 px, re-encode as JPEG. Only JPEG,
-    PNG and WebP are opened, and the pixel count is checked from the header before anything is decoded."""
+    PNG and WebP are opened, and the pixel count, size and shape are checked from the header before
+    anything is decoded."""
     from PIL import Image, ImageOps
 
     too_many = f"The photo has too many pixels. Use one under {MAX_PIXELS // 1_000_000} megapixels."
@@ -731,6 +740,12 @@ def _normalize_photo(raw: bytes) -> bytes:
     w, h = im.size
     if w * h > MAX_PIXELS:  # anything Pillow would warn about is far past this, so the warning never decides
         raise HTTPException(400, too_many)
+    # The size and shape checks below, made from the header first so a crafted file is refused before it is
+    # decoded. An EXIF turn only swaps width and height, and no ratio past 2.3 passes either way round.
+    if max(w, h) < 640:
+        raise HTTPException(400, _TOO_SMALL)
+    if max(w, h) > 2.3 * min(w, h):
+        raise HTTPException(400, _TOO_THIN)
     try:
         im.load()
         im = ImageOps.exif_transpose(im).convert("RGB")
@@ -740,9 +755,9 @@ def _normalize_photo(raw: bytes) -> bytes:
         raise HTTPException(400, _UNREADABLE) from None
     w, h = im.size
     if max(w, h) < 640:
-        raise HTTPException(400, "The photo is too small. Use one at least 640 pixels wide.")
+        raise HTTPException(400, _TOO_SMALL)
     if not (0.45 <= w / h <= 2.3):
-        raise HTTPException(400, "The photo is too narrow or too wide. A normal landscape or portrait photo works best.")
+        raise HTTPException(400, _TOO_THIN)
     s = min(1.0, 1792 / max(w, h))
     if s < 1:
         im = im.resize((round(w * s), round(h * s)), Image.LANCZOS)

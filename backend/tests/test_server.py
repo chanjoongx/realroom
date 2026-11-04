@@ -602,6 +602,47 @@ def test_uploads_past_the_slots_are_refused_at_once(live, monkeypatch):
     assert not launcher.calls and limits.left_today() == 40
 
 
+def test_uploads_past_the_decode_slots_are_refused_at_once(live, monkeypatch):
+    monkeypatch.setattr(server, "DECODE_SLOTS", 0)  # both decode slots busy with other photos
+    client, launcher, limits = live()
+    r = post_photo(client)
+    assert r.status_code == 503 and "checking other photos" in r.json()["detail"]
+    assert not launcher.calls and limits.left_today() == 40
+
+
+def test_photos_refused_for_their_size_or_shape_are_never_decoded(live, monkeypatch):
+    from PIL import ImageFile
+
+    small, wide, tall = jpeg_bytes(500, 400), jpeg_bytes(3000, 900), jpeg_bytes(900, 3000)
+    monkeypatch.setattr(ImageFile.ImageFile, "load",
+                        lambda self: pytest.fail("decoded a photo its header already refuses"))
+    client, launcher, limits = live()
+    for data in (small, wide, tall):
+        assert post_photo(client, data).status_code == 400
+    assert not launcher.calls and limits.left_today() == 40
+
+
+def test_a_content_length_in_other_digits_is_refused(live):
+    """A real server hands the app the raw byte, read as latin-1 "²": isdigit() says yes, int() says no.
+    The test client would re-encode the header as UTF-8, so this calls the app with the raw scope."""
+    client, launcher, _ = live()
+    scope = {"type": "http", "asgi": {"version": "3.0"}, "http_version": "1.1", "method": "POST",
+             "scheme": "http", "path": "/api/runs", "raw_path": b"/api/runs", "query_string": b"",
+             "root_path": "", "client": ("8.8.8.8", 50000), "server": ("testserver", 80),
+             "headers": [(b"host", b"testserver"), (b"content-type", b"multipart/form-data; boundary=x"),
+                         (b"content-length", b"\xb2")]}
+    sent = []
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message):
+        sent.append(message)
+
+    asyncio.run(client.app(scope, receive, send))
+    assert sent[0]["status"] == 400 and not launcher.calls
+
+
 def test_a_body_that_takes_too_long_is_refused(live, monkeypatch):
     monkeypatch.setattr(server, "UPLOAD_READ_S", 0.05)
     monkeypatch.setattr(server.Request, "form", lambda self, **kw: asyncio.sleep(2))  # a sender that trickles

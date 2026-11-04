@@ -10,7 +10,7 @@ A useful report says what you sent, what came back and which commit or address y
 
 The Meta Model API key is in a Modal secret that holds that key and nothing else. Only the server reads it. It never reaches the browser, a run file or the log.
 
-Live runs are capped at 40 a UTC day, 8 an hour, three per visitor, six per IPv6 /48 and $60 of model calls in all. Visitors are counted by a salted hash of their address, and the salt changes every UTC day. Every Muse Spark answer is capped at 16,384 tokens. A run that passes 12 minutes or $0.60 skips the redraws it has left.
+Live runs are capped at 40 a UTC day, 8 an hour, six per visitor, twelve per IPv6 /48 and $60 of model calls in all. Visitors are counted by a salted hash of their address, and the salt changes every UTC day. Every Muse Spark answer is capped at 16,384 tokens. A run that passes 12 minutes or $0.60 skips the redraws it has left.
 
 Uploads must be JPEG, PNG or WebP, at most 12 MB and 40 megapixels. The server reads the pixel count from the file header before it decodes anything, then re-encodes the photo without its metadata. A live run's files sit at an address with 96 random bits, are sent with `Cache-Control: private, no-store` and are deleted 18 to 21 hours after the upload.
 

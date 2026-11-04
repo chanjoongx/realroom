@@ -7,7 +7,7 @@ read-only, and `realroom-runs` (recorded demo runs, live runs). The web containe
 `realroom-model`, which holds MODEL_API_KEY and nothing else; the catalog-tagging keys live in
 `realroom-keys`, which only catalog/modal_catalog.py uses.
 
-Live runs are capped at 40 a UTC day, 8 a UTC hour, three per visitor (and six per IPv6 /48) and 60
+Live runs are capped at 40 a UTC day, 8 a UTC hour, six per visitor (and twelve per IPv6 /48) and 60
 dollars of model calls in all (each run reserves 0.40 when it starts and settles to its ledger
 total). They are deleted 18 hours after
 the upload: the web container checks every hour, and a small scheduled function wakes it every
@@ -84,7 +84,14 @@ WEB_SECRET = "realroom-model"
     # Keep this at 1. The usage counter's lock, the set of active runs, the decode slots and the
     # worker threads all live in this one container; a second container would count on its own.
     max_containers=1,
-    scaledown_window=600,
+    # A live run is a background thread, not a request, and the page stops asking while its tab is hidden,
+    # so Modal can count the container idle while a run is still working. Twenty idle minutes outlast the
+    # four to eight minutes a live run takes.
+    scaledown_window=1200,
+    # A preempted container takes every live run in it and any request in flight down with it, and that
+    # happened twice in about an hour of uptime on the night of 11-04 (KST). Non-preemptible CPU and memory
+    # cost three times the list price.
+    nonpreemptible=True,
 )
 @modal.concurrent(max_inputs=60)
 @modal.asgi_app(label="realroom")
@@ -195,7 +202,8 @@ def web():
     live = os.environ.get("REALROOM_LIVE", "1") == "1"
     limits = Limits(live=live, reason="" if live else "Live runs are paused right now.",
                     per_day=int(os.environ.get("REALROOM_RUNS_PER_DAY", "40")),
-                    per_client_per_day=int(os.environ.get("REALROOM_RUNS_PER_CLIENT", "3")),
+                    # six, not three: judges in one office can share an IPv4 address or an IPv6 /64
+                    per_client_per_day=int(os.environ.get("REALROOM_RUNS_PER_CLIENT", "6")),
                     per_hour=int(os.environ.get("REALROOM_RUNS_PER_HOUR", "8")),
                     budget_usd=float(os.environ.get("REALROOM_BUDGET_USD", "60")),
                     state_file=runs / "_quota.json", on_change=lambda: commit("a usage counter change"))
