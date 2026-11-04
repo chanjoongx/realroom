@@ -11,6 +11,8 @@
 <h4 align="center">
   <a href="https://chanjoongx--realroom.us-east.modal.run">라이브 데모</a>
   &nbsp;·&nbsp;
+  <a href="https://youtu.be/5wld8GSkeqQ">시연 영상</a>
+  &nbsp;·&nbsp;
   <a href="#how-a-run-works">동작 방식</a>
   &nbsp;·&nbsp;
   <a href="#demo-rooms">데모 방</a>
